@@ -130,7 +130,7 @@
         "--yes flag skips all prompts and uses defaults",
         "Writes maxsim.config.yaml to generated project"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P1-009",

@@ -1,1 +1,5 @@
-// Spinner utilities - to be implemented by P1-008
+import ora from 'ora';
+
+export function createSpinner(text: string) {
+  return ora({ text, spinner: 'dots' });
+}

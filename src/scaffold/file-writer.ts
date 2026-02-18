@@ -1,4 +1,5 @@
-import { ensureDir, pathExists, writeFile } from 'fs-extra';
+import fsExtra from 'fs-extra';
+const { ensureDir, pathExists, writeFile } = fsExtra;
 import { join, dirname } from 'node:path';
 
 export type OverwriteMode = 'ask' | 'always' | 'never';

@@ -1,7 +1,8 @@
 import { fileURLToPath } from 'node:url';
 import { dirname, join, extname } from 'node:path';
 import { readFile, readdir } from 'node:fs/promises';
-import { pathExists } from 'fs-extra';
+import fsExtra from 'fs-extra';
+const { pathExists } = fsExtra;
 import { TemplateRenderer } from './renderer.js';
 import type { TemplateContext } from './renderer.js';
 import { FileWriter } from './file-writer.js';
@@ -21,11 +22,18 @@ export interface ScaffoldResult {
   postProcessorsRun: string[];
 }
 
+export interface ScaffoldEngineOptions {
+  /** Override the templates directory (useful for testing) */
+  templatesDir?: string;
+}
+
 export class ScaffoldEngine {
   private renderer: TemplateRenderer;
+  private readonly templatesDirOverride?: string;
 
-  constructor() {
+  constructor(options: ScaffoldEngineOptions = {}) {
     this.renderer = new TemplateRenderer();
+    this.templatesDirOverride = options.templatesDir;
   }
 
   async run(context: ProjectContext): Promise<ScaffoldResult> {
@@ -110,6 +118,9 @@ export class ScaffoldEngine {
   }
 
   private getTemplatesDir(): string {
+    if (this.templatesDirOverride !== undefined) {
+      return this.templatesDirOverride;
+    }
     // __dirname resolves to dist/scaffold/ at runtime; templates/core/ is at ../../templates/core/
     return join(__dirname, '../../templates/core');
   }

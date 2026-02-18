@@ -73,3 +73,14 @@
 - Post-processors: dart-format, flutter-pub-get, build-runner (graceful failure handling)
 - Template directory resolved relative to compiled output using import.meta.url
 - Status: PASSES
+
+## 2026-02-19T00:02 - P1-008: Implement interactive create command with @clack/prompts
+- Created src/cli/commands/create.ts with full interactive flow
+- Created src/cli/ui/prompts.ts with @clack/prompts group (name, org, description, platforms)
+- Created src/cli/ui/spinner.ts with ora wrapper
+- Supports --yes (non-interactive), --config (load from file), --dry-run
+- Writes maxsim.config.yaml to generated project
+- Fixed Jest ESM config: NODE_OPTIONS=--experimental-vm-modules, fs-extra default imports
+- Added ScaffoldEngineOptions with templatesDir override for testing
+- 80 tests passing across 5 suites
+- Status: PASSES

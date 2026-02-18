@@ -84,3 +84,13 @@
 - Added ScaffoldEngineOptions with templatesDir override for testing
 - 80 tests passing across 5 suites
 - Status: PASSES
+
+## 2026-02-19T00:03 - P1-009: Integration test for create command
+- Created tests/integration/create-command.test.ts with 8 integration tests
+- Validates: directory structure, pubspec.yaml deps, main.dart ProviderScope
+- Validates: app_router.dart GoRouter, analysis_options, widget_test.dart
+- Validates: maxsim.config.yaml writing, custom project names
+- All 88 tests pass across 6 suites (4 unit + 1 create-command + 1 integration)
+- Status: PASSES
+
+## Phase 1 COMPLETE - All 9 stories implemented and passing

@@ -147,7 +147,7 @@
         "Validates app_router.dart contains GoRouter setup",
         "npm test passes all tests"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P2-001",

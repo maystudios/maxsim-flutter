@@ -50,3 +50,19 @@
 - Dry-run mode, conflict detection, overwrite modes (ask/always/never)
 - Created tests/unit/file-writer.test.ts with temp directory tests
 - Status: PASSES
+
+## 2026-02-18T00:03 - P1-003: Implement ProjectContext type and validator
+- Created src/core/context.ts with ProjectContext interface and createProjectContext() factory
+- Created src/core/validator.ts with validateEnvironment() checking flutter, dart, git
+- Created src/types/project.ts with GeneratedFile, TemplateInstruction, Platform types
+- Module resolution handles false/undefined/object configs correctly
+- Status: PASSES
+
+## 2026-02-18T00:03 - P1-007: Create core Flutter templates (Clean Architecture + Riverpod + go_router)
+- Created 14 template files in templates/core/
+- pubspec.yaml.hbs with riverpod, go_router, freezed, build_runner dependencies
+- main.dart.hbs with ProviderScope, app.dart.hbs with MaterialApp.router
+- app_router.dart.hbs with GoRouter + Riverpod provider
+- Clean Architecture layers in features/home/ (data, domain, presentation)
+- widget_test.dart.hbs for basic testing
+- Status: PASSES

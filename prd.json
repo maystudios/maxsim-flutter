@@ -46,7 +46,7 @@
         "Validator returns clear error messages when tools are missing",
         "npm run typecheck passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P1-004",
@@ -113,7 +113,7 @@
         "templates/core/test/widget_test.dart.hbs is a valid test",
         "All templates use TemplateContext variables correctly"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P1-008",

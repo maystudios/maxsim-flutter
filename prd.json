@@ -15,7 +15,7 @@
         "'node dist/cli/index.js --version' prints '0.1.0'",
         "'node dist/cli/index.js --help' shows create, add, migrate commands"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P1-002",

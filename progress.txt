@@ -1,0 +1,29 @@
+## 2026-02-18 - Project Initialization
+- maxsim-flutter project bootstrapped
+- Created: package.json, tsconfig.json, tsconfig.build.json, jest.config.ts
+- Created: CLAUDE.md, AGENTS.md, ralph.sh, prompt.md, prd.json
+- Created: .claude/ directory with agents (5), skills (2), commands (2)
+- Created: Full directory structure for src/, templates/, claude-plugin/, tests/
+- PRD contains 34 user stories across 4 phases
+- Ready for Ralph autonomous development
+
+## 2026-02-18 - Architecture Revision: Native Agent Teams (ADR-006)
+- Discovered lifecycle incompatibility: Ralph's `claude --print` vs Teams (persistent session)
+- Initially planned custom orchestrator in src/swarm/ - REMOVED
+- Decision: Use native Claude Code Agent Teams, no custom orchestration code
+- Our job: generate excellent CLAUDE.md + agents + skills + hooks that make Agent Teams work
+- Created ADR-006 (supersedes ADR-004 and ADR-005)
+- Removed: src/swarm/, src/cli/commands/orchestrate.ts, flutter-orchestrate.md
+- CLAUDE.md now describes Agent Teams workflow in natural language
+- Agent definitions designed as Agent Teams teammate roles
+- TaskCompleted hooks enforce quality gates (flutter analyze + flutter test)
+- PRD simplified to 28 stories across 4 phases (P1:9, P2:10, P3:6, P4:3)
+- Ralph.sh remains as simple fallback for non-Teams users
+
+## 2026-02-18T00:01 - P1-001: Implement TypeScript project foundation and CLI entry point
+- CLI entry point (src/cli/index.ts) with Commander.js and shebang already existed
+- Stub commands (create, add, migrate) already wired up
+- Fixed ESLint 9 flat config (created eslint.config.js, installed typescript-eslint)
+- Fixed Jest config (installed ts-node, updated test script with --passWithNoTests)
+- All quality gates pass: typecheck, lint, test
+- Status: PASSES

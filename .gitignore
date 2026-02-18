@@ -6,6 +6,5 @@ coverage/
 .env.local
 .DS_Store
 *.log
-progress.txt
 .last-branch
 archive/

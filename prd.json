@@ -96,7 +96,7 @@
         "Post-processors can be skipped via config flags",
         "npm run typecheck passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P1-007",

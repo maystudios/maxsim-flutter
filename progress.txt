@@ -27,3 +27,26 @@
 - Fixed Jest config (installed ts-node, updated test script with --passWithNoTests)
 - All quality gates pass: typecheck, lint, test
 - Status: PASSES
+
+## 2026-02-18T00:02 - P1-002: Implement Zod config schema and config loader
+- Created src/core/config/schema.ts with full Zod schema (project, platforms, modules, claude, ralph, scaffold)
+- Created src/core/config/loader.ts with loadConfig() and parseConfig()
+- Created src/core/config/defaults.ts with sensible defaults
+- Created src/types/config.ts with MaxsimConfig type inferred from Zod
+- Created tests/unit/schema.test.ts with comprehensive validation tests
+- All quality gates pass: typecheck, lint, 60 tests passing
+- Status: PASSES
+
+## 2026-02-18T00:02 - P1-004: Implement Handlebars template renderer
+- Created src/scaffold/renderer.ts with TemplateRenderer class
+- Registered custom helpers: ifEquals, ifIncludes, camelCase, pascalCase, snakeCase
+- Support for partials (registerPartial, registerPartialsFromDir)
+- Created tests/unit/renderer.test.ts with tests for all helpers and features
+- Status: PASSES
+
+## 2026-02-18T00:02 - P1-005: Implement file writer with dry-run and conflict detection
+- Created src/scaffold/file-writer.ts with FileWriter class
+- writeAll() writes Map<path, content> to disk with proper directory creation
+- Dry-run mode, conflict detection, overwrite modes (ask/always/never)
+- Created tests/unit/file-writer.test.ts with temp directory tests
+- Status: PASSES

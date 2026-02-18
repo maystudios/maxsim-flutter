@@ -31,7 +31,7 @@
         "tests/unit/schema.test.ts passes with valid and invalid config cases",
         "npm run typecheck passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P1-003",
@@ -62,7 +62,7 @@
         "tests/unit/renderer.test.ts passes",
         "npm run typecheck passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P1-005",
@@ -79,7 +79,7 @@
         "tests/unit/file-writer.test.ts passes",
         "npm run typecheck passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P1-006",

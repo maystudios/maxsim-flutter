@@ -1,0 +1,18 @@
+{
+  "branchName": "main",
+  "projectName": "maxsim-flutter",
+  "userStories": [
+    {
+      "id": "P1-001",
+      "phase": 1,
+      "priority": 1,
+      "title": "Example story title",
+      "description": "Detailed description of what needs to be implemented",
+      "acceptanceCriteria": [
+        "First criterion that can be verified",
+        "Second criterion that can be verified"
+      ],
+      "passes": false
+    }
+  ]
+}

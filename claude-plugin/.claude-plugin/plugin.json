@@ -1,0 +1,37 @@
+{
+  "name": "maxsim-flutter",
+  "version": "0.1.0",
+  "description": "AI-powered Flutter app scaffolding with Clean Architecture, Riverpod, and autonomous development",
+  "author": "maxsim-flutter contributors",
+  "commands": [
+    {
+      "name": "flutter-create",
+      "description": "Create a new Flutter app with Clean Architecture, Riverpod, and AI tooling",
+      "file": "commands/flutter-create.md"
+    },
+    {
+      "name": "flutter-add",
+      "description": "Add a module to an existing maxsim-flutter project",
+      "file": "commands/flutter-add.md"
+    },
+    {
+      "name": "flutter-migrate",
+      "description": "Migrate an existing Flutter project to maxsim-flutter architecture",
+      "file": "commands/flutter-migrate.md"
+    }
+  ],
+  "skills": [
+    {
+      "name": "flutter-scaffolding",
+      "description": "Knowledge about available modules, architecture patterns, and configuration options",
+      "directory": "skills/flutter-scaffolding"
+    }
+  ],
+  "agents": [
+    {
+      "name": "flutter-setup-agent",
+      "description": "Interactive agent that guides users through Flutter project setup",
+      "file": "agents/flutter-setup-agent.md"
+    }
+  ]
+}

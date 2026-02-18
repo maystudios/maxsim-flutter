@@ -1,0 +1,73 @@
+version: "1"
+
+project:
+  name: "test_app"
+  orgId: "com.example.test"
+  description: "A test Flutter application"
+
+platforms:
+  - ios
+  - android
+  - web
+
+modules:
+  auth:
+    enabled: true
+    provider: firebase
+
+  api:
+    enabled: true
+    baseUrl: "https://api.example.com"
+    timeout: 30
+
+  database:
+    enabled: true
+    engine: drift
+
+  i18n:
+    enabled: true
+    defaultLocale: "en"
+    supportedLocales:
+      - "en"
+      - "de"
+
+  theme:
+    enabled: true
+    seedColor: "#1E88E5"
+    useMaterial3: true
+
+  push:
+    enabled: true
+    provider: firebase
+
+  analytics:
+    enabled: false
+
+  cicd:
+    enabled: true
+    provider: github
+    targets:
+      - ios
+      - android
+
+  deep-linking:
+    enabled: true
+    scheme: "testapp"
+    host: "app.example.com"
+
+claude:
+  enabled: true
+  generateAgents: true
+  generateSkills: true
+  generateHooks: true
+  mcpServers: []
+
+ralph:
+  enabled: true
+  maxIterations: 25                # for ralph.sh fallback mode
+
+scaffold:
+  overwriteExisting: ask
+  runDartFormat: true
+  runPubGet: true
+  runBuildRunner: true

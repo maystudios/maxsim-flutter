@@ -1,0 +1,8 @@
+version: "1"
+
+project:
+  name: "minimal_app"
+  orgId: "com.example"
+
+platforms:
+  - android

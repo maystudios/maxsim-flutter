@@ -1,0 +1,439 @@
+{
+  "branchName": "main",
+  "projectName": "maxsim-flutter",
+  "userStories": [
+    {
+      "id": "P1-001",
+      "phase": 1,
+      "priority": 1,
+      "title": "Implement TypeScript project foundation and CLI entry point",
+      "description": "Set up the TypeScript project with Commander.js CLI framework. Create src/cli/index.ts as the bin entry point that registers the 'create', 'add', and 'migrate' commands (initially as stubs). Ensure 'npx maxsim-flutter --version' and 'npx maxsim-flutter --help' work correctly. Wire up the bin field in package.json to dist/cli/index.js with proper shebang.",
+      "acceptanceCriteria": [
+        "src/cli/index.ts exists with Commander.js program setup and shebang",
+        "src/cli/commands/create.ts, add.ts, migrate.ts exist as stub commands",
+        "'npm run build' compiles without errors",
+        "'node dist/cli/index.js --version' prints '0.1.0'",
+        "'node dist/cli/index.js --help' shows create, add, migrate commands"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P1-002",
+      "phase": 1,
+      "priority": 2,
+      "title": "Implement Zod config schema and config loader",
+      "description": "Create the central Zod schema in src/core/config/schema.ts that validates maxsim.config.yaml. Include all sections: project, platforms, modules (auth, api, database, i18n, theme, push, analytics, cicd, deep-linking), claude, scaffold. Create src/core/config/loader.ts to read and parse YAML config files. Create src/core/config/defaults.ts with sensible default values. Write unit tests for schema validation.",
+      "acceptanceCriteria": [
+        "src/core/config/schema.ts exports MaxsimConfigSchema with Zod",
+        "src/core/config/loader.ts can read and validate a YAML file",
+        "src/core/config/defaults.ts exports default config values",
+        "src/types/config.ts exports MaxsimConfig type inferred from Zod",
+        "tests/unit/schema.test.ts passes with valid and invalid config cases",
+        "npm run typecheck passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P1-003",
+      "phase": 1,
+      "priority": 3,
+      "title": "Implement ProjectContext type and validator",
+      "description": "Create src/core/context.ts with the ProjectContext interface that carries all resolved project settings through the pipeline. Create src/core/validator.ts that checks pre-flight requirements (Flutter SDK installed, Dart installed, git installed, target directory writable). Create src/types/project.ts with GeneratedFile and other shared types.",
+      "acceptanceCriteria": [
+        "src/core/context.ts exports ProjectContext interface",
+        "src/core/validator.ts exports validateEnvironment() that checks flutter, dart, git",
+        "src/types/project.ts exports GeneratedFile, TemplateInstruction types",
+        "Validator returns clear error messages when tools are missing",
+        "npm run typecheck passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P1-004",
+      "phase": 1,
+      "priority": 4,
+      "title": "Implement Handlebars template renderer",
+      "description": "Create src/scaffold/renderer.ts with a Handlebars-based template renderer. Register custom helpers: ifEquals, ifIncludes, camelCase, pascalCase, snakeCase. The renderer takes a template file path and a TemplateContext, returns rendered string. Support partials for reusable template fragments. Write unit tests.",
+      "acceptanceCriteria": [
+        "src/scaffold/renderer.ts exports TemplateRenderer class",
+        "Supports .hbs file rendering with TemplateContext",
+        "Custom helpers (ifEquals, ifIncludes, camelCase, pascalCase, snakeCase) work",
+        "Partial templates can be registered and used",
+        "tests/unit/renderer.test.ts passes",
+        "npm run typecheck passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P1-005",
+      "phase": 1,
+      "priority": 5,
+      "title": "Implement file writer with dry-run and conflict detection",
+      "description": "Create src/scaffold/file-writer.ts that writes rendered files to the output directory. Support dry-run mode (prints what would be written without writing). Detect file conflicts when target files already exist. Support overwrite modes: ask, always, never. Write unit tests using a temp directory.",
+      "acceptanceCriteria": [
+        "src/scaffold/file-writer.ts exports FileWriter class",
+        "writeAll() writes Map<path, content> to disk",
+        "dry-run mode logs files without writing",
+        "Conflict detection works when files exist",
+        "Overwrite modes (ask/always/never) are respected",
+        "tests/unit/file-writer.test.ts passes",
+        "npm run typecheck passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P1-006",
+      "phase": 1,
+      "priority": 6,
+      "title": "Implement scaffold engine orchestrator",
+      "description": "Create src/scaffold/engine.ts as the main orchestrator. It receives a ProjectContext and coordinates: module resolution -> template composition -> rendering -> file writing -> post-processing. Create post-processors in src/scaffold/post-processors/ for dart-format, flutter-pub-get, and build-runner (using execa to run shell commands).",
+      "acceptanceCriteria": [
+        "src/scaffold/engine.ts exports ScaffoldEngine class with run(context) method",
+        "Engine chains: resolve modules -> compose templates -> render -> write -> post-process",
+        "src/scaffold/post-processors/dart-format.ts runs 'dart format .'",
+        "src/scaffold/post-processors/flutter-pub-get.ts runs 'flutter pub get'",
+        "src/scaffold/post-processors/build-runner.ts runs 'dart run build_runner build'",
+        "Post-processors can be skipped via config flags",
+        "npm run typecheck passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P1-007",
+      "phase": 1,
+      "priority": 7,
+      "title": "Create core Flutter templates (Clean Architecture + Riverpod + go_router)",
+      "description": "Create all Handlebars templates in templates/core/ for the base Flutter project. This includes: pubspec.yaml.hbs, analysis_options.yaml.hbs, lib/main.dart.hbs (ProviderScope + GoRouter setup), lib/app.dart.hbs, lib/core/router/app_router.dart.hbs, lib/core/theme/app_theme.dart.hbs, lib/core/providers/app_providers.dart.hbs, lib/features/home/ example feature with data/domain/presentation layers, test/widget_test.dart.hbs.",
+      "acceptanceCriteria": [
+        "templates/core/pubspec.yaml.hbs generates valid pubspec with riverpod, go_router, build_runner",
+        "templates/core/analysis_options.yaml.hbs includes recommended Flutter lints",
+        "templates/core/lib/main.dart.hbs has ProviderScope and MaterialApp.router",
+        "templates/core/lib/core/router/app_router.dart.hbs has TypedGoRoute setup",
+        "templates/core/lib/features/home/ has Clean Architecture layers",
+        "templates/core/test/widget_test.dart.hbs is a valid test",
+        "All templates use TemplateContext variables correctly"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P1-008",
+      "phase": 1,
+      "priority": 8,
+      "title": "Implement interactive create command with @clack/prompts",
+      "description": "Wire up src/cli/commands/create.ts to be fully functional. Use @clack/prompts for interactive input: project name, org ID, description, platform selection (checkboxes). Build a ProjectContext from user input + defaults. Call ScaffoldEngine.run(). Show spinner during generation, success message after. Support --yes flag for non-interactive mode.",
+      "acceptanceCriteria": [
+        "src/cli/commands/create.ts prompts for name, org, description, platforms",
+        "src/cli/ui/prompts.ts wraps @clack/prompts for project creation questions",
+        "Builds ProjectContext from interactive answers",
+        "Calls ScaffoldEngine.run(context) to generate the project",
+        "Shows ora spinner during generation",
+        "--yes flag skips all prompts and uses defaults",
+        "Writes maxsim.config.yaml to generated project"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P1-009",
+      "phase": 1,
+      "priority": 9,
+      "title": "Integration test: create command generates working Flutter project",
+      "description": "Write an integration test that runs the create command into a temp directory and validates the output. Check that the Flutter project structure is correct, pubspec.yaml is valid YAML, Clean Architecture directories exist, and key files contain expected content.",
+      "acceptanceCriteria": [
+        "tests/integration/create-command.test.ts exists and passes",
+        "Test creates a project in a temp directory",
+        "Validates directory structure matches Clean Architecture",
+        "Validates pubspec.yaml is valid and contains required deps",
+        "Validates main.dart contains ProviderScope",
+        "Validates app_router.dart contains GoRouter setup",
+        "npm test passes all tests"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P2-001",
+      "phase": 2,
+      "priority": 10,
+      "title": "Implement ModuleManifest interface and module registry",
+      "description": "Create src/types/module.ts with ModuleManifest, ModuleContribution, ModuleQuestion interfaces. Create src/modules/registry.ts that discovers and loads all module definitions from src/modules/definitions/. Create src/modules/definitions/core/module.ts as the always-included base module.",
+      "acceptanceCriteria": [
+        "src/types/module.ts exports ModuleManifest with all fields",
+        "src/modules/registry.ts exports ModuleRegistry that loads all module definitions",
+        "src/modules/definitions/core/module.ts exports a valid ModuleManifest",
+        "Registry correctly discovers all module definitions",
+        "npm run typecheck passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P2-002",
+      "phase": 2,
+      "priority": 11,
+      "title": "Implement module dependency resolver with topological sort",
+      "description": "Create src/modules/resolver.ts that performs topological sort on selected modules based on their 'requires' dependencies. Detect and reject circular dependencies. Validate that no conflicting modules are selected together. Write unit tests.",
+      "acceptanceCriteria": [
+        "src/modules/resolver.ts exports ModuleResolver with resolve(selectedIds) method",
+        "Topological sort orders modules by dependency",
+        "Circular dependency detection throws clear error",
+        "Conflict detection prevents incompatible modules",
+        "tests/unit/resolver.test.ts covers: valid order, missing dep, circular, conflict",
+        "npm run typecheck passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P2-003",
+      "phase": 2,
+      "priority": 12,
+      "title": "Implement module composer with pubspec merging",
+      "description": "Create src/modules/composer.ts that takes resolved ModuleManifests and a ProjectContext, then merges all template contributions into a unified file map. Pubspec.partial.yaml merging and provider contributions to app_providers.dart. Write unit tests.",
+      "acceptanceCriteria": [
+        "src/modules/composer.ts exports ModuleComposer with compose() method",
+        "Merges pubspec.partial.yaml fragments from all active modules",
+        "Deduplicates dependencies (newer version wins)",
+        "Merges provider contributions into app_providers.dart barrel file",
+        "tests/unit/composer.test.ts passes",
+        "npm run typecheck passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P2-004",
+      "phase": 2,
+      "priority": 13,
+      "title": "Implement auth module definition and templates",
+      "description": "Create src/modules/definitions/auth/module.ts with full ModuleManifest for authentication. Support providers: firebase, supabase, custom. Create templates/modules/auth/ with Clean Architecture layers. Include pubspec.partial.yaml.",
+      "acceptanceCriteria": [
+        "src/modules/definitions/auth/module.ts exports valid ModuleManifest",
+        "templates/modules/auth/lib/features/auth/ has domain, data, presentation layers",
+        "templates/modules/auth/pubspec.partial.yaml has correct deps per provider",
+        "Templates use conditional rendering for provider-specific code"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P2-005",
+      "phase": 2,
+      "priority": 14,
+      "title": "Implement API module definition and templates",
+      "description": "Create src/modules/definitions/api/module.ts for HTTP client setup with Dio, interceptors, error handling. Create templates/modules/api/ with Dio client setup.",
+      "acceptanceCriteria": [
+        "src/modules/definitions/api/module.ts exports valid ModuleManifest",
+        "templates/modules/api/ has Dio client setup with interceptors",
+        "Error handling with typed ApiException",
+        "pubspec.partial.yaml includes dio, retrofit, json_annotation"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P2-006",
+      "phase": 2,
+      "priority": 15,
+      "title": "Implement theme module definition and templates",
+      "description": "Create src/modules/definitions/theme/module.ts for advanced theming with Material 3 seed color, dark/light switching via Riverpod.",
+      "acceptanceCriteria": [
+        "src/modules/definitions/theme/module.ts exports valid ModuleManifest",
+        "templates/modules/theme/ has ThemeData setup with ColorScheme.fromSeed",
+        "Theme provider supports light/dark mode switching via Riverpod",
+        "pubspec.partial.yaml has theme-related deps"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P2-007",
+      "phase": 2,
+      "priority": 16,
+      "title": "Wire module selection into create command and integration test",
+      "description": "Update create command with interactive module selection, per-module config questions, --modules flag. Wire ModuleResolver and ModuleComposer into ScaffoldEngine. Update integration test.",
+      "acceptanceCriteria": [
+        "Create command shows module selection checkboxes",
+        "--modules auth,api,theme flag works for non-interactive mode",
+        "ScaffoldEngine uses ModuleResolver and ModuleComposer",
+        "Generated project includes selected module files",
+        "pubspec.yaml contains merged dependencies",
+        "npm test passes all tests"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P2-008",
+      "phase": 2,
+      "priority": 17,
+      "title": "Implement database module definition and templates",
+      "description": "Create database module supporting drift, hive, and isar with templates for each engine.",
+      "acceptanceCriteria": [
+        "src/modules/definitions/database/module.ts exports valid ModuleManifest",
+        "Templates conditionally render based on engine choice",
+        "pubspec.partial.yaml includes correct deps per engine"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P2-009",
+      "phase": 2,
+      "priority": 18,
+      "title": "Implement i18n module definition and templates",
+      "description": "Create i18n module with ARB files, l10n.yaml config, localization delegates in MaterialApp.",
+      "acceptanceCriteria": [
+        "src/modules/definitions/i18n/module.ts exports valid ModuleManifest",
+        "Templates include ARB files for selected locales",
+        "MaterialApp.router uses localizationsDelegates",
+        "pubspec.partial.yaml includes flutter_localizations, intl"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P2-010",
+      "phase": 2,
+      "priority": 19,
+      "title": "Implement push, analytics, cicd, deep-linking modules",
+      "description": "Create remaining four module definitions and their templates: push notifications (firebase/onesignal), analytics (service abstraction + go_router observer), CI/CD (github/gitlab/bitbucket pipelines), deep linking (app links + go_router integration).",
+      "acceptanceCriteria": [
+        "src/modules/definitions/push/module.ts with firebase/onesignal support",
+        "src/modules/definitions/analytics/module.ts with AnalyticsService abstraction",
+        "src/modules/definitions/cicd/module.ts with GitHub Actions/GitLab CI templates",
+        "src/modules/definitions/deep-linking/module.ts with go_router integration",
+        "All four modules have valid templates and pubspec partials"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P3-001",
+      "phase": 3,
+      "priority": 20,
+      "title": "Implement CLAUDE.md generator for Flutter projects",
+      "description": "Create src/claude-setup/claude-md-generator.ts that generates a comprehensive CLAUDE.md optimized for Claude Code Agent Teams. Include: architecture rules, Riverpod patterns, go_router conventions, Agent Teams workflow instructions (how to create a team, what roles to spawn, how to use prd.json as task source), module-specific sections, quality gates.",
+      "acceptanceCriteria": [
+        "src/claude-setup/claude-md-generator.ts exports generateClaudeMd(context)",
+        "Generated CLAUDE.md includes Agent Teams workflow section",
+        "Architecture section covers Clean Arch layer rules",
+        "Riverpod and go_router sections with patterns",
+        "Module-specific sections conditionally included",
+        "Quality gates section (flutter analyze, flutter test)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P3-002",
+      "phase": 3,
+      "priority": 21,
+      "title": "Implement agent definitions writer for Flutter projects",
+      "description": "Create src/claude-setup/agent-writer.ts that generates .claude/agents/ optimized for Agent Teams. Agents are designed as teammate roles: architect reviews architecture before builders implement, tester validates after builders finish, reviewer checks Clean Arch compliance, docs writes documentation. Each agent has clear scope and communication patterns.",
+      "acceptanceCriteria": [
+        "src/claude-setup/agent-writer.ts exports writeAgents(context, outputPath)",
+        "5 agent templates designed as Agent Teams teammates",
+        "flutter-architect: Sonnet, read-only tools, reviews before implementation",
+        "flutter-feature-builder: Sonnet, all tools, claims tasks and implements",
+        "flutter-tester: Sonnet, all tools, messages builders about failures",
+        "flutter-reviewer: Sonnet, read-only tools, reviews after implementation",
+        "flutter-docs: Haiku, edit tools, documents after review"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P3-003",
+      "phase": 3,
+      "priority": 22,
+      "title": "Implement skills, hooks, and MCP config writer",
+      "description": "Create skill writer (flutter-patterns, go-router-patterns, module-conventions, prd skills). Create hooks writer with TaskCompleted hook that enforces flutter analyze + flutter test. Create MCP config writer. Create commands (add-feature, analyze).",
+      "acceptanceCriteria": [
+        "4 skill templates generated in .claude/skills/",
+        "TaskCompleted hook runs flutter analyze + flutter test",
+        "TeammateIdle hook optionally checks for uncommitted work",
+        ".mcp.json includes relevant MCP servers based on modules",
+        "Commands: add-feature.md, analyze.md"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P3-004",
+      "phase": 3,
+      "priority": 23,
+      "title": "Wire Claude setup into scaffold engine and generate PRD",
+      "description": "Update ScaffoldEngine to call all claude-setup generators. Generate .claude/ directory with CLAUDE.md, agents, skills, commands, hooks, MCP config. Implement PRD generator that creates prd.json for the generated Flutter project (so Agent Teams can use it as task source). Respect --no-claude flag.",
+      "acceptanceCriteria": [
+        "ScaffoldEngine generates complete .claude/ directory",
+        "--no-claude flag skips Claude setup",
+        "PRD generator creates prd.json with phased stories from selected modules",
+        "All agents, skills, commands, hooks present in generated project",
+        "Integration test verifies .claude/ output"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P3-005",
+      "phase": 3,
+      "priority": 24,
+      "title": "Implement add command for adding modules to existing projects",
+      "description": "Implement src/cli/commands/add.ts fully. Detect existing project, validate module, generate files, merge pubspec, update config, update Claude setup.",
+      "acceptanceCriteria": [
+        "src/cli/commands/add.ts fully functional",
+        "Detects maxsim.config.yaml in project",
+        "Generates only new module files",
+        "Merges new dependencies into existing pubspec.yaml",
+        "Updates maxsim.config.yaml and .claude/ setup",
+        "--dry-run shows what would change"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P3-006",
+      "phase": 3,
+      "priority": 25,
+      "title": "Implement migrate command with analysis",
+      "description": "Implement migrate command with project detector. Analyze existing Flutter project structure, detect patterns, report gaps, create maxsim.config.yaml, add .claude/ setup.",
+      "acceptanceCriteria": [
+        "src/cli/commands/migrate.ts fully functional",
+        "src/core/detector.ts analyzes existing Flutter project",
+        "--analysis-only outputs report without changes",
+        "Full migrate creates maxsim.config.yaml and .claude/ directory",
+        "Non-destructive: never deletes existing files"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P4-001",
+      "phase": 4,
+      "priority": 26,
+      "title": "Create Claude Code plugin structure",
+      "description": "Create claude-plugin/ with plugin.json, commands (flutter-create, flutter-add, flutter-migrate), skills (flutter-scaffolding), and agents (flutter-setup-agent).",
+      "acceptanceCriteria": [
+        "claude-plugin/.claude-plugin/plugin.json has valid metadata",
+        "3 command files wrapping CLI commands",
+        "flutter-scaffolding skill provides module context",
+        "flutter-setup-agent guides users through setup"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P4-002",
+      "phase": 4,
+      "priority": 27,
+      "title": "Write README and documentation",
+      "description": "Write README.md covering: installation, quick start, all commands, module descriptions, Agent Teams workflow (how to use generated projects with Claude Code Agent Teams), Ralph fallback, config reference, contributing guide.",
+      "acceptanceCriteria": [
+        "README.md has installation and quick start",
+        "All 3 commands documented with flags and examples",
+        "Agent Teams workflow section with step-by-step guide",
+        "Module table with descriptions",
+        "Configuration reference"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P4-003",
+      "phase": 4,
+      "priority": 28,
+      "title": "Full integration test suite and npm publish preparation",
+      "description": "Comprehensive integration tests, CHANGELOG.md, verify npm pack, ensure all quality gates pass.",
+      "acceptanceCriteria": [
+        "Integration tests for create, add, migrate commands",
+        "Test: create with all modules generates complete project with .claude/",
+        "Test: add module merges correctly",
+        "CHANGELOG.md with v0.1.0 entry",
+        "'npm pack' produces correct tarball",
+        "All tests pass, typecheck passes"
+      ],
+      "passes": false
+    }
+  ]
+}

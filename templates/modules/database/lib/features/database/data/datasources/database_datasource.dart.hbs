@@ -1,0 +1,115 @@
+{{#ifEquals modules.database.engine "drift"}}
+import 'dart:io';
+
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+
+part 'database_datasource.g.dart';
+
+@DriftDatabase(tables: [])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase() : super(_openConnection());
+
+  @override
+  int get schemaVersion => 1;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) async {
+          await m.createAll();
+        },
+        onUpgrade: (m, from, to) async {
+          // Add migration steps here as the schema evolves.
+        },
+      );
+
+  static QueryExecutor _openConnection() {
+    return LazyDatabase(() async {
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File(p.join(dir.path, '{{project.name}}.db'));
+      return NativeDatabase.createInBackground(file);
+    });
+  }
+
+  Future<void> clearAll() async {
+    // Delete all rows from each table.
+    // Add table.deleteAll() calls here for each table you define.
+  }
+}
+{{/ifEquals}}
+{{#ifEquals modules.database.engine "hive"}}
+import 'package:hive_ce_flutter/hive_flutter.dart';
+
+abstract class HiveDatabaseDataSource {
+  Future<void> initialize();
+  Future<void> close();
+  Future<void> clearAll();
+}
+
+class HiveDatabaseDataSourceImpl implements HiveDatabaseDataSource {
+  // Register adapters and open boxes here as you add domain models.
+  // Example:
+  //   Hive.registerAdapter(MyModelAdapter());
+  //   await Hive.openBox<MyModel>('myModels');
+
+  @override
+  Future<void> initialize() async {
+    await Hive.initFlutter();
+    // TODO: register adapters and open boxes
+  }
+
+  @override
+  Future<void> close() async {
+    await Hive.close();
+  }
+
+  @override
+  Future<void> clearAll() async {
+    // Delete all boxes to reset local state.
+    await Hive.deleteFromDisk();
+  }
+}
+{{/ifEquals}}
+{{#ifEquals modules.database.engine "isar"}}
+import 'package:isar/isar.dart';
+import 'package:path_provider/path_provider.dart';
+
+abstract class IsarDatabaseDataSource {
+  Future<void> initialize();
+  Future<void> close();
+  Future<void> clearAll();
+}
+
+class IsarDatabaseDataSourceImpl implements IsarDatabaseDataSource {
+  late Isar _isar;
+
+  Isar get isar => _isar;
+
+  // Add your collection schemas to the list below as you define them.
+  // Example: schemas: [MyModelSchema]
+  static const List<CollectionSchema<dynamic>> _schemas = [];
+
+  @override
+  Future<void> initialize() async {
+    final dir = await getApplicationDocumentsDirectory();
+    _isar = await Isar.open(
+      _schemas,
+      directory: dir.path,
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _isar.close();
+  }
+
+  @override
+  Future<void> clearAll() async {
+    await _isar.writeTxn(() async {
+      await _isar.clear();
+    });
+  }
+}
+{{/ifEquals}}

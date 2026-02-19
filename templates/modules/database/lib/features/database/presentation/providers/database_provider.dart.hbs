@@ -1,0 +1,43 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../data/datasources/database_datasource.dart';
+import '../../data/repositories/database_repository_impl.dart';
+import '../../domain/repositories/database_repository.dart';
+
+part 'database_provider.g.dart';
+
+{{#ifEquals modules.database.engine "drift"}}
+@Riverpod(keepAlive: true)
+AppDatabase appDatabase(Ref ref) {
+  final db = AppDatabase();
+  ref.onDispose(db.close);
+  return db;
+}
+
+@Riverpod(keepAlive: true)
+DatabaseRepository databaseRepository(Ref ref) {
+  return DatabaseRepositoryImpl(ref.watch(appDatabaseProvider));
+}
+{{/ifEquals}}
+{{#ifEquals modules.database.engine "hive"}}
+@Riverpod(keepAlive: true)
+HiveDatabaseDataSource hiveDatabaseDataSource(Ref ref) {
+  return HiveDatabaseDataSourceImpl();
+}
+
+@Riverpod(keepAlive: true)
+DatabaseRepository databaseRepository(Ref ref) {
+  return DatabaseRepositoryImpl(ref.watch(hiveDatabaseDataSourceProvider));
+}
+{{/ifEquals}}
+{{#ifEquals modules.database.engine "isar"}}
+@Riverpod(keepAlive: true)
+IsarDatabaseDataSource isarDatabaseDataSource(Ref ref) {
+  return IsarDatabaseDataSourceImpl();
+}
+
+@Riverpod(keepAlive: true)
+DatabaseRepository databaseRepository(Ref ref) {
+  return DatabaseRepositoryImpl(ref.watch(isarDatabaseDataSourceProvider));
+}
+{{/ifEquals}}

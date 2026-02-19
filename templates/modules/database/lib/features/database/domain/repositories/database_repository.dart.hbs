@@ -1,0 +1,10 @@
+abstract class DatabaseRepository {
+  /// Initialize the database connection and run any pending migrations.
+  Future<void> initialize();
+
+  /// Close the database connection and release resources.
+  Future<void> close();
+
+  /// Delete all data from the database (useful for logout/reset flows).
+  Future<void> clearAll();
+}

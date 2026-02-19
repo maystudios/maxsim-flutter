@@ -1,0 +1,73 @@
+import '../../domain/repositories/database_repository.dart';
+{{#ifEquals modules.database.engine "drift"}}
+import '../datasources/database_datasource.dart';
+
+class DatabaseRepositoryImpl implements DatabaseRepository {
+  final AppDatabase _db;
+
+  const DatabaseRepositoryImpl(this._db);
+
+  @override
+  Future<void> initialize() async {
+    // Drift opens the database lazily on first query; no explicit init needed.
+  }
+
+  @override
+  Future<void> close() async {
+    await _db.close();
+  }
+
+  @override
+  Future<void> clearAll() async {
+    await _db.clearAll();
+  }
+}
+{{/ifEquals}}
+{{#ifEquals modules.database.engine "hive"}}
+import '../datasources/database_datasource.dart';
+
+class DatabaseRepositoryImpl implements DatabaseRepository {
+  final HiveDatabaseDataSource _dataSource;
+
+  const DatabaseRepositoryImpl(this._dataSource);
+
+  @override
+  Future<void> initialize() async {
+    await _dataSource.initialize();
+  }
+
+  @override
+  Future<void> close() async {
+    await _dataSource.close();
+  }
+
+  @override
+  Future<void> clearAll() async {
+    await _dataSource.clearAll();
+  }
+}
+{{/ifEquals}}
+{{#ifEquals modules.database.engine "isar"}}
+import '../datasources/database_datasource.dart';
+
+class DatabaseRepositoryImpl implements DatabaseRepository {
+  final IsarDatabaseDataSource _dataSource;
+
+  const DatabaseRepositoryImpl(this._dataSource);
+
+  @override
+  Future<void> initialize() async {
+    await _dataSource.initialize();
+  }
+
+  @override
+  Future<void> close() async {
+    await _dataSource.close();
+  }
+
+  @override
+  Future<void> clearAll() async {
+    await _dataSource.clearAll();
+  }
+}
+{{/ifEquals}}

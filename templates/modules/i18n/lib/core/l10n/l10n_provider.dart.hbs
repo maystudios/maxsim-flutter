@@ -1,0 +1,20 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'l10n_provider.g.dart';
+
+/// Notifier that manages the current [Locale] for the application.
+/// Use [localeProvider] to watch the locale and [LocaleNotifier.setLocale]
+/// to change it at runtime.
+@riverpod
+class LocaleNotifier extends _$LocaleNotifier {
+  @override
+  Locale build() => const Locale('{{modules.i18n.defaultLocale}}');
+
+  /// Sets the active locale.
+  void setLocale(Locale locale) => state = locale;
+
+  /// Resets to the default locale.
+  void resetToDefault() => state = const Locale('{{modules.i18n.defaultLocale}}');
+}

@@ -1,0 +1,29 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+export 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+/// Localization configuration for the application.
+///
+/// Provides [localizationsDelegates] and [supportedLocales] to be passed
+/// to [MaterialApp] or [CupertinoApp].
+class L10nConfig {
+  const L10nConfig._();
+
+  /// Delegates required by [MaterialApp.localizationsDelegates].
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = [
+    AppLocalizations.delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ];
+
+  /// The list of locales supported by this application.
+  static const List<Locale> supportedLocales = AppLocalizations.supportedLocales;
+}
+
+/// Extension on [BuildContext] to conveniently access [AppLocalizations].
+extension L10nExtension on BuildContext {
+  AppLocalizations get l10n => AppLocalizations.of(this)!;
+}

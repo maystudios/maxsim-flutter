@@ -344,3 +344,31 @@
   - mergePubspecYaml: add new deps, dev deps, version upgrade, keep newer, SDK skip, no pubspec, create section
 - All quality gates pass: typecheck, lint, 293 tests passing across 13 suites
 - Status: PASSES
+
+## 2026-02-19T07:00 - P3-006: Implement migrate command with analysis
+- src/cli/commands/migrate.ts fully functional with complete pipeline:
+  - runMigrate() orchestrates analysis → report → confirmation → migration
+  - displayReport() shows architecture, state mgmt, routing, detected modules, gaps, recommendations
+  - --analysis-only flag outputs report without making changes
+  - applyMigration() creates maxsim.config.yaml, .claude/ directory, and migration prd.json
+  - buildModuleConfig() maps detected modules to maxsim config format (auth provider, db engine, etc.)
+  - detectOrgId() reads applicationId from build.gradle/build.gradle.kts
+  - generateMigrationPrd() creates phased migration stories based on analysis gaps
+  - Non-destructive: checks pathExists before writing each file (config, CLAUDE.md, prd.json)
+- src/core/detector.ts with ProjectDetector class:
+  - analyzeProject() returns comprehensive AnalysisReport
+  - detectStateManagement: riverpod, bloc, provider, getx, unknown
+  - detectRouting: go_router, auto_route, navigator
+  - detectArchitecture: clean (features/ with 3 layers), mvc, mvvm, unknown
+  - detectModules: auth, api, database, i18n, theme, push, analytics, cicd, deep-linking
+  - findCleanArchitectureGaps: reports missing domain/data/presentation layers per feature
+  - buildRecommendations: context-aware suggestions for migration
+  - assessDifficulty: simple/moderate/complex scoring
+- Created tests/unit/detector.test.ts with 30 tests covering:
+  - projectName extraction, state management detection (6 cases)
+  - routing detection (3 cases), architecture detection (4 cases)
+  - module detection (13 cases: auth, api, database, i18n, theme, push, analytics, cicd, deep-linking)
+  - Clean Architecture gap detection (3 cases)
+  - migration difficulty assessment (3 cases), recommendations (4 cases), rawDependencies
+- All quality gates pass: typecheck, lint, 332 tests passing across 14 suites
+- Status: PASSES

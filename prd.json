@@ -388,7 +388,7 @@
         "Full migrate creates maxsim.config.yaml and .claude/ directory",
         "Non-destructive: never deletes existing files"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P4-001",

@@ -402,7 +402,7 @@
         "flutter-scaffolding skill provides module context",
         "flutter-setup-agent guides users through setup"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P4-002",

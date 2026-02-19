@@ -1,0 +1,39 @@
+{{#ifEquals modules.cicd.provider "bitbucket"}}
+image: ghcr.io/cirruslabs/flutter:stable
+
+pipelines:
+  default:
+    - step:
+        name: Validate & Test
+        caches:
+          - gradle
+        script:
+          - flutter pub get
+          - dart format --output=none --set-exit-if-changed .
+          - flutter analyze --fatal-infos
+          - flutter test --coverage
+
+  branches:
+    main:
+      - step:
+          name: Validate & Test
+          script:
+            - flutter pub get
+            - flutter analyze --fatal-infos
+            - flutter test --coverage
+      - step:
+          name: Build Android APK
+          script:
+            - flutter pub get
+            - flutter build apk --debug
+          artifacts:
+            - build/app/outputs/flutter-apk/*.apk
+
+    develop:
+      - step:
+          name: Validate & Test
+          script:
+            - flutter pub get
+            - flutter analyze --fatal-infos
+            - flutter test --coverage
+{{/ifEquals}}

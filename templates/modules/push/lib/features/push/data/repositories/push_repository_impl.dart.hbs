@@ -1,0 +1,28 @@
+import '../../domain/repositories/push_repository.dart';
+import '../datasources/push_datasource.dart';
+
+class PushRepositoryImpl implements PushRepository {
+  final PushDataSource _dataSource;
+
+  PushRepositoryImpl(this._dataSource);
+
+  @override
+  Future<bool> requestPermission() => _dataSource.requestPermission();
+
+  @override
+  Future<String?> getToken() => _dataSource.getToken();
+
+  @override
+  Stream<PushMessage> get onMessage => _dataSource.onMessage;
+
+  @override
+  Stream<PushMessage> get onMessageOpenedApp => _dataSource.onMessageOpenedApp;
+
+  @override
+  Future<void> subscribeToTopic(String topic) =>
+      _dataSource.subscribeToTopic(topic);
+
+  @override
+  Future<void> unsubscribeFromTopic(String topic) =>
+      _dataSource.unsubscribeFromTopic(topic);
+}

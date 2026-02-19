@@ -1,0 +1,8 @@
+{{#ifEquals modules.push.provider "firebase"}}
+dependencies:
+  firebase_messaging: ^15.1.6
+{{/ifEquals}}
+{{#ifEquals modules.push.provider "onesignal"}}
+dependencies:
+  onesignal_flutter: ^5.2.7
+{{/ifEquals}}

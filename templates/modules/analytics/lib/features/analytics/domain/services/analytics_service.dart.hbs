@@ -1,0 +1,25 @@
+abstract class AnalyticsService {
+  /// Log a screen view event.
+  Future<void> logScreenView({
+    required String screenName,
+    String? screenClass,
+  });
+
+  /// Log a custom event with optional parameters.
+  Future<void> logEvent({
+    required String name,
+    Map<String, Object>? parameters,
+  });
+
+  /// Set a user property.
+  Future<void> setUserProperty({
+    required String name,
+    required String? value,
+  });
+
+  /// Set the current user ID (e.g. after login).
+  Future<void> setUserId(String? id);
+
+  /// Reset analytics data (e.g. after logout).
+  Future<void> resetAnalyticsData();
+}

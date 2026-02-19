@@ -1,0 +1,53 @@
+{{#ifEquals modules.cicd.provider "gitlab"}}
+image: ghcr.io/cirruslabs/flutter:stable
+
+stages:
+  - validate
+  - test
+  - build
+
+variables:
+  PUB_CACHE: "$CI_PROJECT_DIR/.pub-cache"
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .pub-cache/
+    - .dart_tool/
+
+format:
+  stage: validate
+  script:
+    - flutter pub get
+    - dart format --output=none --set-exit-if-changed .
+
+analyze:
+  stage: validate
+  script:
+    - flutter pub get
+    - flutter analyze --fatal-infos
+
+test:
+  stage: test
+  script:
+    - flutter pub get
+    - flutter test --coverage
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura.xml
+
+build_apk:
+  stage: build
+  script:
+    - flutter pub get
+    - flutter build apk --debug
+  artifacts:
+    paths:
+      - build/app/outputs/flutter-apk/app-debug.apk
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+{{/ifEquals}}

@@ -1,0 +1,31 @@
+abstract class PushRepository {
+  /// Request permission to receive push notifications.
+  Future<bool> requestPermission();
+
+  /// Get the FCM/device token for this device.
+  Future<String?> getToken();
+
+  /// Stream of incoming foreground messages.
+  Stream<PushMessage> get onMessage;
+
+  /// Stream of messages that opened the app from background.
+  Stream<PushMessage> get onMessageOpenedApp;
+
+  /// Subscribe to a topic (Firebase only).
+  Future<void> subscribeToTopic(String topic);
+
+  /// Unsubscribe from a topic (Firebase only).
+  Future<void> unsubscribeFromTopic(String topic);
+}
+
+class PushMessage {
+  final String? title;
+  final String? body;
+  final Map<String, dynamic> data;
+
+  const PushMessage({
+    this.title,
+    this.body,
+    this.data = const {},
+  });
+}

@@ -1,0 +1,17 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../data/services/firebase_analytics_service.dart';
+import '../../data/observers/analytics_route_observer.dart';
+import '../../domain/services/analytics_service.dart';
+
+part 'analytics_provider.g.dart';
+
+@riverpod
+AnalyticsService analyticsService(Ref ref) {
+  return FirebaseAnalyticsService();
+}
+
+@riverpod
+AnalyticsRouteObserver analyticsRouteObserver(Ref ref) {
+  return AnalyticsRouteObserver(ref.watch(analyticsServiceProvider));
+}

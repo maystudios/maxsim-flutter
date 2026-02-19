@@ -1,0 +1,7 @@
+abstract class DeepLinkRepository {
+  /// Stream of incoming deep link URIs.
+  Stream<Uri> get onDeepLink;
+
+  /// Get the initial deep link that launched the app, if any.
+  Future<Uri?> getInitialLink();
+}

@@ -1,0 +1,34 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../data/datasources/push_datasource.dart';
+import '../../data/repositories/push_repository_impl.dart';
+import '../../domain/repositories/push_repository.dart';
+
+part 'push_provider.g.dart';
+
+@riverpod
+PushDataSource pushDataSource(Ref ref) {
+{{#ifEquals modules.push.provider "firebase"}}
+  return FirebasePushDataSource();
+{{/ifEquals}}
+{{#ifEquals modules.push.provider "onesignal"}}
+  return OneSignalPushDataSource();
+{{/ifEquals}}
+}
+
+@riverpod
+PushRepository pushRepository(Ref ref) {
+  return PushRepositoryImpl(ref.watch(pushDataSourceProvider));
+}
+
+@riverpod
+Stream<PushMessage> incomingPushMessages(Ref ref) {
+  return ref.watch(pushRepositoryProvider).onMessage;
+}
+
+@riverpod
+Future<String?> pushToken(Ref ref) async {
+  final repo = ref.watch(pushRepositoryProvider);
+  await repo.requestPermission();
+  return repo.getToken();
+}

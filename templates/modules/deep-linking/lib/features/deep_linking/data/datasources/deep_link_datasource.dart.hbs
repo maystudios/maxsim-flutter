@@ -1,0 +1,18 @@
+import 'package:app_links/app_links.dart';
+
+abstract class DeepLinkDataSource {
+  Stream<Uri> get onDeepLink;
+  Future<Uri?> getInitialLink();
+}
+
+class AppLinksDataSource implements DeepLinkDataSource {
+  final AppLinks _appLinks;
+
+  AppLinksDataSource({AppLinks? appLinks}) : _appLinks = appLinks ?? AppLinks();
+
+  @override
+  Stream<Uri> get onDeepLink => _appLinks.uriLinkStream;
+
+  @override
+  Future<Uri?> getInitialLink() => _appLinks.getInitialLink();
+}

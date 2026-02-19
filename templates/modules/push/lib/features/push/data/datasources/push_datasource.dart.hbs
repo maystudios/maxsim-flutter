@@ -1,0 +1,124 @@
+import '../../domain/repositories/push_repository.dart';
+{{#ifEquals modules.push.provider "firebase"}}
+import 'package:firebase_messaging/firebase_messaging.dart';
+{{/ifEquals}}
+{{#ifEquals modules.push.provider "onesignal"}}
+import 'package:onesignal_flutter/onesignal_flutter.dart';
+{{/ifEquals}}
+
+abstract class PushDataSource {
+  Future<bool> requestPermission();
+  Future<String?> getToken();
+  Stream<PushMessage> get onMessage;
+  Stream<PushMessage> get onMessageOpenedApp;
+  Future<void> subscribeToTopic(String topic);
+  Future<void> unsubscribeFromTopic(String topic);
+}
+{{#ifEquals modules.push.provider "firebase"}}
+
+class FirebasePushDataSource implements PushDataSource {
+  final FirebaseMessaging _messaging;
+
+  FirebasePushDataSource({FirebaseMessaging? messaging})
+      : _messaging = messaging ?? FirebaseMessaging.instance;
+
+  @override
+  Future<bool> requestPermission() async {
+    final settings = await _messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    return settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional;
+  }
+
+  @override
+  Future<String?> getToken() => _messaging.getToken();
+
+  @override
+  Stream<PushMessage> get onMessage => FirebaseMessaging.onMessage.map(
+        (message) => PushMessage(
+          title: message.notification?.title,
+          body: message.notification?.body,
+          data: message.data,
+        ),
+      );
+
+  @override
+  Stream<PushMessage> get onMessageOpenedApp =>
+      FirebaseMessaging.onMessageOpenedApp.map(
+        (message) => PushMessage(
+          title: message.notification?.title,
+          body: message.notification?.body,
+          data: message.data,
+        ),
+      );
+
+  @override
+  Future<void> subscribeToTopic(String topic) =>
+      _messaging.subscribeToTopic(topic);
+
+  @override
+  Future<void> unsubscribeFromTopic(String topic) =>
+      _messaging.unsubscribeFromTopic(topic);
+}
+{{/ifEquals}}
+{{#ifEquals modules.push.provider "onesignal"}}
+
+class OneSignalPushDataSource implements PushDataSource {
+  OneSignalPushDataSource() {
+    OneSignal.initialize('YOUR_ONESIGNAL_APP_ID');
+  }
+
+  @override
+  Future<bool> requestPermission() async {
+    return await OneSignal.Notifications.requestPermission(true);
+  }
+
+  @override
+  Future<String?> getToken() async {
+    return OneSignal.User.pushSubscription.id;
+  }
+
+  @override
+  Stream<PushMessage> get onMessage {
+    final controller = StreamController<PushMessage>.broadcast();
+    OneSignal.Notifications.addForegroundWillDisplayListener((event) {
+      final notification = event.notification;
+      controller.add(PushMessage(
+        title: notification.title,
+        body: notification.body,
+        data: notification.additionalData ?? {},
+      ));
+      event.preventDefault();
+    });
+    return controller.stream;
+  }
+
+  @override
+  Stream<PushMessage> get onMessageOpenedApp {
+    final controller = StreamController<PushMessage>.broadcast();
+    OneSignal.Notifications.addClickListener((event) {
+      final notification = event.notification;
+      controller.add(PushMessage(
+        title: notification.title,
+        body: notification.body,
+        data: notification.additionalData ?? {},
+      ));
+    });
+    return controller.stream;
+  }
+
+  @override
+  Future<void> subscribeToTopic(String topic) async {
+    // OneSignal uses tags instead of topics
+    OneSignal.User.addTag(topic, 'true');
+  }
+
+  @override
+  Future<void> unsubscribeFromTopic(String topic) async {
+    OneSignal.User.removeTag(topic);
+  }
+}
+{{/ifEquals}}

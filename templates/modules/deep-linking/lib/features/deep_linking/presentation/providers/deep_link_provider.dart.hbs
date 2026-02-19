@@ -1,0 +1,57 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../data/datasources/deep_link_datasource.dart';
+import '../../data/repositories/deep_link_repository_impl.dart';
+import '../../domain/repositories/deep_link_repository.dart';
+
+part 'deep_link_provider.g.dart';
+
+@riverpod
+DeepLinkDataSource deepLinkDataSource(Ref ref) {
+  return AppLinksDataSource();
+}
+
+@riverpod
+DeepLinkRepository deepLinkRepository(Ref ref) {
+  return DeepLinkRepositoryImpl(ref.watch(deepLinkDataSourceProvider));
+}
+
+/// Handles incoming deep links by navigating with go_router.
+/// Call this provider in your app's root widget to activate deep link handling.
+@riverpod
+Stream<Uri> deepLinkStream(Ref ref) {
+  return ref.watch(deepLinkRepositoryProvider).onDeepLink;
+}
+
+/// Notifier that sets up deep link handling with go_router.
+@riverpod
+class DeepLinkHandler extends _$DeepLinkHandler {
+  @override
+  Future<void> build() async {
+    final repo = ref.watch(deepLinkRepositoryProvider);
+
+    // Handle the initial link that launched the app
+    final initialLink = await repo.getInitialLink();
+    if (initialLink != null) {
+      _navigate(initialLink);
+    }
+
+    // Listen for incoming links while app is running
+    final subscription = repo.onDeepLink.listen(_navigate);
+    ref.onDispose(subscription.cancel);
+  }
+
+  void _navigate(Uri uri) {
+    // The router will handle the navigation based on go_router config.
+    // Scheme: {{modules.deepLinking.scheme}}, Host: {{modules.deepLinking.host}}
+    final router = ref.read(routerProvider);
+    router.go(uri.path, extra: uri.queryParameters);
+  }
+}
+
+// Provide the router instance — override this in your app's provider scope.
+@riverpod
+GoRouter router(Ref ref) {
+  throw UnimplementedError('Override routerProvider with your GoRouter instance');
+}

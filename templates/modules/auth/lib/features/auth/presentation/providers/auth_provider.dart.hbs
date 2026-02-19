@@ -1,0 +1,31 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../data/datasources/auth_remote_datasource.dart';
+import '../../data/repositories/auth_repository_impl.dart';
+import '../../domain/entities/user_entity.dart';
+import '../../domain/repositories/auth_repository.dart';
+
+part 'auth_provider.g.dart';
+
+@riverpod
+AuthRemoteDataSource authDataSource(Ref ref) {
+{{#ifEquals modules.auth.provider "firebase"}}
+  return FirebaseAuthDataSource();
+{{/ifEquals}}
+{{#ifEquals modules.auth.provider "supabase"}}
+  return SupabaseAuthDataSource();
+{{/ifEquals}}
+{{#ifEquals modules.auth.provider "custom"}}
+  return CustomAuthDataSource();
+{{/ifEquals}}
+}
+
+@riverpod
+AuthRepository authRepository(Ref ref) {
+  return AuthRepositoryImpl(ref.watch(authDataSourceProvider));
+}
+
+@riverpod
+Stream<UserEntity?> authState(Ref ref) {
+  return ref.watch(authRepositoryProvider).authStateChanges;
+}

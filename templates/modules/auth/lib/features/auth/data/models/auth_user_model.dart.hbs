@@ -1,0 +1,27 @@
+import '../../domain/entities/user_entity.dart';
+
+class AuthUserModel {
+  final String id;
+  final String email;
+  final String? displayName;
+  final String? photoUrl;
+  final bool emailVerified;
+
+  const AuthUserModel({
+    required this.id,
+    required this.email,
+    this.displayName,
+    this.photoUrl,
+    this.emailVerified = false,
+  });
+
+  UserEntity toEntity() {
+    return UserEntity(
+      id: id,
+      email: email,
+      displayName: displayName,
+      photoUrl: photoUrl,
+      emailVerified: emailVerified,
+    );
+  }
+}

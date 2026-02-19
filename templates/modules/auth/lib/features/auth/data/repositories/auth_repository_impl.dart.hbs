@@ -1,0 +1,49 @@
+import '../../domain/entities/user_entity.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../datasources/auth_remote_datasource.dart';
+
+class AuthRepositoryImpl implements AuthRepository {
+  final AuthRemoteDataSource _remoteDataSource;
+
+  const AuthRepositoryImpl(this._remoteDataSource);
+
+  @override
+  Stream<UserEntity?> get authStateChanges =>
+      _remoteDataSource.authStateChanges.map((model) => model?.toEntity());
+
+  @override
+  Future<UserEntity?> get currentUser async {
+    final model = await _remoteDataSource.currentUser;
+    return model?.toEntity();
+  }
+
+  @override
+  Future<UserEntity> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    final model = await _remoteDataSource.signInWithEmail(email, password);
+    return model.toEntity();
+  }
+
+  @override
+  Future<UserEntity> registerWithEmail({
+    required String email,
+    required String password,
+    String? displayName,
+  }) async {
+    final model = await _remoteDataSource.registerWithEmail(
+      email,
+      password,
+      displayName,
+    );
+    return model.toEntity();
+  }
+
+  @override
+  Future<void> signOut() => _remoteDataSource.signOut();
+
+  @override
+  Future<void> resetPassword({required String email}) =>
+      _remoteDataSource.resetPassword(email);
+}

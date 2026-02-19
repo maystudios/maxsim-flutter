@@ -1,0 +1,181 @@
+import '../models/auth_user_model.dart';
+{{#ifEquals modules.auth.provider "firebase"}}
+import 'package:firebase_auth/firebase_auth.dart' as firebase;
+{{/ifEquals}}
+{{#ifEquals modules.auth.provider "supabase"}}
+import 'package:supabase_flutter/supabase_flutter.dart';
+{{/ifEquals}}
+
+abstract class AuthRemoteDataSource {
+  Stream<AuthUserModel?> get authStateChanges;
+  Future<AuthUserModel?> get currentUser;
+  Future<AuthUserModel> signInWithEmail(String email, String password);
+  Future<AuthUserModel> registerWithEmail(String email, String password, String? displayName);
+  Future<void> signOut();
+  Future<void> resetPassword(String email);
+}
+{{#ifEquals modules.auth.provider "firebase"}}
+
+class FirebaseAuthDataSource implements AuthRemoteDataSource {
+  final firebase.FirebaseAuth _firebaseAuth;
+
+  FirebaseAuthDataSource({firebase.FirebaseAuth? firebaseAuth})
+      : _firebaseAuth = firebaseAuth ?? firebase.FirebaseAuth.instance;
+
+  AuthUserModel? _mapUser(firebase.User? user) {
+    if (user == null) return null;
+    return AuthUserModel(
+      id: user.uid,
+      email: user.email ?? '',
+      displayName: user.displayName,
+      photoUrl: user.photoURL,
+      emailVerified: user.emailVerified,
+    );
+  }
+
+  @override
+  Stream<AuthUserModel?> get authStateChanges =>
+      _firebaseAuth.authStateChanges().map(_mapUser);
+
+  @override
+  Future<AuthUserModel?> get currentUser async =>
+      _mapUser(_firebaseAuth.currentUser);
+
+  @override
+  Future<AuthUserModel> signInWithEmail(String email, String password) async {
+    final credential = await _firebaseAuth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    return _mapUser(credential.user)!;
+  }
+
+  @override
+  Future<AuthUserModel> registerWithEmail(
+    String email,
+    String password,
+    String? displayName,
+  ) async {
+    final credential = await _firebaseAuth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    if (displayName != null) {
+      await credential.user?.updateDisplayName(displayName);
+    }
+    return _mapUser(credential.user)!;
+  }
+
+  @override
+  Future<void> signOut() => _firebaseAuth.signOut();
+
+  @override
+  Future<void> resetPassword(String email) =>
+      _firebaseAuth.sendPasswordResetEmail(email: email);
+}
+{{/ifEquals}}
+{{#ifEquals modules.auth.provider "supabase"}}
+
+class SupabaseAuthDataSource implements AuthRemoteDataSource {
+  final SupabaseClient _client;
+
+  SupabaseAuthDataSource({SupabaseClient? client})
+      : _client = client ?? Supabase.instance.client;
+
+  AuthUserModel? _mapUser(User? user) {
+    if (user == null) return null;
+    return AuthUserModel(
+      id: user.id,
+      email: user.email ?? '',
+      displayName: user.userMetadata?['display_name'] as String?,
+      emailVerified: user.emailConfirmedAt != null,
+    );
+  }
+
+  @override
+  Stream<AuthUserModel?> get authStateChanges =>
+      _client.auth.onAuthStateChange.map((event) => _mapUser(event.session?.user));
+
+  @override
+  Future<AuthUserModel?> get currentUser async =>
+      _mapUser(_client.auth.currentUser);
+
+  @override
+  Future<AuthUserModel> signInWithEmail(String email, String password) async {
+    final response = await _client.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
+    return _mapUser(response.user)!;
+  }
+
+  @override
+  Future<AuthUserModel> registerWithEmail(
+    String email,
+    String password,
+    String? displayName,
+  ) async {
+    final response = await _client.auth.signUp(
+      email: email,
+      password: password,
+      data: displayName != null ? {'display_name': displayName} : null,
+    );
+    return _mapUser(response.user)!;
+  }
+
+  @override
+  Future<void> signOut() => _client.auth.signOut();
+
+  @override
+  Future<void> resetPassword(String email) async {
+    await _client.auth.resetPasswordForEmail(email);
+  }
+}
+{{/ifEquals}}
+{{#ifEquals modules.auth.provider "custom"}}
+
+class CustomAuthDataSource implements AuthRemoteDataSource {
+  // TODO: Implement with your custom backend API.
+  // Inject your HTTP client (e.g., Dio) here.
+
+  @override
+  Stream<AuthUserModel?> get authStateChanges {
+    // TODO: Implement auth state stream (e.g., polling or WebSocket)
+    throw UnimplementedError('Implement auth state changes for custom backend');
+  }
+
+  @override
+  Future<AuthUserModel?> get currentUser {
+    // TODO: Implement current user check (e.g., validate stored token)
+    throw UnimplementedError('Implement current user for custom backend');
+  }
+
+  @override
+  Future<AuthUserModel> signInWithEmail(String email, String password) {
+    // TODO: POST to /auth/login
+    throw UnimplementedError('Implement sign in for custom backend');
+  }
+
+  @override
+  Future<AuthUserModel> registerWithEmail(
+    String email,
+    String password,
+    String? displayName,
+  ) {
+    // TODO: POST to /auth/register
+    throw UnimplementedError('Implement register for custom backend');
+  }
+
+  @override
+  Future<void> signOut() {
+    // TODO: POST to /auth/logout or clear tokens
+    throw UnimplementedError('Implement sign out for custom backend');
+  }
+
+  @override
+  Future<void> resetPassword(String email) {
+    // TODO: POST to /auth/reset-password
+    throw UnimplementedError('Implement reset password for custom backend');
+  }
+}
+{{/ifEquals}}

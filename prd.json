@@ -208,7 +208,7 @@
         "templates/modules/auth/pubspec.partial.yaml has correct deps per provider",
         "Templates use conditional rendering for provider-specific code"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P2-005",

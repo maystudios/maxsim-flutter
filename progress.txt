@@ -138,3 +138,21 @@
   - generateAppProvidersBarrel: base export, additions, dedup, router dedup
 - All quality gates pass: typecheck, lint, 150 tests passing across 9 suites
 - Status: PASSES
+
+## 2026-02-19T00:07 - P2-004: Implement auth module definition and templates
+- Created src/modules/definitions/auth/module.ts with full ModuleManifest
+  - Supports 3 providers: firebase, supabase, custom
+  - Questions for interactive provider selection
+  - Contributions: pubspec deps, providers (authRepositoryProvider), routes (/login, /register)
+  - isEnabled predicate checks context.modules.auth !== false
+- Created templates/modules/auth/ with Clean Architecture layers:
+  - Domain: UserEntity (freezed), AuthRepository interface, SignIn/Register/SignOut use cases
+  - Data: AuthUserModel, AuthRemoteDataSource (with Firebase/Supabase/Custom implementations), AuthRepositoryImpl
+  - Presentation: auth_provider.dart (Riverpod providers), LoginPage, RegisterPage
+- Created templates/modules/auth/pubspec.partial.yaml with conditional deps per provider
+  - Firebase: firebase_core, firebase_auth
+  - Supabase: supabase_flutter
+  - Custom: dio
+- Templates use {{#ifEquals modules.auth.provider "..."}} for provider-specific code
+- All quality gates pass: typecheck, lint, 150 tests passing across 9 suites
+- Status: PASSES

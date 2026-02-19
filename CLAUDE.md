@@ -123,6 +123,32 @@ Model usage policy:
 
 Effort selection: Low/Medium for everyday work, High only for genuinely complex tasks.
 
+## Git Commit & Push Policy
+
+**Always push after committing.** Do not leave commits sitting locally.
+
+### Commit message format
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+- `feat: [Story-ID] - short description` — new features / story work
+- `fix: short description` — bug fixes
+- `chore: short description` — tooling, config, CI, deps
+- `refactor: short description` — code restructuring with no behavior change
+- `test: short description` — adding or fixing tests
+- `docs: short description` — documentation only
+
+### Workflow order
+1. Run quality gates first: `npm run typecheck && npm run lint && npm test`
+2. Stage only the relevant files (`git add <files>`) — never blind `git add -A`
+3. Commit with a clear conventional-commit message
+4. **Push immediately**: `git push` (or `git push -u origin <branch>` for new branches)
+
+### Rules
+- One logical change per commit — don't bundle unrelated changes
+- Never skip pre-commit hooks (`--no-verify` is forbidden)
+- Never force-push to `main`
+- Never amend published commits unless explicitly asked
+- Always push to remote after every commit — no local-only commits
+
 ## Important Paths
 
 - `src/core/config/schema.ts` - Central Zod config schema

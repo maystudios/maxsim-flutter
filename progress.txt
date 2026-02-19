@@ -192,3 +192,20 @@
 - Created templates/modules/theme/pubspec.partial.yaml with google_fonts dependency
 - All quality gates pass: typecheck, lint, 150 tests passing across 9 suites
 - Status: PASSES
+
+## 2026-02-19T00:10 - P2-007: Wire module selection into create command and integration test
+- Updated src/cli/ui/prompts.ts: added modules multiselect with all 9 module options (auth, api, theme, database, i18n, push, analytics, cicd, deep-linking)
+- Updated src/cli/commands/create.ts: added buildModulesConfig() to parse --modules flag into config entries; wired module selection in interactive mode (from prompts) and non-interactive mode (--modules auth,api,theme with --yes)
+- Rewrote src/scaffold/engine.ts to use ModuleResolver and ModuleComposer:
+  - getEnabledModuleIds() extracts enabled module IDs from ProjectContext
+  - getRegistry() supports pre-loaded registry override (for testing) or dynamic loadAll()
+  - collectAndRenderTemplatesFromDir() generalized template collection (core + modules)
+  - Module templates rendered per module, excluding pubspec.partial.yaml
+  - pubspec.partial.yaml rendered as Handlebars template, parsed as YAML, deps merged into pubspec.yaml via mergePubspecDependencies()
+  - Conditional provider-specific deps (e.g., firebase vs supabase for auth) handled via HBS rendering
+- Added ScaffoldEngineOptions: modulesTemplatesDir, registry overrides for testing
+- Updated tests/integration/create-command.test.ts:
+  - Added createTestRegistry() with core, auth, api, theme manifests
+  - 7 new integration tests: auth files, auth pubspec merge, supabase deps, api files, theme files, multi-module merged pubspec, no-modules baseline
+- All quality gates pass: typecheck, lint, 156 tests passing across 9 suites
+- Status: PASSES

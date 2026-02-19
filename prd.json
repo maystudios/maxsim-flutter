@@ -252,7 +252,7 @@
         "pubspec.yaml contains merged dependencies",
         "npm test passes all tests"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P2-008",

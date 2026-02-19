@@ -5,10 +5,26 @@ import { load as yamlLoad } from 'js-yaml';
 import fsExtra from 'fs-extra';
 import { ScaffoldEngine } from '../../src/scaffold/engine.js';
 import type { ProjectContext } from '../../src/core/context.js';
+import { ModuleRegistry } from '../../src/modules/registry.js';
+import { manifest as coreManifest } from '../../src/modules/definitions/core/module.js';
+import { manifest as authManifest } from '../../src/modules/definitions/auth/module.js';
+import { manifest as apiManifest } from '../../src/modules/definitions/api/module.js';
+import { manifest as themeManifest } from '../../src/modules/definitions/theme/module.js';
 
 const { pathExists } = fsExtra;
 
 const TEMPLATES_DIR = resolve('templates/core');
+const MODULES_DIR = resolve('templates/modules');
+
+/** Build a pre-loaded registry for tests (avoids dynamic import issues in ts-jest). */
+function createTestRegistry(): ModuleRegistry {
+  const registry = new ModuleRegistry();
+  registry.register(coreManifest);
+  registry.register(authManifest);
+  registry.register(apiManifest);
+  registry.register(themeManifest);
+  return registry;
+}
 
 function makeContext(
   outputDir: string,
@@ -190,5 +206,198 @@ describe('Integration: create command generates working Flutter project', () => 
     const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
 
     expect(pubspec['name']).toBe('awesome_app');
+  });
+
+  it('generates auth module files when auth is enabled', async () => {
+    const engine = new ScaffoldEngine({
+      templatesDir: TEMPLATES_DIR,
+      modulesTemplatesDir: MODULES_DIR,
+      registry: createTestRegistry(),
+    });
+    const context = makeContext(tmpDir, {
+      modules: {
+        auth: { provider: 'firebase' },
+        api: false,
+        database: false,
+        i18n: false,
+        theme: false,
+        push: false,
+        analytics: false,
+        cicd: false,
+        deepLinking: false,
+      },
+    });
+    await engine.run(context);
+
+    // Auth module files should exist
+    const authProviderPath = join(
+      tmpDir,
+      'lib/features/auth/presentation/providers/auth_provider.dart',
+    );
+    expect(await pathExists(authProviderPath)).toBe(true);
+
+    const loginPagePath = join(tmpDir, 'lib/features/auth/presentation/pages/login_page.dart');
+    expect(await pathExists(loginPagePath)).toBe(true);
+
+    // Core files should still exist
+    expect(await pathExists(join(tmpDir, 'lib/main.dart'))).toBe(true);
+  });
+
+  it('generates api module files when api is enabled', async () => {
+    const engine = new ScaffoldEngine({
+      templatesDir: TEMPLATES_DIR,
+      modulesTemplatesDir: MODULES_DIR,
+      registry: createTestRegistry(),
+    });
+    const context = makeContext(tmpDir, {
+      modules: {
+        auth: false,
+        api: { baseUrl: 'https://api.test.com' },
+        database: false,
+        i18n: false,
+        theme: false,
+        push: false,
+        analytics: false,
+        cicd: false,
+        deepLinking: false,
+      },
+    });
+    await engine.run(context);
+
+    // API module files should exist
+    const apiClientPath = join(tmpDir, 'lib/features/api/data/datasources/api_client.dart');
+    expect(await pathExists(apiClientPath)).toBe(true);
+
+    const apiProviderPath = join(
+      tmpDir,
+      'lib/features/api/presentation/providers/api_provider.dart',
+    );
+    expect(await pathExists(apiProviderPath)).toBe(true);
+  });
+
+  it('merges module dependencies into pubspec.yaml', async () => {
+    const engine = new ScaffoldEngine({
+      templatesDir: TEMPLATES_DIR,
+      modulesTemplatesDir: MODULES_DIR,
+      registry: createTestRegistry(),
+    });
+    const context = makeContext(tmpDir, {
+      modules: {
+        auth: { provider: 'firebase' },
+        api: { baseUrl: 'https://api.test.com' },
+        database: false,
+        i18n: false,
+        theme: { seedColor: '#6750A4', darkMode: true },
+        push: false,
+        analytics: false,
+        cicd: false,
+        deepLinking: false,
+      },
+    });
+    await engine.run(context);
+
+    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
+    const deps = pubspec['dependencies'] as Record<string, unknown>;
+
+    // Core deps should still be present
+    expect(deps).toHaveProperty('flutter_riverpod');
+    expect(deps).toHaveProperty('go_router');
+
+    // Module deps should be merged in
+    expect(deps).toHaveProperty('dio');
+    expect(deps).toHaveProperty('google_fonts');
+  });
+
+  it('generates multiple modules together with merged pubspec', async () => {
+    const engine = new ScaffoldEngine({
+      templatesDir: TEMPLATES_DIR,
+      modulesTemplatesDir: MODULES_DIR,
+      registry: createTestRegistry(),
+    });
+    const context = makeContext(tmpDir, {
+      modules: {
+        auth: { provider: 'firebase' },
+        api: { baseUrl: 'https://api.test.com' },
+        database: false,
+        i18n: false,
+        theme: { seedColor: '#6750A4', darkMode: true },
+        push: false,
+        analytics: false,
+        cicd: false,
+        deepLinking: false,
+      },
+    });
+    const result = await engine.run(context);
+
+    // Should generate core + module files
+    expect(result.filesWritten.length).toBeGreaterThan(20);
+
+    // Verify module-specific files exist
+    expect(await pathExists(join(tmpDir, 'lib/features/auth/presentation/pages/login_page.dart'))).toBe(true);
+    expect(await pathExists(join(tmpDir, 'lib/features/api/data/datasources/api_client.dart'))).toBe(true);
+    expect(await pathExists(join(tmpDir, 'lib/core/theme/app_theme.dart'))).toBe(true);
+
+    // Verify merged pubspec
+    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
+    const deps = pubspec['dependencies'] as Record<string, unknown>;
+    expect(deps).toHaveProperty('flutter_riverpod');
+    expect(deps).toHaveProperty('firebase_core');
+    expect(deps).toHaveProperty('dio');
+    expect(deps).toHaveProperty('google_fonts');
+
+    const devDeps = pubspec['dev_dependencies'] as Record<string, unknown>;
+    expect(devDeps).toHaveProperty('retrofit_generator');
+  });
+
+  it('does not generate module files when no modules are selected', async () => {
+    const engine = new ScaffoldEngine({
+      templatesDir: TEMPLATES_DIR,
+      modulesTemplatesDir: MODULES_DIR,
+      registry: createTestRegistry(),
+    });
+    const context = makeContext(tmpDir);
+    await engine.run(context);
+
+    expect(await pathExists(join(tmpDir, 'lib/features/auth'))).toBe(false);
+    expect(await pathExists(join(tmpDir, 'lib/features/api'))).toBe(false);
+
+    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
+    const deps = pubspec['dependencies'] as Record<string, unknown>;
+    expect(deps).not.toHaveProperty('firebase_core');
+    expect(deps).not.toHaveProperty('dio');
+    expect(deps).not.toHaveProperty('google_fonts');
+  });
+
+  it('generates supabase deps when auth provider is supabase', async () => {
+    const engine = new ScaffoldEngine({
+      templatesDir: TEMPLATES_DIR,
+      modulesTemplatesDir: MODULES_DIR,
+      registry: createTestRegistry(),
+    });
+    const context = makeContext(tmpDir, {
+      modules: {
+        auth: { provider: 'supabase' },
+        api: false,
+        database: false,
+        i18n: false,
+        theme: false,
+        push: false,
+        analytics: false,
+        cicd: false,
+        deepLinking: false,
+      },
+    });
+    await engine.run(context);
+
+    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
+    const deps = pubspec['dependencies'] as Record<string, unknown>;
+
+    expect(deps).toHaveProperty('supabase_flutter');
+    expect(deps).not.toHaveProperty('firebase_core');
+    expect(deps).not.toHaveProperty('firebase_auth');
   });
 });

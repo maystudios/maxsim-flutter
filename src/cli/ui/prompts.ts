@@ -5,6 +5,7 @@ export interface CreateAnswers {
   orgId: string;
   description: string;
   platforms: string[];
+  modules: string[];
 }
 
 export async function promptForProjectCreation(
@@ -57,6 +58,24 @@ export async function promptForProjectCreation(
           initialValues: defaults?.platforms ?? ['android', 'ios'],
           required: true,
         }),
+
+      modules: () =>
+        p.multiselect({
+          message: 'Select modules to include',
+          options: [
+            { value: 'auth', label: 'Authentication', hint: 'Firebase / Supabase / Custom' },
+            { value: 'api', label: 'API Client', hint: 'Dio + interceptors' },
+            { value: 'theme', label: 'Theme', hint: 'Material 3 + dark mode' },
+            { value: 'database', label: 'Database', hint: 'Drift / Hive / Isar' },
+            { value: 'i18n', label: 'Internationalization', hint: 'ARB + Flutter localizations' },
+            { value: 'push', label: 'Push Notifications', hint: 'Firebase / OneSignal' },
+            { value: 'analytics', label: 'Analytics', hint: 'Service abstraction' },
+            { value: 'cicd', label: 'CI/CD', hint: 'GitHub Actions / GitLab CI' },
+            { value: 'deep-linking', label: 'Deep Linking', hint: 'App links + go_router' },
+          ],
+          initialValues: defaults?.modules ?? [],
+          required: false,
+        }),
     },
     {
       onCancel() {
@@ -71,5 +90,6 @@ export async function promptForProjectCreation(
     orgId: answers.orgId as string,
     description: (answers.description as string) ?? 'A new Flutter application',
     platforms: answers.platforms as string[],
+    modules: (answers.modules as string[]) ?? [],
   };
 }

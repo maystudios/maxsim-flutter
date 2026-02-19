@@ -39,6 +39,55 @@ export function createCreateCommand(): Command {
   return cmd;
 }
 
+/**
+ * Build module configuration from a comma-separated list of module IDs.
+ * Uses Zod schema defaults for all module-specific settings.
+ */
+function buildModulesConfig(
+  modulesList: string[],
+  options: Record<string, unknown>,
+): Record<string, unknown> {
+  const modules: Record<string, unknown> = {};
+
+  for (const mod of modulesList) {
+    const id = mod.trim();
+    switch (id) {
+      case 'auth':
+        modules.auth = {
+          enabled: true,
+          provider: (options.authProvider as string) ?? undefined,
+        };
+        break;
+      case 'api':
+        modules.api = { enabled: true };
+        break;
+      case 'theme':
+        modules.theme = { enabled: true };
+        break;
+      case 'database':
+        modules.database = { enabled: true };
+        break;
+      case 'i18n':
+        modules.i18n = { enabled: true };
+        break;
+      case 'push':
+        modules.push = { enabled: true };
+        break;
+      case 'analytics':
+        modules.analytics = { enabled: true };
+        break;
+      case 'cicd':
+        modules.cicd = { enabled: true };
+        break;
+      case 'deep-linking':
+        modules['deep-linking'] = { enabled: true };
+        break;
+    }
+  }
+
+  return modules;
+}
+
 async function runCreate(
   appName: string | undefined,
   options: Record<string, unknown>,
@@ -54,6 +103,11 @@ async function runCreate(
   } else if (options.yes) {
     // Non-interactive: use defaults
     const name = appName ?? 'my_app';
+    const modulesList = options.modules
+      ? (options.modules as string).split(',')
+      : [];
+    const modules = buildModulesConfig(modulesList, options);
+
     config = parseConfig({
       project: {
         name,
@@ -62,6 +116,7 @@ async function runCreate(
       platforms: options.platforms
         ? (options.platforms as string).split(',')
         : undefined,
+      modules,
       scaffold: {
         dryRun: options.dryRun === true,
       },
@@ -72,6 +127,8 @@ async function runCreate(
       projectName: appName,
     });
 
+    const modules = buildModulesConfig(answers.modules, options);
+
     config = parseConfig({
       project: {
         name: answers.projectName,
@@ -79,6 +136,7 @@ async function runCreate(
         description: answers.description,
       },
       platforms: answers.platforms,
+      modules,
       scaffold: {
         dryRun: options.dryRun === true,
       },

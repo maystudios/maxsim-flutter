@@ -10,6 +10,7 @@ import { manifest as coreManifest } from '../../src/modules/definitions/core/mod
 import { manifest as authManifest } from '../../src/modules/definitions/auth/module.js';
 import { manifest as apiManifest } from '../../src/modules/definitions/api/module.js';
 import { manifest as themeManifest } from '../../src/modules/definitions/theme/module.js';
+import { manifest as databaseManifest } from '../../src/modules/definitions/database/module.js';
 
 const { pathExists } = fsExtra;
 
@@ -23,6 +24,7 @@ function createTestRegistry(): ModuleRegistry {
   registry.register(authManifest);
   registry.register(apiManifest);
   registry.register(themeManifest);
+  registry.register(databaseManifest);
   return registry;
 }
 
@@ -369,6 +371,142 @@ describe('Integration: create command generates working Flutter project', () => 
     expect(deps).not.toHaveProperty('firebase_core');
     expect(deps).not.toHaveProperty('dio');
     expect(deps).not.toHaveProperty('google_fonts');
+  });
+
+  it('generates database module files with drift engine', async () => {
+    const engine = new ScaffoldEngine({
+      templatesDir: TEMPLATES_DIR,
+      modulesTemplatesDir: MODULES_DIR,
+      registry: createTestRegistry(),
+    });
+    const context = makeContext(tmpDir, {
+      modules: {
+        auth: false,
+        api: false,
+        database: { engine: 'drift' },
+        i18n: false,
+        theme: false,
+        push: false,
+        analytics: false,
+        cicd: false,
+        deepLinking: false,
+      },
+    });
+    await engine.run(context);
+
+    // Database module files should exist
+    const datasourcePath = join(
+      tmpDir,
+      'lib/features/database/data/datasources/database_datasource.dart',
+    );
+    expect(await pathExists(datasourcePath)).toBe(true);
+
+    const repoImplPath = join(
+      tmpDir,
+      'lib/features/database/data/repositories/database_repository_impl.dart',
+    );
+    expect(await pathExists(repoImplPath)).toBe(true);
+
+    const providerPath = join(
+      tmpDir,
+      'lib/features/database/presentation/providers/database_provider.dart',
+    );
+    expect(await pathExists(providerPath)).toBe(true);
+
+    const domainRepoPath = join(
+      tmpDir,
+      'lib/features/database/domain/repositories/database_repository.dart',
+    );
+    expect(await pathExists(domainRepoPath)).toBe(true);
+
+    // Verify drift-specific content in datasource
+    const datasourceContent = await readFile(datasourcePath, 'utf-8');
+    expect(datasourceContent).toContain('DriftDatabase');
+    expect(datasourceContent).toContain('AppDatabase');
+
+    // Verify drift deps in pubspec
+    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
+    const deps = pubspec['dependencies'] as Record<string, unknown>;
+    expect(deps).toHaveProperty('drift');
+    expect(deps).toHaveProperty('sqlite3_flutter_libs');
+    expect(deps).not.toHaveProperty('hive_ce_flutter');
+    expect(deps).not.toHaveProperty('isar');
+  });
+
+  it('generates database module with hive engine deps', async () => {
+    const engine = new ScaffoldEngine({
+      templatesDir: TEMPLATES_DIR,
+      modulesTemplatesDir: MODULES_DIR,
+      registry: createTestRegistry(),
+    });
+    const context = makeContext(tmpDir, {
+      modules: {
+        auth: false,
+        api: false,
+        database: { engine: 'hive' },
+        i18n: false,
+        theme: false,
+        push: false,
+        analytics: false,
+        cicd: false,
+        deepLinking: false,
+      },
+    });
+    await engine.run(context);
+
+    const datasourcePath = join(
+      tmpDir,
+      'lib/features/database/data/datasources/database_datasource.dart',
+    );
+    const datasourceContent = await readFile(datasourcePath, 'utf-8');
+    expect(datasourceContent).toContain('HiveDatabaseDataSource');
+    expect(datasourceContent).toContain('Hive.initFlutter');
+
+    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
+    const deps = pubspec['dependencies'] as Record<string, unknown>;
+    expect(deps).toHaveProperty('hive_ce_flutter');
+    expect(deps).not.toHaveProperty('drift');
+    expect(deps).not.toHaveProperty('isar');
+  });
+
+  it('generates database module with isar engine deps', async () => {
+    const engine = new ScaffoldEngine({
+      templatesDir: TEMPLATES_DIR,
+      modulesTemplatesDir: MODULES_DIR,
+      registry: createTestRegistry(),
+    });
+    const context = makeContext(tmpDir, {
+      modules: {
+        auth: false,
+        api: false,
+        database: { engine: 'isar' },
+        i18n: false,
+        theme: false,
+        push: false,
+        analytics: false,
+        cicd: false,
+        deepLinking: false,
+      },
+    });
+    await engine.run(context);
+
+    const datasourcePath = join(
+      tmpDir,
+      'lib/features/database/data/datasources/database_datasource.dart',
+    );
+    const datasourceContent = await readFile(datasourcePath, 'utf-8');
+    expect(datasourceContent).toContain('IsarDatabaseDataSource');
+    expect(datasourceContent).toContain('Isar.open');
+
+    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
+    const deps = pubspec['dependencies'] as Record<string, unknown>;
+    expect(deps).toHaveProperty('isar');
+    expect(deps).toHaveProperty('isar_flutter_libs');
+    expect(deps).not.toHaveProperty('drift');
+    expect(deps).not.toHaveProperty('hive_ce_flutter');
   });
 
   it('generates supabase deps when auth provider is supabase', async () => {

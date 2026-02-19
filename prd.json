@@ -373,7 +373,7 @@
         "Updates maxsim.config.yaml and .claude/ setup",
         "--dry-run shows what would change"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P3-006",

@@ -322,3 +322,25 @@
   - writeCommands: conditional auth guard and i18n sections
 - All quality gates pass: typecheck, lint, 268 tests passing across 12 suites
 - Status: PASSES
+
+## 2026-02-19T06:00 - P3-005: Implement add command for adding modules to existing projects
+- src/cli/commands/add.ts fully functional with complete pipeline:
+  - findProjectRoot() detects maxsim.config.yaml up to 5 parent directories
+  - getEnabledModuleIds() extracts enabled modules from config
+  - Interactive module selection via @clack/prompts (or CLI argument)
+  - Module-specific questions (text, select, confirm) from ModuleManifest
+  - Dependency resolution via ModuleResolver (auto-adds required modules)
+  - Template rendering via TemplateRenderer for module .hbs files
+  - File writing with overwriteMode: 'never' (only new files, no overwrites)
+  - mergePubspecYaml() merges new deps into existing pubspec.yaml (newer version wins)
+  - Updates maxsim.config.yaml with new module config
+  - Regenerates .claude/ setup via runClaudeSetup()
+  - --dry-run mode previews all changes without writing
+  - --project-dir option for specifying project location
+- Created tests/unit/add-command.test.ts with 22 tests covering:
+  - createAddCommand: name, argument, options (dry-run, project-dir)
+  - findProjectRoot: direct match, null for missing, parent search, depth limit
+  - getEnabledModuleIds: empty, single, false, enabled:false, multiple, deep-linking, all 9
+  - mergePubspecYaml: add new deps, dev deps, version upgrade, keep newer, SDK skip, no pubspec, create section
+- All quality gates pass: typecheck, lint, 293 tests passing across 13 suites
+- Status: PASSES

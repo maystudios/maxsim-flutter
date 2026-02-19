@@ -433,7 +433,7 @@
         "'npm pack' produces correct tarball",
         "All tests pass, typecheck passes"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

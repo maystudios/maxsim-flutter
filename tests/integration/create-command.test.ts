@@ -11,13 +11,18 @@ import { manifest as authManifest } from '../../src/modules/definitions/auth/mod
 import { manifest as apiManifest } from '../../src/modules/definitions/api/module.js';
 import { manifest as themeManifest } from '../../src/modules/definitions/theme/module.js';
 import { manifest as databaseManifest } from '../../src/modules/definitions/database/module.js';
+import { manifest as i18nManifest } from '../../src/modules/definitions/i18n/module.js';
+import { manifest as pushManifest } from '../../src/modules/definitions/push/module.js';
+import { manifest as analyticsManifest } from '../../src/modules/definitions/analytics/module.js';
+import { manifest as cicdManifest } from '../../src/modules/definitions/cicd/module.js';
+import { manifest as deepLinkingManifest } from '../../src/modules/definitions/deep-linking/module.js';
 
 const { pathExists } = fsExtra;
 
 const TEMPLATES_DIR = resolve('templates/core');
 const MODULES_DIR = resolve('templates/modules');
 
-/** Build a pre-loaded registry for tests (avoids dynamic import issues in ts-jest). */
+/** Build a pre-loaded registry with ALL module manifests. */
 function createTestRegistry(): ModuleRegistry {
   const registry = new ModuleRegistry();
   registry.register(coreManifest);
@@ -25,6 +30,11 @@ function createTestRegistry(): ModuleRegistry {
   registry.register(apiManifest);
   registry.register(themeManifest);
   registry.register(databaseManifest);
+  registry.register(i18nManifest);
+  registry.register(pushManifest);
+  registry.register(analyticsManifest);
+  registry.register(cicdManifest);
+  registry.register(deepLinkingManifest);
   return registry;
 }
 
@@ -732,5 +742,217 @@ describe('Integration: create command generates working Flutter project', () => 
     expect(deps).toHaveProperty('supabase_flutter');
     expect(deps).not.toHaveProperty('firebase_core');
     expect(deps).not.toHaveProperty('firebase_auth');
+  });
+
+  describe('Create with all modules and .claude/ output', () => {
+    it('generates complete project with all 9 modules enabled', async () => {
+      const engine = new ScaffoldEngine({
+        templatesDir: TEMPLATES_DIR,
+        modulesTemplatesDir: MODULES_DIR,
+        registry: createTestRegistry(),
+      });
+      const context = makeContext(tmpDir, {
+        modules: {
+          auth: { provider: 'firebase' },
+          api: { baseUrl: 'https://api.example.com' },
+          database: { engine: 'drift' },
+          i18n: { defaultLocale: 'en', supportedLocales: ['en'] },
+          theme: { seedColor: '#6750A4', darkMode: true },
+          push: { provider: 'firebase' },
+          analytics: { enabled: true },
+          cicd: { provider: 'github' },
+          deepLinking: { scheme: 'myapp', host: 'example.com' },
+        },
+        claude: { enabled: true, agentTeams: true },
+      });
+      const result = await engine.run(context);
+
+      // Core files
+      expect(await pathExists(join(tmpDir, 'lib/main.dart'))).toBe(true);
+      expect(await pathExists(join(tmpDir, 'pubspec.yaml'))).toBe(true);
+      expect(await pathExists(join(tmpDir, 'analysis_options.yaml'))).toBe(true);
+
+      // Auth module files
+      expect(
+        await pathExists(join(tmpDir, 'lib/features/auth/presentation/pages/login_page.dart')),
+      ).toBe(true);
+      expect(
+        await pathExists(join(tmpDir, 'lib/features/auth/domain/entities/user_entity.dart')),
+      ).toBe(true);
+
+      // API module files
+      expect(
+        await pathExists(join(tmpDir, 'lib/features/api/data/datasources/api_client.dart')),
+      ).toBe(true);
+
+      // Database module files
+      expect(
+        await pathExists(
+          join(tmpDir, 'lib/features/database/data/datasources/database_datasource.dart'),
+        ),
+      ).toBe(true);
+
+      // i18n module files
+      expect(await pathExists(join(tmpDir, 'l10n.yaml'))).toBe(true);
+      expect(await pathExists(join(tmpDir, 'lib/l10n/app_en.arb'))).toBe(true);
+
+      // Theme module files
+      expect(await pathExists(join(tmpDir, 'lib/core/theme/app_theme.dart'))).toBe(true);
+
+      // Push module files
+      expect(
+        await pathExists(
+          join(tmpDir, 'lib/features/push/presentation/providers/push_provider.dart'),
+        ),
+      ).toBe(true);
+
+      // Analytics module files
+      expect(
+        await pathExists(
+          join(tmpDir, 'lib/features/analytics/domain/services/analytics_service.dart'),
+        ),
+      ).toBe(true);
+
+      // CI/CD module files
+      expect(await pathExists(join(tmpDir, '.github/workflows/ci.yml'))).toBe(true);
+
+      // Deep linking module files
+      expect(
+        await pathExists(
+          join(
+            tmpDir,
+            'lib/features/deep_linking/presentation/providers/deep_link_provider.dart',
+          ),
+        ),
+      ).toBe(true);
+
+      // Significant file count
+      expect(result.filesWritten.length).toBeGreaterThan(30);
+    });
+
+    it('merges all module dependencies into pubspec.yaml', async () => {
+      const engine = new ScaffoldEngine({
+        templatesDir: TEMPLATES_DIR,
+        modulesTemplatesDir: MODULES_DIR,
+        registry: createTestRegistry(),
+      });
+      const context = makeContext(tmpDir, {
+        modules: {
+          auth: { provider: 'firebase' },
+          api: { baseUrl: 'https://api.example.com' },
+          database: { engine: 'drift' },
+          i18n: { defaultLocale: 'en', supportedLocales: ['en'] },
+          theme: { seedColor: '#6750A4', darkMode: true },
+          push: { provider: 'firebase' },
+          analytics: { enabled: true },
+          cicd: { provider: 'github' },
+          deepLinking: { scheme: 'myapp', host: 'example.com' },
+        },
+      });
+      await engine.run(context);
+
+      const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+      const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
+      const deps = pubspec['dependencies'] as Record<string, unknown>;
+      const devDeps = pubspec['dev_dependencies'] as Record<string, unknown>;
+
+      // Core deps
+      expect(deps).toHaveProperty('flutter_riverpod');
+      expect(deps).toHaveProperty('go_router');
+
+      // Auth deps
+      expect(deps).toHaveProperty('firebase_core');
+      expect(deps).toHaveProperty('firebase_auth');
+
+      // API deps
+      expect(deps).toHaveProperty('dio');
+
+      // Database deps
+      expect(deps).toHaveProperty('drift');
+      expect(deps).toHaveProperty('sqlite3_flutter_libs');
+
+      // i18n deps
+      expect(deps).toHaveProperty('intl');
+
+      // Theme deps
+      expect(deps).toHaveProperty('google_fonts');
+
+      // Push deps
+      expect(deps).toHaveProperty('firebase_messaging');
+
+      // Analytics deps
+      expect(deps).toHaveProperty('firebase_analytics');
+
+      // Deep linking deps
+      expect(deps).toHaveProperty('app_links');
+
+      // Dev deps
+      expect(devDeps).toHaveProperty('retrofit_generator');
+      expect(devDeps).toHaveProperty('drift_dev');
+    });
+
+    it('generates complete .claude/ directory with all modules', async () => {
+      const engine = new ScaffoldEngine({
+        templatesDir: TEMPLATES_DIR,
+        modulesTemplatesDir: MODULES_DIR,
+        registry: createTestRegistry(),
+      });
+      const context = makeContext(tmpDir, {
+        modules: {
+          auth: { provider: 'firebase' },
+          api: { baseUrl: 'https://api.example.com' },
+          database: { engine: 'drift' },
+          i18n: { defaultLocale: 'en', supportedLocales: ['en'] },
+          theme: { seedColor: '#6750A4', darkMode: true },
+          push: { provider: 'firebase' },
+          analytics: { enabled: true },
+          cicd: { provider: 'github' },
+          deepLinking: { scheme: 'myapp', host: 'example.com' },
+        },
+        claude: { enabled: true, agentTeams: true },
+      });
+      await engine.run(context);
+
+      // CLAUDE.md with module-specific sections
+      const claudeMd = await readFile(join(tmpDir, 'CLAUDE.md'), 'utf-8');
+      expect(claudeMd).toContain('# CLAUDE.md');
+      expect(claudeMd).toContain('## Architecture Rules');
+      expect(claudeMd).toContain('## Agent Teams Workflow');
+
+      // Agents
+      expect(await pathExists(join(tmpDir, '.claude/agents/flutter-architect.md'))).toBe(true);
+      expect(await pathExists(join(tmpDir, '.claude/agents/flutter-feature-builder.md'))).toBe(
+        true,
+      );
+      expect(await pathExists(join(tmpDir, '.claude/agents/flutter-tester.md'))).toBe(true);
+      expect(await pathExists(join(tmpDir, '.claude/agents/flutter-reviewer.md'))).toBe(true);
+      expect(await pathExists(join(tmpDir, '.claude/agents/flutter-docs.md'))).toBe(true);
+
+      // Skills
+      expect(await pathExists(join(tmpDir, '.claude/skills/flutter-patterns.md'))).toBe(true);
+      expect(await pathExists(join(tmpDir, '.claude/skills/go-router-patterns.md'))).toBe(true);
+      expect(await pathExists(join(tmpDir, '.claude/skills/module-conventions.md'))).toBe(true);
+      expect(await pathExists(join(tmpDir, '.claude/skills/prd.md'))).toBe(true);
+
+      // Hooks
+      const hooks = await readFile(join(tmpDir, '.claude/settings.local.json'), 'utf-8');
+      expect(hooks).toContain('flutter analyze');
+      expect(hooks).toContain('flutter test');
+
+      // Commands
+      expect(await pathExists(join(tmpDir, '.claude/commands/add-feature.md'))).toBe(true);
+      expect(await pathExists(join(tmpDir, '.claude/commands/analyze.md'))).toBe(true);
+
+      // MCP config
+      expect(await pathExists(join(tmpDir, '.mcp.json'))).toBe(true);
+
+      // PRD
+      const prdContent = await readFile(join(tmpDir, 'prd.json'), 'utf-8');
+      const prd = JSON.parse(prdContent) as {
+        stories: Array<{ id: string; phase: number; passes: boolean }>;
+      };
+      expect(prd.stories.length).toBeGreaterThan(0);
+      expect(prd.stories.every((s) => s.passes === false)).toBe(true);
+    });
   });
 });

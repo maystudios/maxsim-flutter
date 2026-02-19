@@ -15,6 +15,7 @@ import { pickNewerVersion } from '../modules/composer.js';
 import { runDartFormat } from './post-processors/dart-format.js';
 import { runFlutterPubGet } from './post-processors/flutter-pub-get.js';
 import { runBuildRunner } from './post-processors/build-runner.js';
+import { runClaudeSetup } from '../claude-setup/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -33,6 +34,8 @@ export interface ScaffoldEngineOptions {
   modulesTemplatesDir?: string;
   /** Pre-loaded module registry (useful for testing) */
   registry?: ModuleRegistry;
+  /** Skip Claude setup generation even if context.claude.enabled is true */
+  noClaude?: boolean;
 }
 
 export class ScaffoldEngine {
@@ -40,12 +43,14 @@ export class ScaffoldEngine {
   private readonly templatesDirOverride?: string;
   private readonly modulesTemplatesDirOverride?: string;
   private readonly registryOverride?: ModuleRegistry;
+  private readonly noClaudeOverride: boolean;
 
   constructor(options: ScaffoldEngineOptions = {}) {
     this.renderer = new TemplateRenderer();
     this.templatesDirOverride = options.templatesDir;
     this.modulesTemplatesDirOverride = options.modulesTemplatesDir;
     this.registryOverride = options.registry;
+    this.noClaudeOverride = options.noClaude ?? false;
   }
 
   async run(context: ProjectContext): Promise<ScaffoldResult> {
@@ -132,7 +137,12 @@ export class ScaffoldEngine {
 
     const writeResult = await writer.writeAll(fileMap);
 
-    // 4. Post-process
+    // 4. Claude setup (CLAUDE.md, agents, skills, hooks, MCP config, prd.json)
+    if (!context.scaffold.dryRun && context.claude.enabled && !this.noClaudeOverride) {
+      await runClaudeSetup(context, context.outputDir);
+    }
+
+    // 5. Post-process
     const postProcessorsRun: string[] = [];
 
     if (!context.scaffold.dryRun) {

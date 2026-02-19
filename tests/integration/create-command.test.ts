@@ -509,6 +509,137 @@ describe('Integration: create command generates working Flutter project', () => 
     expect(deps).not.toHaveProperty('hive_ce_flutter');
   });
 
+  describe('Claude setup integration', () => {
+    it('generates CLAUDE.md when claude.enabled is true', async () => {
+      const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
+      const context = makeContext(tmpDir, {
+        claude: { enabled: true, agentTeams: false },
+      });
+      await engine.run(context);
+
+      const claudeMdPath = join(tmpDir, 'CLAUDE.md');
+      expect(await pathExists(claudeMdPath)).toBe(true);
+
+      const content = await readFile(claudeMdPath, 'utf-8');
+      expect(content).toContain('# CLAUDE.md');
+      expect(content).toContain('## Architecture Rules');
+      expect(content).toContain('## Quality Gates');
+      expect(content).toContain('## Development Workflow');
+    });
+
+    it('generates .claude/agents/ with 5 agent files', async () => {
+      const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
+      const context = makeContext(tmpDir, {
+        claude: { enabled: true, agentTeams: true },
+      });
+      await engine.run(context);
+
+      const agentsDir = join(tmpDir, '.claude', 'agents');
+      expect(await pathExists(agentsDir)).toBe(true);
+
+      const expectedAgents = [
+        'flutter-architect.md',
+        'flutter-feature-builder.md',
+        'flutter-tester.md',
+        'flutter-reviewer.md',
+        'flutter-docs.md',
+      ];
+      for (const agentFile of expectedAgents) {
+        expect(await pathExists(join(agentsDir, agentFile))).toBe(true);
+      }
+    });
+
+    it('generates prd.json with stories', async () => {
+      const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
+      const context = makeContext(tmpDir, {
+        claude: { enabled: true, agentTeams: false },
+        modules: {
+          auth: { provider: 'firebase' },
+          api: false,
+          database: false,
+          i18n: false,
+          theme: false,
+          push: false,
+          analytics: false,
+          cicd: false,
+          deepLinking: false,
+        },
+      });
+      await engine.run(context);
+
+      const prdPath = join(tmpDir, 'prd.json');
+      expect(await pathExists(prdPath)).toBe(true);
+
+      const prdContent = await readFile(prdPath, 'utf-8');
+      const prd = JSON.parse(prdContent) as { stories: Array<{ id: string; phase: number; passes: boolean }> };
+
+      expect(prd.stories).toBeDefined();
+      expect(prd.stories.length).toBeGreaterThan(0);
+
+      // Phase 1 stories always present
+      const phase1 = prd.stories.filter((s) => s.phase === 1);
+      expect(phase1.length).toBeGreaterThanOrEqual(4);
+
+      // Auth module story present (phase 2)
+      const phase2 = prd.stories.filter((s) => s.phase === 2);
+      expect(phase2.length).toBeGreaterThanOrEqual(1);
+
+      // All stories have passes: false
+      expect(prd.stories.every((s) => s.passes === false)).toBe(true);
+
+      // Story IDs are sequential
+      expect(prd.stories[0].id).toBe('S-001');
+    });
+
+    it('skips Claude setup when claude.enabled is false', async () => {
+      const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
+      const context = makeContext(tmpDir, {
+        claude: { enabled: false, agentTeams: false },
+      });
+      await engine.run(context);
+
+      expect(await pathExists(join(tmpDir, 'CLAUDE.md'))).toBe(false);
+      expect(await pathExists(join(tmpDir, '.claude', 'agents'))).toBe(false);
+      expect(await pathExists(join(tmpDir, 'prd.json'))).toBe(false);
+    });
+
+    it('skips Claude setup when noClaude option is set', async () => {
+      const engine = new ScaffoldEngine({
+        templatesDir: TEMPLATES_DIR,
+        noClaude: true,
+      });
+      const context = makeContext(tmpDir, {
+        claude: { enabled: true, agentTeams: true },
+      });
+      await engine.run(context);
+
+      expect(await pathExists(join(tmpDir, 'CLAUDE.md'))).toBe(false);
+      expect(await pathExists(join(tmpDir, 'prd.json'))).toBe(false);
+    });
+
+    it('generates Agent Teams section in CLAUDE.md when agentTeams is true', async () => {
+      const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
+      const context = makeContext(tmpDir, {
+        claude: { enabled: true, agentTeams: true },
+      });
+      await engine.run(context);
+
+      const content = await readFile(join(tmpDir, 'CLAUDE.md'), 'utf-8');
+      expect(content).toContain('## Agent Teams Workflow');
+      expect(content).toContain('prd.json');
+    });
+
+    it('generates .mcp.json', async () => {
+      const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
+      const context = makeContext(tmpDir, {
+        claude: { enabled: true, agentTeams: false },
+      });
+      await engine.run(context);
+
+      expect(await pathExists(join(tmpDir, '.mcp.json'))).toBe(true);
+    });
+  });
+
   it('generates supabase deps when auth provider is supabase', async () => {
     const engine = new ScaffoldEngine({
       templatesDir: TEMPLATES_DIR,

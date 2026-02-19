@@ -1,0 +1,13 @@
+import '../repositories/push_repository.dart';
+
+/// Use case for handling incoming push notification messages.
+/// Exposes a stream of foreground [PushMessage]s to presentation layer.
+class HandleNotificationUseCase {
+  final PushRepository _repository;
+
+  const HandleNotificationUseCase(this._repository);
+
+  Stream<PushMessage> call() {
+    return _repository.onMessage;
+  }
+}

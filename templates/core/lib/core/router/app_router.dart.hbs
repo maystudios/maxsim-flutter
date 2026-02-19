@@ -2,13 +2,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/home/presentation/pages/home_page.dart';
+{{#if modules.analytics}}
+import '../../features/analytics/presentation/providers/analytics_provider.dart';
+{{/if}}
+{{#if modules.deepLinking}}
+import '../../features/deep_linking/presentation/providers/deep_link_provider.dart';
+{{/if}}
 
 part 'app_router.g.dart';
 
 @riverpod
 GoRouter router(Ref ref) {
+{{#if modules.deepLinking}}
+  // Activate deep link handler — listens for incoming links and navigates via go_router
+  ref.watch(deepLinkHandlerProvider);
+{{/if}}
   return GoRouter(
     initialLocation: '/',
+{{#if modules.analytics}}
+    observers: [ref.watch(analyticsRouteObserverProvider)],
+{{/if}}
     routes: [
       GoRoute(
         path: '/',

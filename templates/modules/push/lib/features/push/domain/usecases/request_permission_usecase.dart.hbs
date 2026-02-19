@@ -1,0 +1,12 @@
+import '../repositories/push_repository.dart';
+
+/// Use case for requesting push notification permission from the user.
+class RequestPermissionUseCase {
+  final PushRepository _repository;
+
+  const RequestPermissionUseCase(this._repository);
+
+  Future<bool> call() {
+    return _repository.requestPermission();
+  }
+}

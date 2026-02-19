@@ -67,72 +67,77 @@ export class ScaffoldEngine {
       this.renderer,
     );
 
-    // 2. Handle module templates if any modules are enabled
-    const registry = await this.getRegistry();
-    const enabledModuleIds = this.getEnabledModuleIds(context, registry);
-    if (enabledModuleIds.length > 0) {
-      // Filter to only modules that exist in the registry (safety net)
-      const validIds = enabledModuleIds.filter((id) => registry.has(id));
-      if (validIds.length > 0) {
-        const resolver = new ModuleResolver(registry);
-        const resolved = resolver.resolve(validIds);
+    // 2. Handle module templates if any modules are enabled.
+    // Quick check: skip registry loading entirely when all modules are disabled.
+    const mods = context.modules as Record<string, unknown>;
+    const hasPotentialModules = Object.values(mods).some((v) => v !== false);
+    if (hasPotentialModules) {
+      const registry = await this.getRegistry();
+      const enabledModuleIds = this.getEnabledModuleIds(context, registry);
+      if (enabledModuleIds.length > 0) {
+        // Filter to only modules that exist in the registry (safety net)
+        const validIds = enabledModuleIds.filter((id) => registry.has(id));
+        if (validIds.length > 0) {
+          const resolver = new ModuleResolver(registry);
+          const resolved = resolver.resolve(validIds);
 
-        const modulesDir = this.getModulesTemplatesDir();
-        const extraDeps = new Map<string, string | Record<string, unknown>>();
-        const extraDevDeps = new Map<string, string | Record<string, unknown>>();
-        const extraFlutter: Record<string, unknown> = {};
+          const modulesDir = this.getModulesTemplatesDir();
+          const extraDeps = new Map<string, string | Record<string, unknown>>();
+          const extraDevDeps = new Map<string, string | Record<string, unknown>>();
+          const extraFlutter: Record<string, unknown> = {};
 
-        for (const mod of resolved.ordered) {
-          if (mod.alwaysIncluded) continue;
-          if (mod.isEnabled && !mod.isEnabled(context)) continue;
+          for (const mod of resolved.ordered) {
+            if (mod.alwaysIncluded) continue;
+            if (mod.isEnabled && !mod.isEnabled(context)) continue;
 
-          const moduleTemplateDir = join(modulesDir, mod.id);
-          if (!(await pathExists(moduleTemplateDir))) continue;
+            const moduleTemplateDir = join(modulesDir, mod.id);
+            if (!(await pathExists(moduleTemplateDir))) continue;
 
-          // Collect and render module templates (excluding pubspec.partial.yaml)
-          const moduleFiles = await collectAndRenderTemplates(
-            moduleTemplateDir,
-            templateContext,
-            this.renderer,
-            ['pubspec.partial.yaml'],
-          );
-          generatedFiles.push(...moduleFiles);
+            // Collect and render module templates (excluding pubspec.partial.yaml)
+            const moduleFiles = await collectAndRenderTemplates(
+              moduleTemplateDir,
+              templateContext,
+              this.renderer,
+              ['pubspec.partial.yaml'],
+            );
+            generatedFiles.push(...moduleFiles);
 
-          // Process pubspec.partial.yaml for dependency merging
-          const partialPath = join(moduleTemplateDir, 'pubspec.partial.yaml');
-          const partial = await processPubspecPartial(partialPath, this.renderer, templateContext);
-          for (const [name, version] of partial.deps) {
-            if (typeof version === 'object') {
-              extraDeps.set(name, version);
-            } else {
-              const existing = extraDeps.get(name);
-              extraDeps.set(
-                name,
-                existing !== undefined && typeof existing === 'string'
-                  ? pickNewerVersion(existing, version)
-                  : version,
-              );
+            // Process pubspec.partial.yaml for dependency merging
+            const partialPath = join(moduleTemplateDir, 'pubspec.partial.yaml');
+            const partial = await processPubspecPartial(partialPath, this.renderer, templateContext);
+            for (const [name, version] of partial.deps) {
+              if (typeof version === 'object') {
+                extraDeps.set(name, version);
+              } else {
+                const existing = extraDeps.get(name);
+                extraDeps.set(
+                  name,
+                  existing !== undefined && typeof existing === 'string'
+                    ? pickNewerVersion(existing, version)
+                    : version,
+                );
+              }
             }
-          }
-          for (const [name, version] of partial.devDeps) {
-            if (typeof version === 'object') {
-              extraDevDeps.set(name, version);
-            } else {
-              const existing = extraDevDeps.get(name);
-              extraDevDeps.set(
-                name,
-                existing !== undefined && typeof existing === 'string'
-                  ? pickNewerVersion(existing, version)
-                  : version,
-              );
+            for (const [name, version] of partial.devDeps) {
+              if (typeof version === 'object') {
+                extraDevDeps.set(name, version);
+              } else {
+                const existing = extraDevDeps.get(name);
+                extraDevDeps.set(
+                  name,
+                  existing !== undefined && typeof existing === 'string'
+                    ? pickNewerVersion(existing, version)
+                    : version,
+                );
+              }
             }
+            Object.assign(extraFlutter, partial.flutter);
           }
-          Object.assign(extraFlutter, partial.flutter);
-        }
 
-        // Merge module deps into the rendered pubspec.yaml
-        if (extraDeps.size > 0 || extraDevDeps.size > 0 || Object.keys(extraFlutter).length > 0) {
-          this.mergePubspecDependencies(generatedFiles, extraDeps, extraDevDeps, extraFlutter);
+          // Merge module deps into the rendered pubspec.yaml
+          if (extraDeps.size > 0 || extraDevDeps.size > 0 || Object.keys(extraFlutter).length > 0) {
+            this.mergePubspecDependencies(generatedFiles, extraDeps, extraDevDeps, extraFlutter);
+          }
         }
       }
     }

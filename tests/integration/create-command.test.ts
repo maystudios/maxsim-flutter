@@ -745,6 +745,7 @@ describe('Integration: create command generates working Flutter project', () => 
 
   describe('Create with all modules and .claude/ output', () => {
     it('generates complete project with all 9 modules enabled', async () => {
+      // Large test — 9 modules × many template files; allow extra time on WSL2
       const engine = new ScaffoldEngine({
         templatesDir: TEMPLATES_DIR,
         modulesTemplatesDir: MODULES_DIR,

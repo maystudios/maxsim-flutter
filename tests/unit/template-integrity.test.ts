@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { readFile, readdir } from 'node:fs/promises';
 import { resolve, relative, join } from 'node:path';
 
@@ -36,6 +37,9 @@ function extractProviderNames(content: string): string[] {
   }
   return names;
 }
+
+// File I/O across many templates can be slow on WSL2 — allow extra time
+jest.setTimeout(30000);
 
 describe('Template integrity', () => {
   let coreTemplateFiles: string[];

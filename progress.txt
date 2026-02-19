@@ -445,3 +445,116 @@ Verification:
 
 ## Phase 4 COMPLETE - All 3 stories implemented and passing
 ## ALL PHASES COMPLETE - 28/28 stories passing
+
+## 2026-02-19T12:00 - Full Project Review (Agent Team)
+
+### Quality Gates
+- npm run typecheck: PASS (0 errors)
+- npm run lint: PASS (0 errors/warnings)
+- npm test: PASS (424 tests, 17 suites)
+
+### PRD Completion Audit
+- 26/28 stories VERIFIED (all acceptance criteria met in codebase)
+- 1 FAILING: P1-001 — src/cli/index.ts is a stub (shebang + comment only). CLI binary is non-functional despite all commands being fully implemented. Commander.js never wired.
+- 1 PARTIAL: P4-003 — npm pack tarball not verified in tests
+
+### Critical Bugs Found (P0)
+1. src/cli/index.ts is a stub — CLI entry point never registers create/add/migrate commands
+2. src/index.ts missing — package.json "main" points to non-existent file, programmatic imports fail
+3. i18n flutter_localizations SDK-style dep {sdk: flutter} corrupted to '[object Object]' by String() cast in engine.ts and add.ts
+4. i18n flutter: generate: true section never merged into pubspec.yaml (engine only extracts dependencies/dev_dependencies)
+5. Ralph subsystem stubs: prd-generator.ts, story-sizer.ts, ralph-converter.ts, plugin-assembler.ts are unimplemented
+
+### Code Quality Issues Found
+- buildTemplateContext duplicated in engine.ts and add.ts
+- Silent catch block in add.ts:198-200 swallows resolver errors (conflicts, circular deps)
+- Database/push manifest contributions hardcoded (not engine-conditional)
+- defaults.ts is dead code (never imported anywhere)
+- Deep-linking path in generated CLAUDE.md uses hyphen (deep-linking/) instead of underscore (deep_linking/)
+- Create command doesn't prompt for module-specific options (auth always defaults to Firebase)
+- validator.ts warnings array always empty
+
+### Test Gaps Identified
+- No E2E test of CLI binary execution
+- runCreate/runMigrate orchestration not tested
+- i18n pubspec corruption not caught by integration tests
+- pickNewerVersion with SDK-style versions not tested
+- prompts.ts has no unit tests
+
+### New Phases Added to PRD
+- Phase 5: 6 stories (release quality) + 3 NPM publishing stories
+- Phase 6: 6 stories (DX & template quality)
+- Phase 7: 5 stories (ecosystem & polish)
+- Total: 20 new stories added, PRD now contains 48 stories across 7 phases
+
+### Immediate Fix Plan
+1. Wire src/cli/index.ts with Commander.js (P1-001 fix)
+2. Create src/index.ts barrel export
+3. Fix i18n SDK-style dependency handling in engine.ts and add.ts
+4. Fix i18n flutter: generate: true merge
+
+## 2026-02-19T13:00 - Phase 5 Implementation (Agent Team: 4 builders)
+
+### P5-001 + P5-NPM-001: GitHub Actions CI/CD workflows
+- Created .github/workflows/ci.yml (push/PR to main: typecheck, lint, test, validate:pack)
+- Created .github/workflows/release.yml (v* tags: build, test, npm publish --provenance)
+- Added CI badge to README.md
+- Status: PASSES
+
+### P5-002: Prepare package for first npm publish
+- Fixed repository.url to real GitHub URL
+- Added publishConfig: { access: "public" }
+- Added LICENSE to files[] array
+- Updated prepublishOnly to include typecheck + lint
+- Status: PASSES
+
+### P5-003: Implement list command
+- Created src/cli/commands/list.ts with createListCommand()
+- Registered in src/cli/index.ts
+- Shows module status table with config details
+- Supports --project-dir flag
+- Created tests/unit/list-command.test.ts
+- Status: PASSES
+
+### P5-004: Extract shared template helpers
+- Created src/scaffold/template-helpers.ts with buildTemplateContext, collectAndRenderTemplates, processPubspecPartial
+- Updated engine.ts and add.ts to import from shared module
+- Eliminated duplicate function bodies
+- All existing tests still pass
+- Status: PASSES
+
+### P5-005: Improve post-processor error handling
+- Added postProcessorErrors: string[] to ScaffoldResult
+- Replaced silent catch blocks with error capture and user-facing messages
+- Updated create.ts to display post-processor errors
+- Created tests/unit/engine-errors.test.ts with 8 tests
+- Status: PASSES
+
+### P5-006: Add version check and update nudge
+- Created src/cli/version-check.ts with non-blocking npm registry check
+- Throttled to once per 24 hours via timestamp file
+- Added --no-update-check global option
+- Network errors silently ignored with 3s timeout
+- Created tests/unit/version-check.test.ts
+- Status: PASSES
+
+### P5-NPM-002: Package validation and dry-run gate
+- Created scripts/validate-pack.mjs
+- Added validate:pack npm script
+- Validates no forbidden files, required files present, size < 2MB
+- Integrated into CI workflow
+- Status: PASSES
+
+### P5-NPM-003: CHANGELOG and release notes automation
+- Installed conventional-changelog-cli
+- Added changelog npm script
+- Added commit convention documentation
+- CHANGELOG linked from README
+- Status: PASSES
+
+### Quality Gates
+- npm run typecheck: PASS (0 errors)
+- npm run lint: PASS (0 errors/warnings)
+- npm test: PASS (462 tests, 20 suites — up from 424/17)
+
+## Phase 5 COMPLETE - All 9 stories implemented and passing

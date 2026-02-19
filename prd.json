@@ -434,6 +434,294 @@
         "All tests pass, typecheck passes"
       ],
       "passes": true
+    },
+    {
+      "id": "P5-001",
+      "phase": 5,
+      "priority": 29,
+      "title": "GitHub Actions CI/CD for maxsim-flutter",
+      "description": "Create .github/workflows/ci.yml that runs npm run typecheck, npm run lint, and npm test on every push and PR. Add a release.yml workflow triggered by v* tags that publishes to npm with provenance (--provenance flag).",
+      "acceptanceCriteria": [
+        ".github/workflows/ci.yml runs typecheck + lint + test on push/PR to main",
+        ".github/workflows/release.yml triggers on v* tags, builds, tests, then npm publish --provenance",
+        "Secrets documented: NPM_TOKEN required in repo settings",
+        "Badge in README links to workflow status"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P5-002",
+      "phase": 5,
+      "priority": 30,
+      "title": "Prepare package for first npm publish",
+      "description": "Fix repository.url in package.json to real GitHub URL. Verify files[] array is complete. Add publishConfig with access: public. Run npm pack --dry-run and verify tarball contents. Confirm prepublishOnly runs build + test. Create LICENSE file if missing.",
+      "acceptanceCriteria": [
+        "npm pack --dry-run shows exactly: dist/, templates/, claude-plugin/, README.md, CHANGELOG.md, package.json, LICENSE",
+        "package.json has real repository.url and publishConfig: { access: public }",
+        "npm run prepublishOnly passes typecheck, lint, and tests",
+        "No .env, secrets, or dev files included in pack"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P5-003",
+      "phase": 5,
+      "priority": 31,
+      "title": "Implement list command to show project module status",
+      "description": "Create src/cli/commands/list.ts. Detect maxsim.config.yaml, display table of all modules and their enabled/disabled status. Support --project-dir flag.",
+      "acceptanceCriteria": [
+        "maxsim-flutter list outputs a readable table of all modules with their status",
+        "maxsim-flutter list --project-dir <path> works",
+        "Throws helpful error if no maxsim.config.yaml found",
+        "Unit tests added",
+        "Command registered in CLI entry point"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P5-004",
+      "phase": 5,
+      "priority": 32,
+      "title": "Extract shared template helpers to eliminate create/add duplication",
+      "description": "Both create.ts and add.ts contain copies of buildTemplateContext and pubspec-merging logic. Extract to src/scaffold/template-helpers.ts and update both commands to import from shared location.",
+      "acceptanceCriteria": [
+        "src/scaffold/template-helpers.ts exports shared functions",
+        "create.ts and add.ts both import from the shared module",
+        "No duplicate function bodies remain",
+        "All existing tests still pass",
+        "npm run typecheck and npm run lint pass"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P5-005",
+      "phase": 5,
+      "priority": 33,
+      "title": "Improve post-processor error handling and user feedback",
+      "description": "engine.ts silently swallows all post-processor errors. Capture error messages and surface them to users. Add postProcessorErrors array to ScaffoldResult.",
+      "acceptanceCriteria": [
+        "ScaffoldResult includes postProcessorErrors: string[]",
+        "When dart format fails, user sees: dart format skipped with reason",
+        "When flutter pub get fails, user sees the actual error message",
+        "Engine tests updated to verify error messages surface"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P5-006",
+      "phase": 5,
+      "priority": 34,
+      "title": "Add version check and update nudge on CLI startup",
+      "description": "On first run per day, check npm registry for latest version. If newer version exists, print a friendly nudge. Non-blocking (network failure silently ignored). Throttled by timestamp file.",
+      "acceptanceCriteria": [
+        "Version check runs at most once per day",
+        "Network errors silently ignored",
+        "Nudge appears at bottom of command output",
+        "--no-update-check flag disables the check globally"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P5-NPM-001",
+      "phase": 5,
+      "priority": 35,
+      "title": "Automated npm publish workflow with provenance attestation",
+      "description": "Create .github/workflows/release.yml triggered by v* tags. Steps: checkout, Node 18, npm ci, npm run prepublishOnly, npm publish --provenance --access public. Configure NPM_TOKEN secret. Add npm badge to README.",
+      "acceptanceCriteria": [
+        "Tag v0.1.0 triggers release workflow",
+        "Workflow passes typecheck + lint + test before publish",
+        "Package published with provenance",
+        "npm badge in README shows current version",
+        "Documented: how to create a release (tag + push)"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P5-NPM-002",
+      "phase": 5,
+      "priority": 36,
+      "title": "Package validation and dry-run gate",
+      "description": "Add validate:pack npm script that runs npm pack --dry-run and asserts correct files included, no secrets, size < 2MB. Integrate into CI.",
+      "acceptanceCriteria": [
+        "npm run validate:pack script exists",
+        "Script fails if node_modules/ or .env appear in pack output",
+        "CI runs validate:pack step before npm publish",
+        "Total pack size < 2MB enforced"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P5-NPM-003",
+      "phase": 5,
+      "priority": 37,
+      "title": "CHANGELOG and release notes automation",
+      "description": "Install conventional-changelog-cli. Add changelog npm script. Document commit convention. Verify existing CHANGELOG.md with v0.1.0 entry.",
+      "acceptanceCriteria": [
+        "CHANGELOG.md exists with v0.1.0 entry",
+        "npm run changelog updates CHANGELOG.md from commit history",
+        "Commit format generates correct changelog entries",
+        "CHANGELOG linked from README"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P6-001",
+      "phase": 6,
+      "priority": 38,
+      "title": "Expand template coverage for push, analytics, and deep-linking modules",
+      "description": "Audit templates against auth/api benchmark. Push missing use cases, analytics missing route observer wiring, deep-linking missing route handler integration.",
+      "acceptanceCriteria": [
+        "Push module has domain/usecases/ with RequestPermissionUseCase, HandleNotificationUseCase",
+        "Analytics module analytics_route_observer.dart is wired into app_router",
+        "Deep-linking module provider is wired into GoRouter redirect guard",
+        "Integration tests verify new files are generated"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P6-002",
+      "phase": 6,
+      "priority": 39,
+      "title": "Generate README.md in scaffolded projects",
+      "description": "Add templates/core/README.md.hbs that documents project structure, enabled modules, run instructions, Agent Teams section.",
+      "acceptanceCriteria": [
+        "README.md is generated in every new project",
+        "README contains project name, enabled modules list, run instructions",
+        "README has Agent Teams section if claude.agentTeams is true",
+        "Integration test verifies README generated with correct project name"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P6-003",
+      "phase": 6,
+      "priority": 40,
+      "title": "Make module ID lists registry-driven",
+      "description": "engine.ts getEnabledModuleIds and add.ts ADDABLE_MODULE_IDS are hardcoded. Refactor so ModuleRegistry is single source of truth.",
+      "acceptanceCriteria": [
+        "ModuleRegistry.getAllOptionalIds() returns all registered non-core module IDs",
+        "engine.ts getEnabledModuleIds uses the registry",
+        "add.ts ADDABLE_MODULE_IDS replaced by registry query",
+        "Adding a new module requires ONLY module.ts + templates",
+        "All existing tests still pass"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P6-004",
+      "phase": 6,
+      "priority": 41,
+      "title": "Add snapshot tests for generated Dart file content",
+      "description": "Add Jest snapshot tests for key rendered files (main.dart, app_router.dart, login_page.dart) across module combinations.",
+      "acceptanceCriteria": [
+        "tests/unit/snapshots/ directory with .snap files",
+        "toMatchSnapshot() used for main.dart, pubspec.yaml, app_router.dart",
+        "Snapshot update workflow documented",
+        "CI fails if snapshots drift without being updated"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P6-005",
+      "phase": 6,
+      "priority": 42,
+      "title": "Improve migrate detector with lib/ directory structure analysis",
+      "description": "Enhance ProjectDetector to scan lib/ for feature structure, identify layer violations, produce more precise gap analysis.",
+      "acceptanceCriteria": [
+        "analyzeProject() scans lib/ for features/ subdirectories",
+        "Detects existing feature names and reports them",
+        "Identifies direct presentation-to-data imports as a gap",
+        "AnalysisReport.detectedFeatures field contains discovered feature names",
+        "Updated unit tests for enhanced detector"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P6-006",
+      "phase": 6,
+      "priority": 43,
+      "title": "Add per-module configuration prompts in interactive create flow",
+      "description": "After module multi-select in create, show follow-up prompts for auth provider, database engine, API base URL, locales etc. --yes skips with defaults.",
+      "acceptanceCriteria": [
+        "After module selection, follow-up prompts appear for modules with questions",
+        "--yes flag skips follow-up prompts and uses defaults",
+        "Unit test for prompt flow using mock answers",
+        "No regression on existing --yes non-interactive path"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P7-001",
+      "phase": 7,
+      "priority": 44,
+      "title": "Support external/community module packages",
+      "description": "Allow users to register third-party module packages via maxsim.config.yaml externalModules array. CLI resolves and loads from node_modules at runtime.",
+      "acceptanceCriteria": [
+        "maxsim.config.yaml supports externalModules: string[]",
+        "ModuleRegistry.loadExternal(packageName) loads from node_modules",
+        "Sample module package structure documented",
+        "Error thrown if external module has invalid manifest",
+        "Unit tests for external module loading"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P7-002",
+      "phase": 7,
+      "priority": 45,
+      "title": "Implement upgrade command to refresh .claude/ directory",
+      "description": "maxsim-flutter upgrade re-runs runClaudeSetup with current config and latest templates. Backs up user-edited agent files before overwrite.",
+      "acceptanceCriteria": [
+        "maxsim-flutter upgrade re-generates CLAUDE.md and .claude/ contents",
+        "Existing user-edited agent files backed up with .bak extension",
+        "--dry-run shows what would change",
+        "Success message lists updated files"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P7-003",
+      "phase": 7,
+      "priority": 46,
+      "title": "Add CI step that validates generated Dart code compiles",
+      "description": "Add flutter-validate.yml workflow using Flutter Docker image. Creates test project, runs flutter pub get, flutter analyze.",
+      "acceptanceCriteria": [
+        ".github/workflows/flutter-validate.yml exists",
+        "Uses subosito/flutter-action@v2 to install Flutter",
+        "Tests core + auth + api + theme combinations",
+        "Fails CI if flutter analyze reports errors",
+        "Annotated as separate workflow not blocking main CI"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P7-004",
+      "phase": 7,
+      "priority": 47,
+      "title": "Write contributor guide and architecture documentation",
+      "description": "Create CONTRIBUTING.md with dev setup, how to add a module, template conventions, test instructions, PR process. Create docs/architecture.md.",
+      "acceptanceCriteria": [
+        "CONTRIBUTING.md at project root with complete dev setup instructions",
+        "How to add a new module walkthrough",
+        "docs/architecture.md describes subsystem relationships with diagram",
+        "README has Contributing section linking to CONTRIBUTING.md"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P7-005",
+      "phase": 7,
+      "priority": 48,
+      "title": "Interactive create wizard — project template presets",
+      "description": "Before asking individual questions, offer preset bundles: Minimal (core), Standard (auth+api+theme), Full Featured (all), Custom (pick manually).",
+      "acceptanceCriteria": [
+        "First prompt in interactive flow is preset selection",
+        "Selecting Standard pre-fills auth/api/theme",
+        "Selecting Full Featured pre-fills all 9 modules",
+        "Custom falls through to existing module multi-select",
+        "--yes skips preset and defaults to minimal"
+      ],
+      "passes": false
     }
   ]
 }

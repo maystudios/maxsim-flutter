@@ -17,6 +17,7 @@ const config: Config = {
     ],
   },
   extensionsToTreatAsEsm: ['.ts'],
+  transformIgnorePatterns: ['/node_modules/(?!(chalk|ansi-styles|#ansi-styles)/)'],
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
 };
 

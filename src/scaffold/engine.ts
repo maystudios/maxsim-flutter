@@ -1,11 +1,9 @@
 import { fileURLToPath } from 'node:url';
-import { dirname, join, extname } from 'node:path';
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import { load as yamlLoad, dump as yamlDump } from 'js-yaml';
 import fsExtra from 'fs-extra';
 const { pathExists } = fsExtra;
 import { TemplateRenderer } from './renderer.js';
-import type { TemplateContext } from './renderer.js';
 import { FileWriter } from './file-writer.js';
 import type { ProjectContext } from '../core/context.js';
 import type { GeneratedFile } from '../types/project.js';
@@ -16,6 +14,11 @@ import { runDartFormat } from './post-processors/dart-format.js';
 import { runFlutterPubGet } from './post-processors/flutter-pub-get.js';
 import { runBuildRunner } from './post-processors/build-runner.js';
 import { runClaudeSetup } from '../claude-setup/index.js';
+import {
+  buildTemplateContext,
+  collectAndRenderTemplates,
+  processPubspecPartial,
+} from './template-helpers.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -25,6 +28,7 @@ export interface ScaffoldResult {
   filesSkipped: string[];
   conflicts: string[];
   postProcessorsRun: string[];
+  postProcessorErrors: string[];
 }
 
 export interface ScaffoldEngineOptions {
@@ -54,12 +58,13 @@ export class ScaffoldEngine {
   }
 
   async run(context: ProjectContext): Promise<ScaffoldResult> {
-    const templateContext = this.buildTemplateContext(context);
+    const templateContext = buildTemplateContext(context);
 
     // 1. Collect and render core templates
-    const generatedFiles = await this.collectAndRenderTemplatesFromDir(
+    const generatedFiles = await collectAndRenderTemplates(
       this.getTemplatesDir(),
       templateContext,
+      this.renderer,
     );
 
     // 2. Handle module templates if any modules are enabled
@@ -74,8 +79,9 @@ export class ScaffoldEngine {
         const resolved = resolver.resolve(validIds);
 
         const modulesDir = this.getModulesTemplatesDir();
-        const extraDeps = new Map<string, string>();
-        const extraDevDeps = new Map<string, string>();
+        const extraDeps = new Map<string, string | Record<string, unknown>>();
+        const extraDevDeps = new Map<string, string | Record<string, unknown>>();
+        const extraFlutter: Record<string, unknown> = {};
 
         for (const mod of resolved.ordered) {
           if (mod.alwaysIncluded) continue;
@@ -85,41 +91,49 @@ export class ScaffoldEngine {
           if (!(await pathExists(moduleTemplateDir))) continue;
 
           // Collect and render module templates (excluding pubspec.partial.yaml)
-          const moduleFiles = await this.collectAndRenderTemplatesFromDir(
+          const moduleFiles = await collectAndRenderTemplates(
             moduleTemplateDir,
             templateContext,
+            this.renderer,
             ['pubspec.partial.yaml'],
           );
           generatedFiles.push(...moduleFiles);
 
           // Process pubspec.partial.yaml for dependency merging
           const partialPath = join(moduleTemplateDir, 'pubspec.partial.yaml');
-          if (await pathExists(partialPath)) {
-            const partialContent = await readFile(partialPath, 'utf-8');
-            const rendered = this.renderer.render(partialContent, templateContext);
-            const parsed = yamlLoad(rendered) as Record<string, Record<string, string>> | null;
-            if (parsed) {
-              if (parsed.dependencies) {
-                for (const [name, version] of Object.entries(parsed.dependencies)) {
-                  const v = String(version);
-                  const existing = extraDeps.get(name);
-                  extraDeps.set(name, existing ? pickNewerVersion(existing, v) : v);
-                }
-              }
-              if (parsed.dev_dependencies) {
-                for (const [name, version] of Object.entries(parsed.dev_dependencies)) {
-                  const v = String(version);
-                  const existing = extraDevDeps.get(name);
-                  extraDevDeps.set(name, existing ? pickNewerVersion(existing, v) : v);
-                }
-              }
+          const partial = await processPubspecPartial(partialPath, this.renderer, templateContext);
+          for (const [name, version] of partial.deps) {
+            if (typeof version === 'object') {
+              extraDeps.set(name, version);
+            } else {
+              const existing = extraDeps.get(name);
+              extraDeps.set(
+                name,
+                existing !== undefined && typeof existing === 'string'
+                  ? pickNewerVersion(existing, version)
+                  : version,
+              );
             }
           }
+          for (const [name, version] of partial.devDeps) {
+            if (typeof version === 'object') {
+              extraDevDeps.set(name, version);
+            } else {
+              const existing = extraDevDeps.get(name);
+              extraDevDeps.set(
+                name,
+                existing !== undefined && typeof existing === 'string'
+                  ? pickNewerVersion(existing, version)
+                  : version,
+              );
+            }
+          }
+          Object.assign(extraFlutter, partial.flutter);
         }
 
         // Merge module deps into the rendered pubspec.yaml
-        if (extraDeps.size > 0 || extraDevDeps.size > 0) {
-          this.mergePubspecDependencies(generatedFiles, extraDeps, extraDevDeps);
+        if (extraDeps.size > 0 || extraDevDeps.size > 0 || Object.keys(extraFlutter).length > 0) {
+          this.mergePubspecDependencies(generatedFiles, extraDeps, extraDevDeps, extraFlutter);
         }
       }
     }
@@ -144,14 +158,17 @@ export class ScaffoldEngine {
 
     // 5. Post-process
     const postProcessorsRun: string[] = [];
+    const postProcessorErrors: string[] = [];
 
     if (!context.scaffold.dryRun) {
       if (context.scaffold.postProcessors.dartFormat) {
         try {
           await runDartFormat(context.outputDir);
           postProcessorsRun.push('dart-format');
-        } catch {
-          // dart may not be installed; don't fail the whole scaffold
+        } catch (err) {
+          postProcessorErrors.push(
+            `dart format skipped: ${err instanceof Error ? err.message : String(err)}`,
+          );
         }
       }
 
@@ -159,8 +176,10 @@ export class ScaffoldEngine {
         try {
           await runFlutterPubGet(context.outputDir);
           postProcessorsRun.push('flutter-pub-get');
-        } catch {
-          // flutter may not be installed; don't fail the whole scaffold
+        } catch (err) {
+          postProcessorErrors.push(
+            `flutter pub get failed: ${err instanceof Error ? err.message : String(err)}`,
+          );
         }
       }
 
@@ -168,8 +187,10 @@ export class ScaffoldEngine {
         try {
           await runBuildRunner(context.outputDir);
           postProcessorsRun.push('build-runner');
-        } catch {
-          // build_runner may not be available; don't fail the whole scaffold
+        } catch (err) {
+          postProcessorErrors.push(
+            `build_runner failed: ${err instanceof Error ? err.message : String(err)}`,
+          );
         }
       }
     }
@@ -179,32 +200,7 @@ export class ScaffoldEngine {
       filesSkipped: writeResult.skipped,
       conflicts: writeResult.conflicts,
       postProcessorsRun,
-    };
-  }
-
-  private buildTemplateContext(ctx: ProjectContext): TemplateContext {
-    const platforms: Record<string, boolean> = {};
-    for (const platform of ctx.platforms) {
-      platforms[platform] = true;
-    }
-
-    const modules: Record<string, false | Record<string, unknown>> = {};
-    for (const [key, value] of Object.entries(ctx.modules)) {
-      if (value === false) {
-        modules[key] = false;
-      } else {
-        modules[key] = value as Record<string, unknown>;
-      }
-    }
-
-    return {
-      project: {
-        name: ctx.projectName,
-        org: ctx.orgId,
-        description: ctx.description,
-      },
-      platforms,
-      modules,
+      postProcessorErrors,
     };
   }
 
@@ -247,56 +243,13 @@ export class ScaffoldEngine {
   }
 
   /**
-   * Collect all template files from a directory and render them.
-   */
-  private async collectAndRenderTemplatesFromDir(
-    baseDir: string,
-    templateContext: TemplateContext,
-    excludeFiles: string[] = [],
-  ): Promise<GeneratedFile[]> {
-    const exists = await pathExists(baseDir);
-    if (!exists) return [];
-
-    const entries = await readdir(baseDir, { recursive: true });
-    const results: GeneratedFile[] = [];
-
-    for (const entry of entries) {
-      const entryStr = String(entry);
-      const absolutePath = join(baseDir, entryStr);
-
-      const fileStat = await stat(absolutePath);
-      if (fileStat.isDirectory()) continue;
-
-      // Check exclusions
-      if (excludeFiles.some((e) => entryStr === e || entryStr.endsWith(e))) continue;
-
-      const isHbs = extname(entryStr) === '.hbs';
-      const outputPath = isHbs ? entryStr.replace(/\.hbs$/, '') : entryStr;
-
-      let content: string;
-      if (isHbs) {
-        content = await this.renderer.renderFile(absolutePath, templateContext);
-      } else {
-        content = await readFile(absolutePath, 'utf-8');
-      }
-
-      results.push({
-        relativePath: outputPath,
-        content,
-        templateSource: absolutePath,
-      });
-    }
-
-    return results;
-  }
-
-  /**
    * Merge additional dependencies from modules into the rendered pubspec.yaml.
    */
   private mergePubspecDependencies(
     files: GeneratedFile[],
-    extraDeps: Map<string, string>,
-    extraDevDeps: Map<string, string>,
+    extraDeps: Map<string, string | Record<string, unknown>>,
+    extraDevDeps: Map<string, string | Record<string, unknown>>,
+    extraFlutter: Record<string, unknown> = {},
   ): void {
     const pubspecIdx = files.findIndex((f) => f.relativePath === 'pubspec.yaml');
     if (pubspecIdx < 0) return;
@@ -305,24 +258,33 @@ export class ScaffoldEngine {
 
     const deps = (pubspec['dependencies'] ?? {}) as Record<string, unknown>;
     for (const [name, version] of extraDeps) {
-      if (typeof deps[name] === 'string') {
+      if (typeof version === 'object') {
+        deps[name] = version;
+      } else if (typeof deps[name] === 'string') {
         deps[name] = pickNewerVersion(deps[name] as string, version);
       } else if (deps[name] === undefined) {
         deps[name] = version;
       }
-      // Skip SDK-style deps like flutter: {sdk: flutter}
     }
     pubspec['dependencies'] = deps;
 
     const devDeps = (pubspec['dev_dependencies'] ?? {}) as Record<string, unknown>;
     for (const [name, version] of extraDevDeps) {
-      if (typeof devDeps[name] === 'string') {
+      if (typeof version === 'object') {
+        devDeps[name] = version;
+      } else if (typeof devDeps[name] === 'string') {
         devDeps[name] = pickNewerVersion(devDeps[name] as string, version);
       } else if (devDeps[name] === undefined) {
         devDeps[name] = version;
       }
     }
     pubspec['dev_dependencies'] = devDeps;
+
+    if (Object.keys(extraFlutter).length > 0) {
+      const flutterSection = (pubspec['flutter'] ?? {}) as Record<string, unknown>;
+      Object.assign(flutterSection, extraFlutter);
+      pubspec['flutter'] = flutterSection;
+    }
 
     files[pubspecIdx] = {
       ...files[pubspecIdx],

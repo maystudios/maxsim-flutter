@@ -55,11 +55,13 @@ describe('ScaffoldEngine', () => {
       expect(result).toHaveProperty('filesSkipped');
       expect(result).toHaveProperty('conflicts');
       expect(result).toHaveProperty('postProcessorsRun');
+      expect(result).toHaveProperty('postProcessorErrors');
 
       // In dry-run, all files are counted as written
       expect(result.filesSkipped).toEqual([]);
       expect(result.conflicts).toEqual([]);
       expect(result.postProcessorsRun).toEqual([]);
+      expect(result.postProcessorErrors).toEqual([]);
     });
 
     it('includes core template output paths without .hbs extension', async () => {

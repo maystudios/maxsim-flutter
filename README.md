@@ -1,5 +1,6 @@
 # maxsim-flutter
 
+[![CI](https://github.com/nicosalm/maxsim-flutter/actions/workflows/ci.yml/badge.svg)](https://github.com/nicosalm/maxsim-flutter/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/maxsim-flutter.svg)](https://www.npmjs.com/package/maxsim-flutter)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js >= 18](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org/)
@@ -368,7 +369,7 @@ scaffold:
 ### Development setup
 
 ```bash
-git clone https://github.com/your-org/maxsim-flutter.git
+git clone https://github.com/nicosalm/maxsim-flutter.git
 cd maxsim-flutter
 npm install
 ```
@@ -430,6 +431,12 @@ feat: [Story-ID] - Short description
 fix: short description
 chore: short description
 ```
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 ---
 

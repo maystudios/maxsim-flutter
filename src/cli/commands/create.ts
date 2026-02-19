@@ -179,5 +179,9 @@ async function runCreate(
     p.log.info(`Ran: ${result.postProcessorsRun.join(', ')}`);
   }
 
+  for (const err of result.postProcessorErrors) {
+    p.log.warn(err);
+  }
+
   p.outro(`Project created! Run:\n  cd ${config.project.name}\n  flutter run`);
 }

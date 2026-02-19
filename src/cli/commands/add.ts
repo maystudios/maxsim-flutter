@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url';
-import { dirname, join, extname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { readFile, writeFile, readdir, stat } from 'node:fs/promises';
 import { Command } from 'commander';
 import * as p from '@clack/prompts';
@@ -12,9 +12,13 @@ import { ModuleRegistry } from '../../modules/registry.js';
 import { ModuleResolver } from '../../modules/resolver.js';
 import { pickNewerVersion } from '../../modules/composer.js';
 import { TemplateRenderer } from '../../scaffold/renderer.js';
-import type { TemplateContext } from '../../scaffold/renderer.js';
 import { FileWriter } from '../../scaffold/file-writer.js';
 import { runClaudeSetup } from '../../claude-setup/index.js';
+import {
+  buildTemplateContext,
+  collectAndRenderTemplates,
+  processPubspecPartial,
+} from '../../scaffold/template-helpers.js';
 import { createSpinner } from '../ui/spinner.js';
 import type { MaxsimConfig } from '../../types/config.js';
 import type { ModuleManifest } from '../../types/module.js';
@@ -263,8 +267,9 @@ async function runAdd(
   const modulesTemplatesDir = getModulesTemplatesDir();
 
   const generatedFiles: GeneratedFile[] = [];
-  const extraDeps = new Map<string, string>();
-  const extraDevDeps = new Map<string, string>();
+  const extraDeps = new Map<string, string | Record<string, unknown>>();
+  const extraDevDeps = new Map<string, string | Record<string, unknown>>();
+  const extraFlutter: Record<string, unknown> = {};
 
   for (const id of resolvedModuleIds) {
     const moduleTemplateDir = join(modulesTemplatesDir, id);
@@ -281,27 +286,34 @@ async function runAdd(
 
     // Process pubspec.partial.yaml
     const partialPath = join(moduleTemplateDir, 'pubspec.partial.yaml');
-    if (await pathExists(partialPath)) {
-      const partialContent = await readFile(partialPath, 'utf-8');
-      const rendered = renderer.render(partialContent, templateContext);
-      const parsed = yamlLoad(rendered) as Record<string, Record<string, string>> | null;
-      if (parsed) {
-        if (parsed['dependencies']) {
-          for (const [name, version] of Object.entries(parsed['dependencies'])) {
-            const v = String(version);
-            const existing = extraDeps.get(name);
-            extraDeps.set(name, existing ? pickNewerVersion(existing, v) : v);
-          }
-        }
-        if (parsed['dev_dependencies']) {
-          for (const [name, version] of Object.entries(parsed['dev_dependencies'])) {
-            const v = String(version);
-            const existing = extraDevDeps.get(name);
-            extraDevDeps.set(name, existing ? pickNewerVersion(existing, v) : v);
-          }
-        }
+    const partial = await processPubspecPartial(partialPath, renderer, templateContext);
+    for (const [name, version] of partial.deps) {
+      if (typeof version === 'object') {
+        extraDeps.set(name, version);
+      } else {
+        const existing = extraDeps.get(name);
+        extraDeps.set(
+          name,
+          existing !== undefined && typeof existing === 'string'
+            ? pickNewerVersion(existing, version)
+            : version,
+        );
       }
     }
+    for (const [name, version] of partial.devDeps) {
+      if (typeof version === 'object') {
+        extraDevDeps.set(name, version);
+      } else {
+        const existing = extraDevDeps.get(name);
+        extraDevDeps.set(
+          name,
+          existing !== undefined && typeof existing === 'string'
+            ? pickNewerVersion(existing, version)
+            : version,
+        );
+      }
+    }
+    Object.assign(extraFlutter, partial.flutter);
   }
 
   // 11. Write module files
@@ -315,8 +327,8 @@ async function runAdd(
   const writeResult = await writer.writeAll(fileMap);
 
   // 12. Merge pubspec.yaml
-  if (extraDeps.size > 0 || extraDevDeps.size > 0) {
-    await mergePubspecYaml(projectRoot, extraDeps, extraDevDeps);
+  if (extraDeps.size > 0 || extraDevDeps.size > 0 || Object.keys(extraFlutter).length > 0) {
+    await mergePubspecYaml(projectRoot, extraDeps, extraDevDeps, extraFlutter);
   }
 
   // 13. Update maxsim.config.yaml
@@ -401,70 +413,6 @@ export function getEnabledModuleIds(config: MaxsimConfig): Set<string> {
 }
 
 /**
- * Build a TemplateContext from a ProjectContext (mirrors the engine's private method).
- */
-function buildTemplateContext(ctx: import('../../core/context.js').ProjectContext): TemplateContext {
-  const platforms: Record<string, boolean> = {};
-  for (const platform of ctx.platforms) {
-    platforms[platform] = true;
-  }
-
-  const modules: Record<string, false | Record<string, unknown>> = {};
-  for (const [key, value] of Object.entries(ctx.modules)) {
-    modules[key] = value === false ? false : (value as Record<string, unknown>);
-  }
-
-  return {
-    project: {
-      name: ctx.projectName,
-      org: ctx.orgId,
-      description: ctx.description,
-    },
-    platforms,
-    modules,
-  };
-}
-
-/**
- * Collect and render all template files from a directory, excluding specified files.
- */
-async function collectAndRenderTemplates(
-  baseDir: string,
-  templateContext: TemplateContext,
-  renderer: TemplateRenderer,
-  excludeFiles: string[] = [],
-): Promise<GeneratedFile[]> {
-  const exists = await pathExists(baseDir);
-  if (!exists) return [];
-
-  const entries = await readdir(baseDir, { recursive: true });
-  const results: GeneratedFile[] = [];
-
-  for (const entry of entries) {
-    const entryStr = String(entry);
-    const absolutePath = join(baseDir, entryStr);
-
-    const fileStat = await stat(absolutePath);
-    if (fileStat.isDirectory()) continue;
-    if (excludeFiles.some((e) => entryStr === e || entryStr.endsWith(e))) continue;
-
-    const isHbs = extname(entryStr) === '.hbs';
-    const outputPath = isHbs ? entryStr.replace(/\.hbs$/, '') : entryStr;
-
-    let content: string;
-    if (isHbs) {
-      content = await renderer.renderFile(absolutePath, templateContext);
-    } else {
-      content = await readFile(absolutePath, 'utf-8');
-    }
-
-    results.push({ relativePath: outputPath, content, templateSource: absolutePath });
-  }
-
-  return results;
-}
-
-/**
  * List template files in a directory (for dry-run preview).
  */
 async function listTemplateFiles(baseDir: string): Promise<string[]> {
@@ -491,8 +439,9 @@ async function listTemplateFiles(baseDir: string): Promise<string[]> {
  */
 export async function mergePubspecYaml(
   projectDir: string,
-  extraDeps: Map<string, string>,
-  extraDevDeps: Map<string, string>,
+  extraDeps: Map<string, string | Record<string, unknown>>,
+  extraDevDeps: Map<string, string | Record<string, unknown>>,
+  extraFlutter: Record<string, unknown> = {},
 ): Promise<void> {
   const pubspecPath = join(projectDir, 'pubspec.yaml');
   if (!(await pathExists(pubspecPath))) return;
@@ -502,24 +451,33 @@ export async function mergePubspecYaml(
 
   const deps = (pubspec['dependencies'] ?? {}) as Record<string, unknown>;
   for (const [name, version] of extraDeps) {
-    if (typeof deps[name] === 'string') {
+    if (typeof version === 'object') {
+      deps[name] = version;
+    } else if (typeof deps[name] === 'string') {
       deps[name] = pickNewerVersion(deps[name] as string, version);
     } else if (deps[name] === undefined) {
       deps[name] = version;
     }
-    // Skip SDK-style deps like flutter: {sdk: flutter}
   }
   pubspec['dependencies'] = deps;
 
   const devDeps = (pubspec['dev_dependencies'] ?? {}) as Record<string, unknown>;
   for (const [name, version] of extraDevDeps) {
-    if (typeof devDeps[name] === 'string') {
+    if (typeof version === 'object') {
+      devDeps[name] = version;
+    } else if (typeof devDeps[name] === 'string') {
       devDeps[name] = pickNewerVersion(devDeps[name] as string, version);
     } else if (devDeps[name] === undefined) {
       devDeps[name] = version;
     }
   }
   pubspec['dev_dependencies'] = devDeps;
+
+  if (Object.keys(extraFlutter).length > 0) {
+    const flutterSection = (pubspec['flutter'] ?? {}) as Record<string, unknown>;
+    Object.assign(flutterSection, extraFlutter);
+    pubspec['flutter'] = flutterSection;
+  }
 
   await writeFile(pubspecPath, yamlDump(pubspec, { indent: 2, lineWidth: 120, noRefs: true }), 'utf-8');
 }

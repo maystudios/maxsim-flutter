@@ -294,6 +294,18 @@
 - All quality gates pass: typecheck, lint, 233 tests passing across 11 suites
 - Status: PASSES
 
+## 2026-02-19T05:00 - P3-004: Wire Claude setup into scaffold engine and generate PRD
+- ScaffoldEngine already calls runClaudeSetup() to generate complete .claude/ directory
+- setup-orchestrator.ts coordinates all generators: CLAUDE.md, agents, skills, hooks, MCP, commands, prd.json
+- prd-generator.ts creates phased stories (Phase 1: core setup, Phase 2: module-specific, Phase 3: polish)
+- Fixed: wired --no-claude CLI flag to ScaffoldEngine via noClaude option in create.ts
+- Added 3 new integration tests:
+  - .claude/skills/ with 4 skill files (flutter-patterns, go-router-patterns, module-conventions, prd)
+  - .claude/settings.local.json with TaskCompleted hook (flutter analyze + flutter test)
+  - .claude/commands/ with add-feature.md and analyze.md
+- All quality gates pass: typecheck, lint, 271 tests passing across 12 suites
+- Status: PASSES
+
 ## 2026-02-19T04:00 - P3-003: Implement skills, hooks, and MCP config writer
 - Implementation already existed from prior commit but passes was not set to true
 - Fixed missing acceptance criterion: added TeammateIdle hook in hooks-writer.ts

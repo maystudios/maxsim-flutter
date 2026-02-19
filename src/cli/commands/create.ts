@@ -156,7 +156,9 @@ async function runCreate(
   const spinner = createSpinner('Generating Flutter project...');
   spinner.start();
 
-  const engine = new ScaffoldEngine();
+  const engine = new ScaffoldEngine({
+    noClaude: options.claude === false,
+  });
   const result = await engine.run(context);
 
   spinner.succeed(`Generated ${result.filesWritten.length} files`);

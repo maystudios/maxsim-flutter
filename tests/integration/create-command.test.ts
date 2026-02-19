@@ -638,6 +638,70 @@ describe('Integration: create command generates working Flutter project', () => 
 
       expect(await pathExists(join(tmpDir, '.mcp.json'))).toBe(true);
     });
+
+    it('generates .claude/skills/ with 4 skill files', async () => {
+      const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
+      const context = makeContext(tmpDir, {
+        claude: { enabled: true, agentTeams: false },
+      });
+      await engine.run(context);
+
+      const skillsDir = join(tmpDir, '.claude', 'skills');
+      expect(await pathExists(skillsDir)).toBe(true);
+
+      const expectedSkills = [
+        'flutter-patterns.md',
+        'go-router-patterns.md',
+        'module-conventions.md',
+        'prd.md',
+      ];
+      for (const skillFile of expectedSkills) {
+        expect(await pathExists(join(skillsDir, skillFile))).toBe(true);
+      }
+
+      // Verify skill content
+      const flutterPatterns = await readFile(join(skillsDir, 'flutter-patterns.md'), 'utf-8');
+      expect(flutterPatterns).toContain('Riverpod');
+    });
+
+    it('generates .claude/settings.local.json with hooks', async () => {
+      const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
+      const context = makeContext(tmpDir, {
+        claude: { enabled: true, agentTeams: false },
+      });
+      await engine.run(context);
+
+      const hooksPath = join(tmpDir, '.claude', 'settings.local.json');
+      expect(await pathExists(hooksPath)).toBe(true);
+
+      const hooksContent = await readFile(hooksPath, 'utf-8');
+      const hooks = JSON.parse(hooksContent) as Record<string, unknown>;
+      expect(hooks).toHaveProperty('hooks');
+
+      // TaskCompleted hook should run flutter analyze + test
+      expect(hooksContent).toContain('flutter analyze');
+      expect(hooksContent).toContain('flutter test');
+    });
+
+    it('generates .claude/commands/ with command files', async () => {
+      const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
+      const context = makeContext(tmpDir, {
+        claude: { enabled: true, agentTeams: false },
+      });
+      await engine.run(context);
+
+      const commandsDir = join(tmpDir, '.claude', 'commands');
+      expect(await pathExists(commandsDir)).toBe(true);
+
+      const expectedCommands = ['add-feature.md', 'analyze.md'];
+      for (const cmdFile of expectedCommands) {
+        expect(await pathExists(join(commandsDir, cmdFile))).toBe(true);
+      }
+
+      // Verify command content
+      const addFeature = await readFile(join(commandsDir, 'add-feature.md'), 'utf-8');
+      expect(addFeature).toContain('feature');
+    });
   });
 
   it('generates supabase deps when auth provider is supabase', async () => {

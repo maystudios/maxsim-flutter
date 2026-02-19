@@ -357,7 +357,7 @@
         "All agents, skills, commands, hooks present in generated project",
         "Integration test verifies .claude/ output"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P3-005",

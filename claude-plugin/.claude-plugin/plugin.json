@@ -1,8 +1,17 @@
 {
   "name": "maxsim-flutter",
   "version": "0.1.0",
-  "description": "AI-powered Flutter app scaffolding with Clean Architecture, Riverpod, and autonomous development",
+  "description": "AI-powered Flutter app scaffolding with Clean Architecture, Riverpod, go_router, and autonomous development via Claude Code Agent Teams",
   "author": "maxsim-flutter contributors",
+  "homepage": "https://github.com/your-org/maxsim-flutter",
+  "keywords": [
+    "flutter",
+    "clean-architecture",
+    "riverpod",
+    "go-router",
+    "scaffold",
+    "agent-teams"
+  ],
   "commands": [
     {
       "name": "flutter-create",
@@ -23,14 +32,14 @@
   "skills": [
     {
       "name": "flutter-scaffolding",
-      "description": "Knowledge about available modules, architecture patterns, and configuration options",
+      "description": "Knowledge about available modules, architecture patterns, and configuration options for maxsim-flutter projects",
       "directory": "skills/flutter-scaffolding"
     }
   ],
   "agents": [
     {
       "name": "flutter-setup-agent",
-      "description": "Interactive agent that guides users through Flutter project setup",
+      "description": "Interactive agent that guides users through Flutter project setup, module selection, and configuration",
       "file": "agents/flutter-setup-agent.md"
     }
   ]

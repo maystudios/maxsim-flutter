@@ -162,7 +162,7 @@
         "Registry correctly discovers all module definitions",
         "npm run typecheck passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P2-002",

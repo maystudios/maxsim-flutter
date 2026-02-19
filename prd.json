@@ -178,7 +178,7 @@
         "tests/unit/resolver.test.ts covers: valid order, missing dep, circular, conflict",
         "npm run typecheck passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P2-003",

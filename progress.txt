@@ -102,3 +102,19 @@
 - Created tests/unit/registry.test.ts with 13 tests covering registration, retrieval, filtering, dynamic loading, and core manifest validation
 - All quality gates pass: typecheck, lint, 101 tests passing across 7 suites
 - Status: PASSES
+
+## 2026-02-19T00:05 - P2-002: Implement module dependency resolver with topological sort
+- Created src/modules/resolver.ts with ModuleResolver class and ResolveResult interface
+- Topological sort via Kahn's algorithm (BFS-based) with deterministic alphabetical ordering
+- Automatic inclusion of always-included modules and transitive dependency resolution
+- Circular dependency detection (reports involved module IDs)
+- Conflict detection using conflictsWith field on ModuleManifest
+- Created tests/unit/resolver.test.ts with 18 tests covering:
+  - Valid resolution order (single, chain, diamond, complex dependencies)
+  - Transitive dependency auto-inclusion
+  - Missing dependency errors (selected and required)
+  - Circular dependency detection (direct and transitive)
+  - Conflict detection with clear error messages
+  - Edge cases (empty selection, duplicates, always-included overlap)
+- All quality gates pass: typecheck, lint, 119 tests passing across 8 suites
+- Status: PASSES

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../../core/router/app_router.dart';
 import '../../data/datasources/deep_link_datasource.dart';
 import '../../data/repositories/deep_link_repository_impl.dart';
 import '../../domain/repositories/deep_link_repository.dart';
@@ -48,10 +48,4 @@ class DeepLinkHandler extends _$DeepLinkHandler {
     final router = ref.read(routerProvider);
     router.go(uri.path, extra: uri.queryParameters);
   }
-}
-
-// Provide the router instance — override this in your app's provider scope.
-@riverpod
-GoRouter router(Ref ref) {
-  throw UnimplementedError('Override routerProvider with your GoRouter instance');
 }

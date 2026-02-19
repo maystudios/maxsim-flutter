@@ -714,6 +714,78 @@ describe('Integration: create command generates working Flutter project', () => 
     });
   });
 
+  describe('deep-linking module does not conflict with core router', () => {
+    it('produces only one routerProvider definition across all output files', async () => {
+      const engine = new ScaffoldEngine({
+        templatesDir: TEMPLATES_DIR,
+        modulesTemplatesDir: MODULES_DIR,
+        registry: createTestRegistry(),
+      });
+      const context = makeContext(tmpDir, {
+        modules: {
+          auth: false,
+          api: false,
+          database: false,
+          i18n: false,
+          theme: false,
+          push: false,
+          analytics: false,
+          cicd: false,
+          deepLinking: { scheme: 'myapp', host: 'example.com' },
+        },
+      });
+      await engine.run(context);
+
+      // Collect all .dart files
+      const { readdir: readdirRecursive } = await import('node:fs/promises');
+      const allEntries = await readdirRecursive(tmpDir, { recursive: true });
+      const dartFiles = (allEntries as string[]).filter((f: string) => f.endsWith('.dart'));
+
+      let routerProviderCount = 0;
+      for (const file of dartFiles) {
+        const content = await readFile(join(tmpDir, file), 'utf-8');
+        // Count @riverpod annotated functions named "router"
+        const matches = content.match(/@riverpod[\s\S]*?\n\s*\w+\s+router\s*\(/g);
+        if (matches) {
+          routerProviderCount += matches.length;
+        }
+      }
+
+      expect(routerProviderCount).toBe(1);
+    });
+
+    it('deep-link provider imports routerProvider from core router', async () => {
+      const engine = new ScaffoldEngine({
+        templatesDir: TEMPLATES_DIR,
+        modulesTemplatesDir: MODULES_DIR,
+        registry: createTestRegistry(),
+      });
+      const context = makeContext(tmpDir, {
+        modules: {
+          auth: false,
+          api: false,
+          database: false,
+          i18n: false,
+          theme: false,
+          push: false,
+          analytics: false,
+          cicd: false,
+          deepLinking: { scheme: 'myapp', host: 'example.com' },
+        },
+      });
+      await engine.run(context);
+
+      const deepLinkProviderPath = join(
+        tmpDir,
+        'lib/features/deep_linking/presentation/providers/deep_link_provider.dart',
+      );
+      const content = await readFile(deepLinkProviderPath, 'utf-8');
+
+      expect(content).toContain('core/router/app_router.dart');
+      expect(content).not.toMatch(/@riverpod[\s\S]*?\n\s*GoRouter\s+router\s*\(/);
+    });
+  });
+
   it('generates supabase deps when auth provider is supabase', async () => {
     const engine = new ScaffoldEngine({
       templatesDir: TEMPLATES_DIR,

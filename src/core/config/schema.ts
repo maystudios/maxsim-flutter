@@ -128,7 +128,7 @@ export const MaxsimConfigSchema = z.object({
       overwriteExisting: z.enum(['ask', 'always', 'never']).default('ask'),
       runDartFormat: z.boolean().default(true),
       runPubGet: z.boolean().default(true),
-      runBuildRunner: z.boolean().default(false),
+      runBuildRunner: z.boolean().default(true),
       dryRun: z.boolean().default(false),
     })
     .default({}),

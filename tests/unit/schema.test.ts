@@ -25,7 +25,7 @@ describe('MaxsimConfigSchema', () => {
       expect(result.scaffold.overwriteExisting).toBe('ask');
       expect(result.scaffold.runDartFormat).toBe(true);
       expect(result.scaffold.runPubGet).toBe(true);
-      expect(result.scaffold.runBuildRunner).toBe(false);
+      expect(result.scaffold.runBuildRunner).toBe(true);
       expect(result.scaffold.dryRun).toBe(false);
     });
   });

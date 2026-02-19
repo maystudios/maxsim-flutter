@@ -1,0 +1,171 @@
+import 'package:dio/dio.dart';
+import '../../domain/exceptions/api_exception.dart';
+
+/// Central API client built on Dio.
+///
+/// Provides a pre-configured [Dio] instance with:
+/// - Base URL from project configuration
+/// - Request/response logging interceptor
+/// - Error-mapping interceptor that converts [DioException] to [ApiException]
+/// - Configurable request timeout
+class ApiClient {
+  final Dio dio;
+
+  ApiClient({Dio? dio}) : dio = dio ?? _createDio();
+
+  static Dio _createDio() {
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: const String.fromEnvironment(
+          'API_BASE_URL',
+          defaultValue: '{{#if modules.api.baseUrl}}{{{modules.api.baseUrl}}}{{else}}https://api.example.com{{/if}}',
+        ),
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        sendTimeout: const Duration(seconds: 15),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
+
+    dio.interceptors.addAll([
+      _LoggingInterceptor(),
+      _ErrorInterceptor(),
+    ]);
+
+    return dio;
+  }
+
+  /// Perform a GET request.
+  Future<Response<T>> get<T>(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) {
+    return dio.get<T>(path, queryParameters: queryParameters, options: options);
+  }
+
+  /// Perform a POST request.
+  Future<Response<T>> post<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) {
+    return dio.post<T>(path, data: data, queryParameters: queryParameters, options: options);
+  }
+
+  /// Perform a PUT request.
+  Future<Response<T>> put<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) {
+    return dio.put<T>(path, data: data, queryParameters: queryParameters, options: options);
+  }
+
+  /// Perform a PATCH request.
+  Future<Response<T>> patch<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) {
+    return dio.patch<T>(path, data: data, queryParameters: queryParameters, options: options);
+  }
+
+  /// Perform a DELETE request.
+  Future<Response<T>> delete<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) {
+    return dio.delete<T>(path, data: data, queryParameters: queryParameters, options: options);
+  }
+}
+
+/// Interceptor that logs request and response details in debug mode.
+class _LoggingInterceptor extends Interceptor {
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    assert(() {
+      // ignore: avoid_print
+      print('[API] ${options.method} ${options.uri}');
+      return true;
+    }());
+    handler.next(options);
+  }
+
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    assert(() {
+      // ignore: avoid_print
+      print('[API] ${response.statusCode} ${response.requestOptions.uri}');
+      return true;
+    }());
+    handler.next(response);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    assert(() {
+      // ignore: avoid_print
+      print('[API] ERROR ${err.type}: ${err.message}');
+      return true;
+    }());
+    handler.next(err);
+  }
+}
+
+/// Interceptor that maps [DioException] to typed [ApiException].
+class _ErrorInterceptor extends Interceptor {
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    final apiException = _mapDioException(err);
+    handler.reject(
+      DioException(
+        requestOptions: err.requestOptions,
+        response: err.response,
+        type: err.type,
+        error: apiException,
+      ),
+    );
+  }
+
+  ApiException _mapDioException(DioException err) {
+    switch (err.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return ApiException(
+          message: 'Request timed out. Please try again.',
+        );
+      case DioExceptionType.badResponse:
+        return ApiException(
+          statusCode: err.response?.statusCode,
+          message: _extractMessage(err.response),
+          data: err.response?.data,
+        );
+      case DioExceptionType.cancel:
+        return const ApiException(message: 'Request was cancelled.');
+      case DioExceptionType.connectionError:
+        return const ApiException(
+          message: 'No internet connection. Please check your network.',
+        );
+      default:
+        return ApiException(message: err.message ?? 'An unexpected error occurred.');
+    }
+  }
+
+  String _extractMessage(Response? response) {
+    if (response?.data is Map) {
+      final data = response!.data as Map;
+      return (data['message'] ?? data['error'] ?? 'Request failed').toString();
+    }
+    return 'Request failed with status ${response?.statusCode}';
+  }
+}

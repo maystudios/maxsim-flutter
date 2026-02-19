@@ -1,0 +1,42 @@
+import 'package:dio/dio.dart';
+
+/// Interceptor that retries failed requests with exponential backoff.
+///
+/// Retries on connection errors and 5xx server errors up to [maxRetries] times.
+class RetryInterceptor extends Interceptor {
+  final Dio dio;
+  final int maxRetries;
+
+  RetryInterceptor({
+    required this.dio,
+    this.maxRetries = 3,
+  });
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
+    if (_shouldRetry(err)) {
+      final retryCount = (err.requestOptions.extra['retryCount'] as int?) ?? 0;
+      if (retryCount < maxRetries) {
+        final delay = Duration(milliseconds: 200 * (retryCount + 1));
+        await Future<void>.delayed(delay);
+
+        err.requestOptions.extra['retryCount'] = retryCount + 1;
+        try {
+          final response = await dio.fetch(err.requestOptions);
+          handler.resolve(response);
+          return;
+        } on DioException catch (e) {
+          handler.reject(e);
+          return;
+        }
+      }
+    }
+    handler.next(err);
+  }
+
+  bool _shouldRetry(DioException err) {
+    return err.type == DioExceptionType.connectionError ||
+        err.type == DioExceptionType.connectionTimeout ||
+        (err.response?.statusCode != null && err.response!.statusCode! >= 500);
+  }
+}

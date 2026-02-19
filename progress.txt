@@ -156,3 +156,21 @@
 - Templates use {{#ifEquals modules.auth.provider "..."}} for provider-specific code
 - All quality gates pass: typecheck, lint, 150 tests passing across 9 suites
 - Status: PASSES
+
+## 2026-02-19T00:08 - P2-005: Implement API module definition and templates
+- Created src/modules/definitions/api/module.ts with full ModuleManifest
+  - No dependencies on other modules (requires: [])
+  - Question for API base URL configuration
+  - Contributions: pubspec deps (dio, retrofit, json_annotation), dev deps (retrofit_generator, json_serializable)
+  - Provider: dioClientProvider
+  - Environment variable: API_BASE_URL
+  - isEnabled predicate checks context.modules.api !== false
+- Created templates/modules/api/ with Clean Architecture layers:
+  - Domain: ApiException (typed error with status code, convenience getters), ApiRepository interface
+  - Data: ApiClient (Dio wrapper with base URL, timeouts, logging + error interceptors)
+  - Data interceptors: AuthInterceptor (bearer token attachment), RetryInterceptor (exponential backoff)
+  - Data: ApiRepositoryImpl with health check implementation
+  - Presentation: api_provider.dart (Riverpod providers for ApiClient and ApiRepository)
+- Created templates/modules/api/pubspec.partial.yaml with dio, retrofit, json_annotation deps
+- All quality gates pass: typecheck, lint, 150 tests passing across 9 suites
+- Status: PASSES

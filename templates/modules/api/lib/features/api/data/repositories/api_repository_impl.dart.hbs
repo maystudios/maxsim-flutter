@@ -1,0 +1,21 @@
+import '../../domain/exceptions/api_exception.dart';
+import '../../domain/repositories/api_repository.dart';
+import '../datasources/api_client.dart';
+
+class ApiRepositoryImpl implements ApiRepository {
+  final ApiClient _client;
+
+  const ApiRepositoryImpl(this._client);
+
+  @override
+  Future<bool> healthCheck() async {
+    try {
+      final response = await _client.get<dynamic>('/health');
+      return response.statusCode == 200;
+    } on ApiException {
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+}

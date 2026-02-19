@@ -1,0 +1,25 @@
+import 'package:dio/dio.dart';
+
+/// Interceptor that attaches authentication tokens to requests.
+///
+/// Override [getToken] with your token retrieval logic
+/// (e.g., reading from secure storage or a Riverpod provider).
+class AuthInterceptor extends Interceptor {
+  /// Override this to return the current auth token.
+  Future<String?> getToken() async {
+    // TODO: Implement token retrieval from your auth/storage solution.
+    return null;
+  }
+
+  @override
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    final token = await getToken();
+    if (token != null) {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
+    handler.next(options);
+  }
+}

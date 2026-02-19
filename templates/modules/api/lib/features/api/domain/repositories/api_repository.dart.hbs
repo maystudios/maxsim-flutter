@@ -1,0 +1,8 @@
+/// Base repository interface for API operations.
+///
+/// Extend this interface for feature-specific API repositories.
+/// Implementations should use [ApiClient] for HTTP requests.
+abstract class ApiRepository {
+  /// Perform a health check against the API.
+  Future<bool> healthCheck();
+}

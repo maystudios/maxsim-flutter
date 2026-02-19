@@ -222,7 +222,7 @@
         "Error handling with typed ApiException",
         "pubspec.partial.yaml includes dio, retrofit, json_annotation"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P2-006",

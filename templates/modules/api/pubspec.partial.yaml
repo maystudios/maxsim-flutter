@@ -1,0 +1,7 @@
+dependencies:
+  dio: ^5.7.0
+  retrofit: ^4.4.1
+  json_annotation: ^4.9.0
+dev_dependencies:
+  retrofit_generator: ^9.1.5
+  json_serializable: ^6.9.0

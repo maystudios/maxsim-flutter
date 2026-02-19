@@ -1,0 +1,17 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../data/datasources/api_client.dart';
+import '../../data/repositories/api_repository_impl.dart';
+import '../../domain/repositories/api_repository.dart';
+
+part 'api_provider.g.dart';
+
+@riverpod
+ApiClient apiClient(Ref ref) {
+  return ApiClient();
+}
+
+@riverpod
+ApiRepository apiRepository(Ref ref) {
+  return ApiRepositoryImpl(ref.watch(apiClientProvider));
+}

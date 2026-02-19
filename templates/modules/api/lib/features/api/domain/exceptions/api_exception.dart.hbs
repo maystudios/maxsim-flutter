@@ -1,0 +1,31 @@
+/// Typed exception for API errors with status code and message.
+class ApiException implements Exception {
+  final int? statusCode;
+  final String message;
+  final dynamic data;
+
+  const ApiException({
+    this.statusCode,
+    required this.message,
+    this.data,
+  });
+
+  /// Creates an [ApiException] from a generic error.
+  factory ApiException.fromError(Object error) {
+    return ApiException(message: error.toString());
+  }
+
+  bool get isUnauthorized => statusCode == 401;
+  bool get isForbidden => statusCode == 403;
+  bool get isNotFound => statusCode == 404;
+  bool get isServerError => statusCode != null && statusCode! >= 500;
+  bool get isTimeout => statusCode == null && message.contains('timeout');
+
+  @override
+  String toString() {
+    if (statusCode != null) {
+      return 'ApiException($statusCode): $message';
+    }
+    return 'ApiException: $message';
+  }
+}

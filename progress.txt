@@ -275,3 +275,21 @@
 - Created tests/unit/claude-md-generator.test.ts with 40 tests covering all sections
 - All quality gates pass: typecheck, lint, 199 tests passing across 10 suites
 - Status: PASSES
+
+## 2026-02-19T03:00 - P3-002: Implement agent definitions writer for Flutter projects
+- Created src/claude-setup/agent-writer.ts with writeAgents(context, outputPath) and buildAgentDefinitions(context) exports
+- 5 agent definitions designed as Claude Code Agent Teams teammates:
+  - flutter-architect: Sonnet, read-only tools (Read, Grep, Glob, WebSearch), reviews before implementation
+  - flutter-feature-builder: Sonnet, all tools (Read, Write, Edit, Grep, Glob, Bash), claims tasks and implements
+  - flutter-tester: Sonnet, all tools, writes tests and messages builders about failures
+  - flutter-reviewer: Sonnet, read-only tools (Read, Grep, Glob), reviews after implementation
+  - flutter-docs: Haiku, edit tools (Read, Write, Edit, Grep, Glob), documents after review
+- All agents include project name, module context (lists active modules), architecture rules
+- Agent markdown files have YAML frontmatter (name, description, model, tools)
+- Created tests/unit/agent-writer.test.ts with 34 tests covering:
+  - Agent count, filenames, names
+  - Per-agent: model, tools, body content (architecture rules, workflow, conventions)
+  - Module context: no-modules message, partial modules, all modules
+  - writeAgents: directory creation, file writing, frontmatter format, file paths
+- All quality gates pass: typecheck, lint, 233 tests passing across 11 suites
+- Status: PASSES

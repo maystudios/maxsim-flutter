@@ -417,7 +417,7 @@
         "Module table with descriptions",
         "Configuration reference"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P4-003",

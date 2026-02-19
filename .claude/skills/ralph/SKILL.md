@@ -19,8 +19,8 @@ This will autonomously iterate through prd.json stories, implementing one per it
 
 ### Status
 Check current Ralph progress:
-1. Read `prd.json` - count completed vs remaining stories
-2. Read `progress.txt` - see what was done in recent iterations
+1. Read `prd.json` — count completed vs remaining stories
+2. Read `progress.txt` — see what was done in recent iterations
 3. Report phase progress and estimated remaining work
 
 ### Resume
@@ -35,6 +35,14 @@ If Ralph stopped mid-run (max iterations or error):
 - `claude` CLI in PATH
 - `prd.json` exists with valid stories
 - `npm run build` succeeds (project compiles)
+
+## TDD Integration
+
+Ralph iterations follow TDD discipline:
+- Quality gates include test-first verification
+- Each story must have tests written before implementation
+- `npm run quality` is run before marking any story complete
+- Coverage thresholds must be met: statements 80%, branches 75%, functions 80%, lines 80%
 
 ## Monitoring
 

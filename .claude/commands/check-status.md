@@ -15,8 +15,13 @@ Check the current development status:
 
 3. Run `npm run typecheck` and `npm test` to verify project health
 
-4. Report:
+4. Run `npm run test:coverage` for coverage summary:
+   - Statements, branches, functions, lines percentages
+   - Whether thresholds are met (80/75/80/80)
+
+5. Report:
    - Phase progress (e.g., "Phase 2: 4/8 stories complete")
    - Next story to implement
    - Any failing quality checks
+   - Coverage status
    - Git status (uncommitted changes)

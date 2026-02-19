@@ -342,7 +342,7 @@
         ".mcp.json includes relevant MCP servers based on modules",
         "Commands: add-feature.md, analyze.md"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P3-004",

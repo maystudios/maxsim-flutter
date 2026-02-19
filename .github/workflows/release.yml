@@ -1,25 +1,27 @@
 name: Release
 
-# Triggered when a version tag is pushed (e.g. v0.1.0, v1.2.3)
-# Required secret: NPM_TOKEN — add in GitHub repo Settings → Secrets → Actions
-
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 permissions:
-  contents: read
-  id-token: write  # Required for npm publish --provenance
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
 
 jobs:
   release:
-    name: Build, test, and publish to npm
+    name: Quality Gates & Release
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -37,7 +39,8 @@ jobs:
       - name: Validate package contents
         run: npm run validate:pack
 
-      - name: Publish to npm (with provenance)
-        run: npm publish --provenance --access public
+      - name: Semantic Release
+        run: npx semantic-release
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

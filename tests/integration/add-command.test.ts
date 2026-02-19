@@ -1,22 +1,12 @@
-import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { load as yamlLoad, dump as yamlDump } from 'js-yaml';
 import fsExtra from 'fs-extra';
 
 import { ScaffoldEngine } from '../../src/scaffold/engine.js';
-import type { ProjectContext } from '../../src/core/context.js';
-import { ModuleRegistry } from '../../src/modules/registry.js';
-import { manifest as coreManifest } from '../../src/modules/definitions/core/module.js';
-import { manifest as authManifest } from '../../src/modules/definitions/auth/module.js';
-import { manifest as apiManifest } from '../../src/modules/definitions/api/module.js';
-import { manifest as themeManifest } from '../../src/modules/definitions/theme/module.js';
-import { manifest as databaseManifest } from '../../src/modules/definitions/database/module.js';
-import { manifest as i18nManifest } from '../../src/modules/definitions/i18n/module.js';
-import { manifest as pushManifest } from '../../src/modules/definitions/push/module.js';
-import { manifest as analyticsManifest } from '../../src/modules/definitions/analytics/module.js';
-import { manifest as cicdManifest } from '../../src/modules/definitions/cicd/module.js';
-import { manifest as deepLinkingManifest } from '../../src/modules/definitions/deep-linking/module.js';
+import { makeWritableContext } from '../helpers/context-factory.js';
+import { useTempDir } from '../helpers/temp-dir.js';
+import { createTestRegistry } from '../helpers/registry-factory.js';
 import {
   findProjectRoot,
   getEnabledModuleIds,
@@ -30,59 +20,11 @@ const { pathExists } = fsExtra;
 const TEMPLATES_DIR = resolve('templates/core');
 const MODULES_DIR = resolve('templates/modules');
 
-/** Build a pre-loaded registry with ALL module manifests. */
-function createTestRegistry(): ModuleRegistry {
-  const registry = new ModuleRegistry();
-  registry.register(coreManifest);
-  registry.register(authManifest);
-  registry.register(apiManifest);
-  registry.register(themeManifest);
-  registry.register(databaseManifest);
-  registry.register(i18nManifest);
-  registry.register(pushManifest);
-  registry.register(analyticsManifest);
-  registry.register(cicdManifest);
-  registry.register(deepLinkingManifest);
-  return registry;
-}
-
 function makeContext(
   outputDir: string,
-  overrides: Partial<ProjectContext> = {},
-): ProjectContext {
-  const base: ProjectContext = {
-    projectName: 'my_app',
-    orgId: 'com.example',
-    description: 'A test Flutter app',
-    platforms: ['android', 'ios'],
-    modules: {
-      auth: false,
-      api: false,
-      database: false,
-      i18n: false,
-      theme: false,
-      push: false,
-      analytics: false,
-      cicd: false,
-      deepLinking: false,
-    },
-    scaffold: {
-      dryRun: false,
-      overwrite: 'always',
-      postProcessors: {
-        dartFormat: false,
-        flutterPubGet: false,
-        buildRunner: false,
-      },
-    },
-    claude: {
-      enabled: false,
-      agentTeams: false,
-    },
-    outputDir,
-    rawConfig: {} as ProjectContext['rawConfig'],
-  };
-  return { ...base, ...overrides };
+  overrides: Partial<Parameters<typeof makeWritableContext>[1]> = {},
+) {
+  return makeWritableContext(outputDir, overrides);
 }
 
 describe('Integration: add command structure', () => {
@@ -101,17 +43,10 @@ describe('Integration: add command structure', () => {
 });
 
 describe('Integration: findProjectRoot in a scaffolded project', () => {
-  let tmpDir: string;
-
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), 'add-findroot-test-'));
-  });
-
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true });
-  });
+  const tmp = useTempDir('add-findroot-test-');
 
   it('finds project root after scaffold + config write', async () => {
+    const tmpDir = tmp.path;
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
     await engine.run(makeContext(tmpDir));
 
@@ -126,6 +61,7 @@ describe('Integration: findProjectRoot in a scaffolded project', () => {
   });
 
   it('finds project root from inside lib/features subdirectory', async () => {
+    const tmpDir = tmp.path;
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
     await engine.run(makeContext(tmpDir));
 
@@ -142,6 +78,7 @@ describe('Integration: findProjectRoot in a scaffolded project', () => {
   });
 
   it('returns null if no config in scaffolded structure', async () => {
+    const tmpDir = tmp.path;
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
     await engine.run(makeContext(tmpDir));
 
@@ -187,17 +124,10 @@ describe('Integration: getEnabledModuleIds reflects project config state', () =>
 });
 
 describe('Integration: mergePubspecYaml on a scaffolded project', () => {
-  let tmpDir: string;
-
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), 'add-pubspec-test-'));
-  });
-
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true });
-  });
+  const tmp = useTempDir('add-pubspec-test-');
 
   it('merges auth firebase deps into a live scaffolded pubspec.yaml', async () => {
+    const tmpDir = tmp.path;
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
     await engine.run(makeContext(tmpDir));
 
@@ -219,6 +149,7 @@ describe('Integration: mergePubspecYaml on a scaffolded project', () => {
   });
 
   it('merges api deps and dev_dependencies into scaffolded pubspec', async () => {
+    const tmpDir = tmp.path;
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
     await engine.run(makeContext(tmpDir));
 
@@ -241,6 +172,7 @@ describe('Integration: mergePubspecYaml on a scaffolded project', () => {
   });
 
   it('does not downgrade an existing dependency', async () => {
+    const tmpDir = tmp.path;
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
     await engine.run(makeContext(tmpDir));
 
@@ -263,17 +195,10 @@ describe('Integration: mergePubspecYaml on a scaffolded project', () => {
 });
 
 describe('Integration: adding modules to an existing project', () => {
-  let tmpDir: string;
-
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), 'add-module-test-'));
-  });
-
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true });
-  });
+  const tmp = useTempDir('add-module-test-');
 
   it('generates auth module files when added to a base project', async () => {
+    const tmpDir = tmp.path;
     // Step 1: Scaffold the base project (no modules)
     const baseEngine = new ScaffoldEngine({
       templatesDir: TEMPLATES_DIR,
@@ -334,6 +259,7 @@ describe('Integration: adding modules to an existing project', () => {
   });
 
   it('does not overwrite existing core files when adding a module', async () => {
+    const tmpDir = tmp.path;
     // Create base project
     const baseEngine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
     await baseEngine.run(makeContext(tmpDir));
@@ -380,6 +306,7 @@ describe('Integration: adding modules to an existing project', () => {
   });
 
   it('pubspec.yaml receives module dependencies after add', async () => {
+    const tmpDir = tmp.path;
     // Scaffold base project
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
     await engine.run(makeContext(tmpDir));
@@ -405,6 +332,7 @@ describe('Integration: adding modules to an existing project', () => {
   });
 
   it('maxsim.config.yaml is updated after adding auth module', async () => {
+    const tmpDir = tmp.path;
     // Scaffold base project
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
     await engine.run(makeContext(tmpDir));
@@ -442,17 +370,10 @@ describe('Integration: adding modules to an existing project', () => {
 });
 
 describe('Integration: add command --dry-run behavior', () => {
-  let tmpDir: string;
-
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), 'add-dryrun-test-'));
-  });
-
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true });
-  });
+  const tmp = useTempDir('add-dryrun-test-');
 
   it('engine with dryRun: true does not write any files to disk', async () => {
+    const tmpDir = tmp.path;
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
     const context = makeContext(tmpDir, {
       scaffold: {
@@ -474,6 +395,7 @@ describe('Integration: add command --dry-run behavior', () => {
   });
 
   it('engine with dryRun: true does not write auth module files to disk', async () => {
+    const tmpDir = tmp.path;
     const engine = new ScaffoldEngine({
       templatesDir: TEMPLATES_DIR,
       modulesTemplatesDir: MODULES_DIR,

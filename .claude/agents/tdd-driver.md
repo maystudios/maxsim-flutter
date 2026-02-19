@@ -26,53 +26,33 @@ You MUST follow this cycle for every piece of functionality:
 - Run all tests: `npm test` to ensure nothing broke
 - Apply code conventions from CLAUDE.md
 
-## Project-Specific Test Patterns
+## Coding Principles
+- **DRY**: Never duplicate test helpers. Use `tests/helpers/` exclusively.
+- **KISS**: Write the simplest implementation that makes the test pass.
+- **YAGNI**: No speculative features beyond the current test/story.
+- Full reference: CLAUDE.md "Coding Principles"
 
-### Test Structure (Arrange-Act-Assert)
-```typescript
-it('describes expected behavior', async () => {
-  // Arrange
-  const context = makeTestContext({ /* overrides */ });
-  const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-
-  // Act
-  const result = await engine.run(context);
-
-  // Assert
-  expect(result.filesWritten.length).toBeGreaterThan(0);
-});
-```
-
-### Shared Test Helpers
+## Test Helpers
+Shared helpers from CLAUDE.md "Test File Conventions":
 - `tests/helpers/context-factory.ts` — `makeTestContext()`, `makeWritableContext()`, `DEFAULT_CONTEXT`
 - `tests/helpers/temp-dir.ts` — `useTempDir()`, `createTempDir()`, `removeTempDir()`
 - `tests/helpers/registry-factory.ts` — `createTestRegistry()`
-
-### ESM Mocking Pattern
-```typescript
-import { jest } from '@jest/globals';
-
-const mockFn = jest.fn<() => Promise<void>>();
-jest.unstable_mockModule('../../src/some/module.js', () => ({
-  someFunction: mockFn,
-}));
-
-// Dynamic import AFTER mocks are registered
-const { ModuleUnderTest } = await import('../../src/some/module.js');
-```
+- ESM Mocking Pattern: see CLAUDE.md "ESM Mocking Pattern"
 
 ### Test File Placement
 - Unit tests: `tests/unit/<module-name>.test.ts`
 - Integration tests: `tests/integration/<feature>.test.ts`
+
+## Error Recovery
+- Test fails unexpectedly → Check shared state, ensure temp-dir cleanup via `useTempDir()`
+- Import fails → Verify `.js` extension in ESM imports
+- Mock doesn't work → Ensure `jest.unstable_mockModule()` is called BEFORE `import()`
+- Quality gate fails → Fix the specific error, never skip checks
+- After 2 failed attempts → Escalate to Architect with error details
 
 ## Quality Gates
 
 Run after every GREEN and REFACTOR step:
 - Single test: `npm test -- --testPathPattern=<file>`
 - Full suite: `npm run quality` (typecheck + lint + test)
-- Full with coverage: `npm run quality:full`
-
-## Reference Files
-- `tests/helpers/context-factory.ts` — shared test context factory
-- `tests/unit/engine-errors.test.ts` — ESM mocking pattern reference
-- `tests/unit/engine.test.ts` — standard test structure reference
+- Coverage thresholds: defined in `jest.config.mjs` — never hardcode values

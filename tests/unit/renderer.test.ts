@@ -104,12 +104,17 @@ describe('TemplateRenderer', () => {
       expect(result).toBe('myString');
     });
 
-    it('returns empty string for non-string input', () => {
+    it('handles project name with dashes', () => {
       const result = renderer.render('{{camelCase project.name}}', {
         ...baseContext,
         project: { name: 'my-app', org: 'com.example', description: 'test' },
       });
       expect(result).toBe('myApp');
+    });
+
+    it('returns empty string for non-string input', () => {
+      const result = renderer.render('{{camelCase undefinedVar}}', baseContext);
+      expect(result).toBe('');
     });
   });
 
@@ -126,6 +131,11 @@ describe('TemplateRenderer', () => {
       );
       expect(result).toBe('MyString');
     });
+
+    it('returns empty string for non-string input', () => {
+      const result = renderer.render('{{pascalCase undefinedVar}}', baseContext);
+      expect(result).toBe('');
+    });
   });
 
   describe('snakeCase helper', () => {
@@ -140,6 +150,30 @@ describe('TemplateRenderer', () => {
         baseContext,
       );
       expect(result).toBe('my_string');
+    });
+
+    it('returns empty string for non-string input', () => {
+      const result = renderer.render('{{snakeCase undefinedVar}}', baseContext);
+      expect(result).toBe('');
+    });
+  });
+
+  describe('ifIncludes helper', () => {
+    it('renders truthy block when array includes item', () => {
+      const ctx = { ...baseContext, items: ['a', 'b', 'c'] };
+      const result = renderer.render('{{#ifIncludes items "b"}}yes{{else}}no{{/ifIncludes}}', ctx);
+      expect(result).toBe('yes');
+    });
+
+    it('renders falsy block when array does not include item', () => {
+      const ctx = { ...baseContext, items: ['a', 'b'] };
+      const result = renderer.render('{{#ifIncludes items "z"}}yes{{else}}no{{/ifIncludes}}', ctx);
+      expect(result).toBe('no');
+    });
+
+    it('renders falsy block when value is not an array', () => {
+      const result = renderer.render('{{#ifIncludes undefinedVar "x"}}yes{{else}}no{{/ifIncludes}}', baseContext);
+      expect(result).toBe('no');
     });
   });
 

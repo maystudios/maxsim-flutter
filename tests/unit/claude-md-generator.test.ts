@@ -1,40 +1,11 @@
 import { generateClaudeMd } from '../../src/claude-setup/claude-md-generator.js';
-import type { ProjectContext } from '../../src/core/context.js';
+import { makeTestContext } from '../helpers/context-factory.js';
 
-function makeContext(overrides: Partial<ProjectContext> = {}): ProjectContext {
-  return {
-    projectName: 'my_app',
-    orgId: 'com.example',
-    description: 'A test Flutter app',
-    platforms: ['android', 'ios'],
-    modules: {
-      auth: false,
-      api: false,
-      database: false,
-      i18n: false,
-      theme: false,
-      push: false,
-      analytics: false,
-      cicd: false,
-      deepLinking: false,
-    },
-    scaffold: {
-      dryRun: false,
-      overwrite: 'ask',
-      postProcessors: {
-        dartFormat: true,
-        flutterPubGet: true,
-        buildRunner: true,
-      },
-    },
-    claude: {
-      enabled: true,
-      agentTeams: false,
-    },
-    outputDir: '/tmp/my_app',
-    rawConfig: {} as ProjectContext['rawConfig'],
+function makeContext(overrides: Partial<Parameters<typeof makeTestContext>[0]> = {}) {
+  return makeTestContext({
+    claude: { enabled: true, agentTeams: false },
     ...overrides,
-  };
+  });
 }
 
 describe('generateClaudeMd', () => {

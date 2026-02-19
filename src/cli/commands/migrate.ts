@@ -171,7 +171,7 @@ async function applyMigration(projectPath: string, report: AnalysisReport): Prom
   spinner.succeed('Migration applied');
 }
 
-function buildModuleConfig(report: AnalysisReport): Record<string, unknown> {
+export function buildModuleConfig(report: AnalysisReport): Record<string, unknown> {
   const modules: Record<string, unknown> = {};
   const detected = report.detectedModules;
 
@@ -220,7 +220,7 @@ function buildModuleConfig(report: AnalysisReport): Record<string, unknown> {
   return modules;
 }
 
-async function detectOrgId(projectPath: string, projectName: string): Promise<string> {
+export async function detectOrgId(projectPath: string, projectName: string): Promise<string> {
   const gradlePath = path.join(projectPath, 'android', 'app', 'build.gradle');
   try {
     const content = await fs.readFile(gradlePath, 'utf-8');

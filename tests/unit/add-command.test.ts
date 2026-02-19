@@ -272,4 +272,47 @@ describe('mergePubspecYaml', () => {
     const deps = updated['dependencies'] as Record<string, unknown>;
     expect(deps['firebase_core']).toBe('^3.0.0');
   });
+
+  it('merges object-style dependencies (path/git)', async () => {
+    await writePubspec({
+      name: 'my_app',
+      dependencies: { flutter: { sdk: 'flutter' } },
+    });
+
+    const extraDeps = new Map<string, string | Record<string, unknown>>([
+      ['local_package', { path: '../local_package' }],
+    ]);
+    await mergePubspecYaml(tmpDir, extraDeps, new Map());
+
+    const updated = await readPubspec();
+    const deps = updated['dependencies'] as Record<string, unknown>;
+    expect(deps['local_package']).toEqual({ path: '../local_package' });
+  });
+
+  it('merges flutter section', async () => {
+    await writePubspec({
+      name: 'my_app',
+      dependencies: {},
+    });
+
+    await mergePubspecYaml(tmpDir, new Map(), new Map(), { assets: ['assets/'] });
+
+    const updated = await readPubspec();
+    const flutter = updated['flutter'] as Record<string, unknown>;
+    expect(flutter['assets']).toEqual(['assets/']);
+  });
+
+  it('merges into existing flutter section without overwriting', async () => {
+    await writePubspec({
+      name: 'my_app',
+      flutter: { 'uses-material-design': true },
+    });
+
+    await mergePubspecYaml(tmpDir, new Map(), new Map(), { assets: ['assets/'] });
+
+    const updated = await readPubspec();
+    const flutter = updated['flutter'] as Record<string, unknown>;
+    expect(flutter['uses-material-design']).toBe(true);
+    expect(flutter['assets']).toEqual(['assets/']);
+  });
 });

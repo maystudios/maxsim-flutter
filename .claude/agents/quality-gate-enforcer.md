@@ -1,7 +1,7 @@
 ---
 name: quality-gate-enforcer
 description: Runs all quality checks, verifies test-source correspondence, and blocks non-compliant code. Use this agent to validate work before committing.
-model: sonnet
+model: haiku
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---
 
@@ -36,10 +36,7 @@ npm test
 ```bash
 npm run test:coverage
 ```
-- Statements: >= 80%
-- Branches: >= 75%
-- Functions: >= 80%
-- Lines: >= 80%
+Thresholds are defined in `jest.config.mjs` `coverageThreshold.global` — look them up there, never hardcode.
 
 ### 6. No Incomplete Tests
 - Scan for `it.todo(` and `it.skip(` across all test files
@@ -53,6 +50,11 @@ npm run test:coverage
 ### 8. Public Functions Have Tests
 - Every new public function exported from `src/` should have >= 2 test cases
 - Check git diff for new exports and verify test coverage
+
+### 9. DRY Compliance
+- Scan test files for local `makeContext()`, `createContext()`, or `createTestRegistry()` that duplicate shared helpers in `tests/helpers/`
+- Check for hardcoded coverage thresholds (e.g., `80`, `75`) outside `jest.config.mjs`
+- Verify agent files reference CLAUDE.md instead of duplicating shared content
 
 ## Report Format
 
@@ -71,6 +73,7 @@ Output a structured report:
 | No it.todo/skip | PASS/FAIL | found N remnants |
 | Behavioral Names | PASS/FAIL | ... |
 | Public Fn Tests | PASS/FAIL | ... |
+| DRY Compliance | PASS/FAIL | ... |
 
 **Overall: PASS/FAIL**
 ```

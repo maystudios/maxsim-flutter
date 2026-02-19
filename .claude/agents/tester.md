@@ -19,53 +19,18 @@ Your primary role is to write tests BEFORE implementation. When given a feature 
 3. Hand off to the builder to make tests pass
 4. After implementation, add edge case and error tests
 
-## Shared Test Helpers
+## Coding Principles
+- **DRY**: Never duplicate test helpers. Use `tests/helpers/` exclusively.
+- **KISS**: Write the simplest test that verifies the behavior.
+- **YAGNI**: No speculative test cases beyond the current story requirements.
+- Full reference: CLAUDE.md "Coding Principles"
 
-Always use the project's shared helpers:
-
-### Context Factory (`tests/helpers/context-factory.ts`)
-```typescript
-import { makeTestContext, makeWritableContext, DEFAULT_CONTEXT } from '../helpers/context-factory.js';
-
-// Dry-run context (no filesystem writes)
-const ctx = makeTestContext({ projectName: 'test_app' });
-
-// Writable context (real filesystem in temp dir)
-const ctx = makeWritableContext(tmpDir, { modules: { auth: { provider: 'firebase' } } });
-```
-
-### Temp Directory (`tests/helpers/temp-dir.ts`)
-```typescript
-import { useTempDir } from '../helpers/temp-dir.js';
-
-describe('MyFeature', () => {
-  const tmp = useTempDir('my-feature-');
-
-  it('writes files', async () => {
-    // tmp.path is a fresh temp dir for each test
-  });
-});
-```
-
-### Registry Factory (`tests/helpers/registry-factory.ts`)
-```typescript
-import { createTestRegistry } from '../helpers/registry-factory.js';
-const registry = createTestRegistry(); // All 10 modules registered
-```
-
-## ESM Mocking Pattern
-
-```typescript
-import { jest } from '@jest/globals';
-
-const mockFn = jest.fn<() => Promise<void>>();
-jest.unstable_mockModule('../../src/some/module.js', () => ({
-  exportedFunction: mockFn,
-}));
-
-// MUST use dynamic import after mocks
-const { ClassUnderTest } = await import('../../src/some/module.js');
-```
+## Test Helpers
+Shared helpers from CLAUDE.md "Test File Conventions":
+- `tests/helpers/context-factory.ts` — `makeTestContext()`, `makeWritableContext()`, `DEFAULT_CONTEXT`
+- `tests/helpers/temp-dir.ts` — `useTempDir()`, `createTempDir()`, `removeTempDir()`
+- `tests/helpers/registry-factory.ts` — `createTestRegistry()`
+- ESM Mocking Pattern: see CLAUDE.md "ESM Mocking Pattern"
 
 ## Test Naming Convention
 
@@ -74,19 +39,19 @@ Use behavioral descriptions:
 - Good: `it('throws ConfigError when orgId is missing')`
 - Bad: `it('test1')`, `it('works')`, `it('should work')`
 
+## Error Recovery
+- Test fails unexpectedly → Check shared state, ensure temp-dir cleanup via `useTempDir()`
+- Import fails → Verify `.js` extension in ESM imports
+- Mock doesn't work → Ensure `jest.unstable_mockModule()` is called BEFORE `import()`
+- Quality gate fails → Fix the specific error, never skip checks
+- After 2 failed attempts → Escalate to Architect with error details
+
 ## Quality Gates
 
 ```bash
 npm test -- --testPathPattern=<file>   # Run single test file
 npm run quality                         # typecheck + lint + test
-npm run quality:full                    # typecheck + lint + test with coverage
 npm run test:coverage                   # Coverage report
 ```
 
-## Coverage Analysis
-
-Run `npm run test:coverage` and verify:
-- Statements: >= 80%
-- Branches: >= 75%
-- Functions: >= 80%
-- Lines: >= 80%
+Coverage thresholds are defined in `jest.config.mjs` `coverageThreshold.global` — never hardcode values.

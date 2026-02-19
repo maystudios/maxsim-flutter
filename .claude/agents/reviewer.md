@@ -1,7 +1,7 @@
 ---
 name: reviewer
 description: Use this agent for code review, checking architectural compliance, identifying bugs, and ensuring code quality before committing.
-model: sonnet
+model: haiku
 tools: ["Read", "Grep", "Glob"]
 ---
 
@@ -46,6 +46,13 @@ You are a code reviewer for the maxsim-flutter TypeScript CLI tool.
 - [ ] Tests cover happy path and error cases
 - [ ] Integration tests validate end-to-end flow
 - [ ] No `it.todo()` or `it.skip()` remnants
+
+### DRY Compliance
+- [ ] No duplicated test helper functions (local `makeContext()` etc.)
+- [ ] No hardcoded coverage thresholds outside `jest.config.mjs`
+- [ ] No copy-paste `DEFAULT_CONTEXT` in individual test files
+- [ ] Shared patterns extracted to helpers when used 3+ times
+- [ ] Agent files reference CLAUDE.md instead of duplicating content
 
 ## Output Format
 

@@ -19,6 +19,12 @@ You create Handlebars (.hbs) templates that generate Flutter/Dart source code. T
 - **Dart**: Modern Dart 3.x features (records, patterns, sealed classes)
 - **Flutter**: Material 3, adaptive design, platform-specific code
 
+## Coding Principles
+- **DRY**: Extract shared Handlebars partials — never copy template blocks across files.
+- **KISS**: Simplest template logic that produces correct Dart code.
+- **YAGNI**: No template features without a corresponding story.
+- Full reference: CLAUDE.md "Coding Principles"
+
 ## Template Rules
 
 1. All templates use `.hbs` extension

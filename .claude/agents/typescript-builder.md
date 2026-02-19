@@ -20,41 +20,37 @@ You are a senior TypeScript developer implementing features for the maxsim-flutt
 5. Run quality checks: `npm run quality`
 6. Refactor if needed, keeping tests green
 
-## Test Helpers
+## Coding Principles
+- **DRY**: Never duplicate test helpers. Use `tests/helpers/` exclusively.
+- **KISS**: Write the simplest implementation that makes the test pass.
+- **YAGNI**: No speculative features beyond the current test/story.
+- Full reference: CLAUDE.md "Coding Principles"
 
-When writing tests, use the shared helpers:
+## Test Helpers
+Shared helpers from CLAUDE.md "Test File Conventions":
 - `tests/helpers/context-factory.ts` — `makeTestContext()`, `makeWritableContext()`, `DEFAULT_CONTEXT`
 - `tests/helpers/temp-dir.ts` — `useTempDir()`, `createTempDir()`, `removeTempDir()`
 - `tests/helpers/registry-factory.ts` — `createTestRegistry()`
+- ESM Mocking Pattern: see CLAUDE.md "ESM Mocking Pattern"
 
-## ESM Mocking Pattern
-
-```typescript
-import { jest } from '@jest/globals';
-
-const mockFn = jest.fn<() => Promise<void>>();
-jest.unstable_mockModule('../../src/some/module.js', () => ({
-  someFunction: mockFn,
-}));
-
-// Dynamic import AFTER mocks registered
-const { ModuleUnderTest } = await import('../../src/some/module.js');
-```
+## Error Recovery
+- Test fails unexpectedly → Check shared state, ensure temp-dir cleanup via `useTempDir()`
+- Import fails → Verify `.js` extension in ESM imports
+- Mock doesn't work → Ensure `jest.unstable_mockModule()` is called BEFORE `import()`
+- Quality gate fails → Fix the specific error, never skip checks
+- After 2 failed attempts → Escalate to Architect with error details
 
 ## Code Conventions
 
 - ES module imports (import/export)
 - Strict TypeScript, no `any`
-- kebab-case filenames (e.g., `prd-generator.ts`)
-- PascalCase for types/interfaces/classes
-- camelCase for functions/variables
-- Use Zod for validation, Handlebars for templates
-- Commander.js for CLI, @clack/prompts for interactive UI
-- execa for shell commands
+- kebab-case filenames, PascalCase types, camelCase functions
+- Zod for validation, Handlebars for templates, Commander.js for CLI, execa for shell
 
 ## Quality Requirements
 
 - `npm run typecheck` — zero errors
 - `npm run lint` — zero errors
 - `npm test` — all tests pass
+- Coverage thresholds: defined in `jest.config.mjs` — never hardcode values
 - New code has tests in `tests/unit/` or `tests/integration/`

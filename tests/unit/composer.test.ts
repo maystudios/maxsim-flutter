@@ -1,6 +1,7 @@
 import { ModuleComposer, pickNewerVersion } from '../../src/modules/composer.js';
 import type { ModuleManifest } from '../../src/types/module.js';
 import type { ProjectContext } from '../../src/core/context.js';
+import { makeTestContext } from '../helpers/context-factory.js';
 
 function makeManifest(overrides: Partial<ModuleManifest> = {}): ModuleManifest {
   return {
@@ -15,37 +16,8 @@ function makeManifest(overrides: Partial<ModuleManifest> = {}): ModuleManifest {
   };
 }
 
-function makeContext(overrides: Partial<ProjectContext> = {}): ProjectContext {
-  return {
-    projectName: 'test-app',
-    orgId: 'com.example',
-    description: 'Test app',
-    platforms: ['android', 'ios'],
-    modules: {
-      auth: false,
-      api: false,
-      database: false,
-      i18n: false,
-      theme: false,
-      push: false,
-      analytics: false,
-      cicd: false,
-      deepLinking: false,
-    },
-    scaffold: {
-      dryRun: false,
-      overwrite: 'never',
-      postProcessors: {
-        dartFormat: false,
-        flutterPubGet: false,
-        buildRunner: false,
-      },
-    },
-    claude: { enabled: false, agentTeams: false },
-    outputDir: '/tmp/test-output',
-    rawConfig: {} as ProjectContext['rawConfig'],
-    ...overrides,
-  };
+function makeContext(overrides: Partial<Parameters<typeof makeTestContext>[0]> = {}) {
+  return makeTestContext(overrides);
 }
 
 describe('pickNewerVersion', () => {

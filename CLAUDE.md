@@ -60,6 +60,29 @@ Each module in `src/modules/definitions/<name>/module.ts` exports a `ModuleManif
 - Use `{{#if modules.auth}}` for conditional sections
 - Pubspec fragments in `pubspec.partial.yaml` per module
 
+## Coding Principles
+
+### DRY (Don't Repeat Yourself)
+- Use shared helpers from `tests/helpers/` — never duplicate `makeTestContext()`, `useTempDir()`, or `createTestRegistry()` in individual test files
+- Config values (coverage thresholds, module lists) are defined once and referenced — never hardcode them in multiple places
+- When a pattern appears 3+ times, extract it into a shared helper or utility
+
+### SOLID
+- **S (Single Responsibility)**: One module = one concern. Each file in `src/` has a single, clear purpose
+- **O (Open/Closed)**: Add new modules via `src/modules/definitions/` — never modify the registry core to add features
+- **I (Interface Segregation)**: Keep interfaces minimal. `ModuleManifest` exposes only what consumers need
+- **D (Dependency Inversion)**: Commands depend on abstractions (`ProjectContext`, `ModuleManifest`), not concrete implementations
+
+### KISS (Keep It Simple)
+- Prefer simple conditionals over clever abstractions
+- Functions exceeding 50 lines should be considered for splitting
+- Avoid premature optimization — correctness first
+
+### YAGNI (You Aren't Gonna Need It)
+- No features without a story in `prd.json`
+- No dead code — remove unused exports, functions, and imports immediately
+- No speculative abstractions — build for today's requirements
+
 ## Test-Driven Development (TDD)
 
 ### Red-Green-Refactor Cycle
@@ -171,10 +194,45 @@ Before marking any story as complete, ALL 8 gates must pass:
 2. **`npm run typecheck`** must pass with zero errors
 3. **`npm run lint`** must pass with zero errors
 4. **`npm test`** must pass all tests
-5. **Coverage meets thresholds** — statements 80%, branches 75%, functions 80%, lines 80%
+5. **Coverage meets thresholds** — defined in `jest.config.mjs` `coverageThreshold.global` (all agents MUST look up values there, never hardcode)
 6. **No `it.todo()` or `it.skip()`** left behind in test files
 7. **Test names are behavioral** — describe behavior, not implementation
 8. **Every new public function has >= 2 tests** — happy path + at least one edge case
+
+## Error Handling & Recovery
+
+### When `npm run quality` fails
+- Identify the specific failing check (typecheck, lint, test, coverage)
+- Fix the root cause — never skip or disable checks
+- Re-run only the failing check first, then the full suite
+
+### When coverage drops
+- Run `npm run test:coverage` to identify uncovered lines
+- Write tests targeting the specific uncovered branches/statements
+- Coverage thresholds are defined in `jest.config.mjs` `coverageThreshold.global` — all agents MUST look them up there, never hardcode values
+
+### When typecheck fails
+- Never use `@ts-ignore` or `as any` to suppress errors
+- Fix the type error at its source — add proper types, fix interfaces, or update imports
+
+### When tests fail unexpectedly
+- Check for shared state between tests (missing cleanup, leaked mocks)
+- Ensure temp directories are cleaned up via `useTempDir()` helper
+- Verify `.js` extensions on all ESM imports
+- Verify `jest.unstable_mockModule()` is called BEFORE dynamic `import()`
+
+### Escalation Protocol
+- After 2 failed attempts at the same fix, escalate to the Architect agent
+- Include: what was tried, exact error messages, and relevant file paths
+
+## Handoff Format
+
+Every agent handoff between team members must include:
+1. **Changed files** — absolute paths of all modified/created files
+2. **Tests added** — file paths and count of new test cases
+3. **Quality status** — last `npm run quality` output (pass/fail per gate)
+4. **Blockers** — any unresolved issues preventing completion
+5. **Next step** — explicit description of what the receiving agent should do
 
 ## Agent Team Coordination
 

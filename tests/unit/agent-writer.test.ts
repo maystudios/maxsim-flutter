@@ -1,43 +1,19 @@
 import { writeAgents, buildAgentDefinitions } from '../../src/claude-setup/agent-writer.js';
-import type { ProjectContext } from '../../src/core/context.js';
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { makeTestContext } from '../helpers/context-factory.js';
+import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { useTempDir } from '../helpers/temp-dir.js';
 
-function makeContext(overrides: Partial<ProjectContext> = {}): ProjectContext {
-  return {
-    projectName: 'my_app',
-    orgId: 'com.example',
-    description: 'A test Flutter app',
-    platforms: ['android', 'ios'],
-    modules: {
-      auth: false,
-      api: false,
-      database: false,
-      i18n: false,
-      theme: false,
-      push: false,
-      analytics: false,
-      cicd: false,
-      deepLinking: false,
-    },
+function makeContext(overrides: Partial<Parameters<typeof makeTestContext>[0]> = {}) {
+  return makeTestContext({
     scaffold: {
       dryRun: false,
       overwrite: 'ask',
-      postProcessors: {
-        dartFormat: true,
-        flutterPubGet: true,
-        buildRunner: true,
-      },
+      postProcessors: { dartFormat: true, flutterPubGet: true, buildRunner: true },
     },
-    claude: {
-      enabled: true,
-      agentTeams: true,
-    },
-    outputDir: '/tmp/my_app',
-    rawConfig: {} as ProjectContext['rawConfig'],
+    claude: { enabled: true, agentTeams: true },
     ...overrides,
-  };
+  });
 }
 
 describe('buildAgentDefinitions', () => {
@@ -283,25 +259,17 @@ describe('buildAgentDefinitions', () => {
 });
 
 describe('writeAgents', () => {
-  let tempDir: string;
-
-  beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), 'agent-writer-test-'));
-  });
-
-  afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
-  });
+  const tmp = useTempDir('agent-writer-test-');
 
   it('creates .claude/agents/ directory', async () => {
-    await writeAgents(makeContext(), tempDir);
-    const agentsDir = join(tempDir, '.claude', 'agents');
+    await writeAgents(makeContext(), tmp.path);
+    const agentsDir = join(tmp.path, '.claude', 'agents');
     const entries = await readdir(agentsDir);
     expect(entries).toHaveLength(5);
   });
 
   it('writes all 5 agent files', async () => {
-    const files = await writeAgents(makeContext(), tempDir);
+    const files = await writeAgents(makeContext(), tmp.path);
     expect(files).toHaveLength(5);
     for (const file of files) {
       expect(file).toContain('.claude/agents/');
@@ -310,9 +278,9 @@ describe('writeAgents', () => {
   });
 
   it('writes valid markdown with YAML frontmatter', async () => {
-    await writeAgents(makeContext(), tempDir);
+    await writeAgents(makeContext(), tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'agents', 'flutter-architect.md'),
+      join(tmp.path, '.claude', 'agents', 'flutter-architect.md'),
       'utf-8',
     );
     expect(content).toMatch(/^---\n/);
@@ -323,36 +291,36 @@ describe('writeAgents', () => {
   });
 
   it('includes project name in generated agent files', async () => {
-    await writeAgents(makeContext({ projectName: 'cool_app' }), tempDir);
+    await writeAgents(makeContext({ projectName: 'cool_app' }), tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'agents', 'flutter-feature-builder.md'),
+      join(tmp.path, '.claude', 'agents', 'flutter-feature-builder.md'),
       'utf-8',
     );
     expect(content).toContain('cool_app');
   });
 
   it('returns full file paths', async () => {
-    const files = await writeAgents(makeContext(), tempDir);
-    expect(files[0]).toBe(join(tempDir, '.claude', 'agents', 'flutter-architect.md'));
-    expect(files[1]).toBe(join(tempDir, '.claude', 'agents', 'flutter-feature-builder.md'));
-    expect(files[2]).toBe(join(tempDir, '.claude', 'agents', 'flutter-tester.md'));
-    expect(files[3]).toBe(join(tempDir, '.claude', 'agents', 'flutter-reviewer.md'));
-    expect(files[4]).toBe(join(tempDir, '.claude', 'agents', 'flutter-docs.md'));
+    const files = await writeAgents(makeContext(), tmp.path);
+    expect(files[0]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-architect.md'));
+    expect(files[1]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-feature-builder.md'));
+    expect(files[2]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-tester.md'));
+    expect(files[3]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-reviewer.md'));
+    expect(files[4]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-docs.md'));
   });
 
   it('generates docs agent with haiku model', async () => {
-    await writeAgents(makeContext(), tempDir);
+    await writeAgents(makeContext(), tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'agents', 'flutter-docs.md'),
+      join(tmp.path, '.claude', 'agents', 'flutter-docs.md'),
       'utf-8',
     );
     expect(content).toContain('model: haiku');
   });
 
   it('generates reviewer agent with read-only tools', async () => {
-    await writeAgents(makeContext(), tempDir);
+    await writeAgents(makeContext(), tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'agents', 'flutter-reviewer.md'),
+      join(tmp.path, '.claude', 'agents', 'flutter-reviewer.md'),
       'utf-8',
     );
     expect(content).toContain('["Read","Grep","Glob"]');

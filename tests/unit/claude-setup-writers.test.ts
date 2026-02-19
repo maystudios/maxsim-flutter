@@ -2,61 +2,24 @@ import { writeSkills } from '../../src/claude-setup/skill-writer.js';
 import { writeHooks } from '../../src/claude-setup/hooks-writer.js';
 import { writeMcpConfig } from '../../src/claude-setup/mcp-config-writer.js';
 import { writeCommands } from '../../src/claude-setup/commands-writer.js';
-import type { ProjectContext } from '../../src/core/context.js';
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { makeTestContext } from '../helpers/context-factory.js';
+import { useTempDir } from '../helpers/temp-dir.js';
+import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
 
-function makeContext(overrides: Partial<ProjectContext> = {}): ProjectContext {
-  return {
-    projectName: 'my_app',
-    orgId: 'com.example',
-    description: 'A test Flutter app',
-    platforms: ['android', 'ios'],
-    modules: {
-      auth: false,
-      api: false,
-      database: false,
-      i18n: false,
-      theme: false,
-      push: false,
-      analytics: false,
-      cicd: false,
-      deepLinking: false,
-    },
-    scaffold: {
-      dryRun: false,
-      overwrite: 'ask',
-      postProcessors: {
-        dartFormat: true,
-        flutterPubGet: true,
-        buildRunner: true,
-      },
-    },
-    claude: {
-      enabled: true,
-      agentTeams: true,
-    },
-    outputDir: '/tmp/my_app',
-    rawConfig: {} as ProjectContext['rawConfig'],
+function makeContext(overrides: Partial<Parameters<typeof makeTestContext>[0]> = {}) {
+  return makeTestContext({
+    claude: { enabled: true, agentTeams: true },
     ...overrides,
-  };
+  });
 }
 
 describe('writeSkills', () => {
-  let tempDir: string;
-
-  beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), 'skill-writer-test-'));
-  });
-
-  afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
-  });
+  const tmp = useTempDir('skill-writer-test-');
 
   it('creates .claude/skills/ directory with 4 files', async () => {
-    await writeSkills(makeContext(), tempDir);
-    const skillsDir = join(tempDir, '.claude', 'skills');
+    await writeSkills(makeContext(), tmp.path);
+    const skillsDir = join(tmp.path, '.claude', 'skills');
     const entries = await readdir(skillsDir);
     expect(entries.sort()).toEqual([
       'flutter-patterns.md',
@@ -67,9 +30,9 @@ describe('writeSkills', () => {
   });
 
   it('flutter-patterns.md contains Riverpod patterns', async () => {
-    await writeSkills(makeContext(), tempDir);
+    await writeSkills(makeContext(), tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'skills', 'flutter-patterns.md'),
+      join(tmp.path, '.claude', 'skills', 'flutter-patterns.md'),
       'utf-8',
     );
     expect(content).toContain('Riverpod');
@@ -80,9 +43,9 @@ describe('writeSkills', () => {
   });
 
   it('go-router-patterns.md contains GoRouter patterns', async () => {
-    await writeSkills(makeContext(), tempDir);
+    await writeSkills(makeContext(), tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'skills', 'go-router-patterns.md'),
+      join(tmp.path, '.claude', 'skills', 'go-router-patterns.md'),
       'utf-8',
     );
     expect(content).toContain('go_router');
@@ -94,9 +57,9 @@ describe('writeSkills', () => {
     const ctx = makeContext({
       modules: { ...makeContext().modules, auth: { provider: 'firebase' } },
     });
-    await writeSkills(ctx, tempDir);
+    await writeSkills(ctx, tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'skills', 'go-router-patterns.md'),
+      join(tmp.path, '.claude', 'skills', 'go-router-patterns.md'),
       'utf-8',
     );
     expect(content).toContain('Auth Guards');
@@ -104,9 +67,9 @@ describe('writeSkills', () => {
   });
 
   it('go-router-patterns.md excludes auth guard when auth is disabled', async () => {
-    await writeSkills(makeContext(), tempDir);
+    await writeSkills(makeContext(), tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'skills', 'go-router-patterns.md'),
+      join(tmp.path, '.claude', 'skills', 'go-router-patterns.md'),
       'utf-8',
     );
     expect(content).not.toContain('Auth Guards');
@@ -116,18 +79,18 @@ describe('writeSkills', () => {
     const ctx = makeContext({
       modules: { ...makeContext().modules, deepLinking: { scheme: 'myapp', host: 'example.com' } },
     });
-    await writeSkills(ctx, tempDir);
+    await writeSkills(ctx, tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'skills', 'go-router-patterns.md'),
+      join(tmp.path, '.claude', 'skills', 'go-router-patterns.md'),
       'utf-8',
     );
     expect(content).toContain('Deep Linking');
   });
 
   it('module-conventions.md contains Clean Architecture guide', async () => {
-    await writeSkills(makeContext(), tempDir);
+    await writeSkills(makeContext(), tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'skills', 'module-conventions.md'),
+      join(tmp.path, '.claude', 'skills', 'module-conventions.md'),
       'utf-8',
     );
     expect(content).toContain('Clean Architecture');
@@ -138,9 +101,9 @@ describe('writeSkills', () => {
   });
 
   it('prd.md contains story workflow guide', async () => {
-    await writeSkills(makeContext(), tempDir);
+    await writeSkills(makeContext(), tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'skills', 'prd.md'),
+      join(tmp.path, '.claude', 'skills', 'prd.md'),
       'utf-8',
     );
     expect(content).toContain('prd.json');
@@ -151,27 +114,19 @@ describe('writeSkills', () => {
 });
 
 describe('writeHooks', () => {
-  let tempDir: string;
-
-  beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), 'hooks-writer-test-'));
-  });
-
-  afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
-  });
+  const tmp = useTempDir('hooks-writer-test-');
 
   it('creates .claude/settings.local.json', async () => {
-    await writeHooks(makeContext(), tempDir);
-    const settingsPath = join(tempDir, '.claude', 'settings.local.json');
+    await writeHooks(makeContext(), tmp.path);
+    const settingsPath = join(tmp.path, '.claude', 'settings.local.json');
     const content = await readFile(settingsPath, 'utf-8');
     expect(content).toBeTruthy();
   });
 
   it('includes TaskCompleted hook with flutter analyze and test', async () => {
-    await writeHooks(makeContext(), tempDir);
+    await writeHooks(makeContext(), tmp.path);
     const content = JSON.parse(
-      await readFile(join(tempDir, '.claude', 'settings.local.json'), 'utf-8'),
+      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
     );
     expect(content.hooks.TaskCompleted).toBeDefined();
     expect(content.hooks.TaskCompleted).toHaveLength(1);
@@ -182,9 +137,9 @@ describe('writeHooks', () => {
   });
 
   it('includes TeammateIdle hook when agentTeams is true', async () => {
-    await writeHooks(makeContext({ claude: { enabled: true, agentTeams: true } }), tempDir);
+    await writeHooks(makeContext({ claude: { enabled: true, agentTeams: true } }), tmp.path);
     const content = JSON.parse(
-      await readFile(join(tempDir, '.claude', 'settings.local.json'), 'utf-8'),
+      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
     );
     expect(content.hooks.TeammateIdle).toBeDefined();
     expect(content.hooks.TeammateIdle).toHaveLength(1);
@@ -192,17 +147,17 @@ describe('writeHooks', () => {
   });
 
   it('excludes TeammateIdle hook when agentTeams is false', async () => {
-    await writeHooks(makeContext({ claude: { enabled: true, agentTeams: false } }), tempDir);
+    await writeHooks(makeContext({ claude: { enabled: true, agentTeams: false } }), tmp.path);
     const content = JSON.parse(
-      await readFile(join(tempDir, '.claude', 'settings.local.json'), 'utf-8'),
+      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
     );
     expect(content.hooks.TeammateIdle).toBeUndefined();
   });
 
   it('writes valid JSON', async () => {
-    await writeHooks(makeContext(), tempDir);
+    await writeHooks(makeContext(), tmp.path);
     const raw = await readFile(
-      join(tempDir, '.claude', 'settings.local.json'),
+      join(tmp.path, '.claude', 'settings.local.json'),
       'utf-8',
     );
     expect(() => JSON.parse(raw)).not.toThrow();
@@ -210,32 +165,24 @@ describe('writeHooks', () => {
 });
 
 describe('writeMcpConfig', () => {
-  let tempDir: string;
-
-  beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), 'mcp-writer-test-'));
-  });
-
-  afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
-  });
+  const tmp = useTempDir('mcp-writer-test-');
 
   it('creates .mcp.json at output root', async () => {
-    await writeMcpConfig(makeContext(), tempDir);
-    const content = await readFile(join(tempDir, '.mcp.json'), 'utf-8');
+    await writeMcpConfig(makeContext(), tmp.path);
+    const content = await readFile(join(tmp.path, '.mcp.json'), 'utf-8');
     expect(content).toBeTruthy();
   });
 
   it('writes valid JSON', async () => {
-    await writeMcpConfig(makeContext(), tempDir);
-    const raw = await readFile(join(tempDir, '.mcp.json'), 'utf-8');
+    await writeMcpConfig(makeContext(), tmp.path);
+    const raw = await readFile(join(tmp.path, '.mcp.json'), 'utf-8');
     expect(() => JSON.parse(raw)).not.toThrow();
   });
 
   it('has empty mcpServers when no modules need MCP', async () => {
-    await writeMcpConfig(makeContext(), tempDir);
+    await writeMcpConfig(makeContext(), tmp.path);
     const content = JSON.parse(
-      await readFile(join(tempDir, '.mcp.json'), 'utf-8'),
+      await readFile(join(tmp.path, '.mcp.json'), 'utf-8'),
     );
     expect(content.mcpServers).toEqual({});
   });
@@ -244,9 +191,9 @@ describe('writeMcpConfig', () => {
     const ctx = makeContext({
       modules: { ...makeContext().modules, auth: { provider: 'firebase' } },
     });
-    await writeMcpConfig(ctx, tempDir);
+    await writeMcpConfig(ctx, tmp.path);
     const content = JSON.parse(
-      await readFile(join(tempDir, '.mcp.json'), 'utf-8'),
+      await readFile(join(tmp.path, '.mcp.json'), 'utf-8'),
     );
     expect(content.mcpServers.firebase).toBeDefined();
     expect(content.mcpServers.firebase.command).toBe('npx');
@@ -257,9 +204,9 @@ describe('writeMcpConfig', () => {
     const ctx = makeContext({
       modules: { ...makeContext().modules, push: { provider: 'firebase' } },
     });
-    await writeMcpConfig(ctx, tempDir);
+    await writeMcpConfig(ctx, tmp.path);
     const content = JSON.parse(
-      await readFile(join(tempDir, '.mcp.json'), 'utf-8'),
+      await readFile(join(tmp.path, '.mcp.json'), 'utf-8'),
     );
     expect(content.mcpServers.firebase).toBeDefined();
   });
@@ -268,9 +215,9 @@ describe('writeMcpConfig', () => {
     const ctx = makeContext({
       modules: { ...makeContext().modules, analytics: { enabled: true } },
     });
-    await writeMcpConfig(ctx, tempDir);
+    await writeMcpConfig(ctx, tmp.path);
     const content = JSON.parse(
-      await readFile(join(tempDir, '.mcp.json'), 'utf-8'),
+      await readFile(join(tmp.path, '.mcp.json'), 'utf-8'),
     );
     expect(content.mcpServers.firebase).toBeDefined();
   });
@@ -279,9 +226,9 @@ describe('writeMcpConfig', () => {
     const ctx = makeContext({
       modules: { ...makeContext().modules, auth: { provider: 'supabase' } },
     });
-    await writeMcpConfig(ctx, tempDir);
+    await writeMcpConfig(ctx, tmp.path);
     const content = JSON.parse(
-      await readFile(join(tempDir, '.mcp.json'), 'utf-8'),
+      await readFile(join(tmp.path, '.mcp.json'), 'utf-8'),
     );
     expect(content.mcpServers.supabase).toBeDefined();
     expect(content.mcpServers.supabase.command).toBe('npx');
@@ -292,9 +239,9 @@ describe('writeMcpConfig', () => {
     const ctx = makeContext({
       modules: { ...makeContext().modules, auth: { provider: 'firebase' } },
     });
-    await writeMcpConfig(ctx, tempDir);
+    await writeMcpConfig(ctx, tmp.path);
     const content = JSON.parse(
-      await readFile(join(tempDir, '.mcp.json'), 'utf-8'),
+      await readFile(join(tmp.path, '.mcp.json'), 'utf-8'),
     );
     expect(content.mcpServers.supabase).toBeUndefined();
   });
@@ -307,9 +254,9 @@ describe('writeMcpConfig', () => {
         analytics: { enabled: true },
       },
     });
-    await writeMcpConfig(ctx, tempDir);
+    await writeMcpConfig(ctx, tmp.path);
     const content = JSON.parse(
-      await readFile(join(tempDir, '.mcp.json'), 'utf-8'),
+      await readFile(join(tmp.path, '.mcp.json'), 'utf-8'),
     );
     expect(content.mcpServers.firebase).toBeDefined();
     expect(content.mcpServers.supabase).toBeDefined();
@@ -317,27 +264,19 @@ describe('writeMcpConfig', () => {
 });
 
 describe('writeCommands', () => {
-  let tempDir: string;
-
-  beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), 'commands-writer-test-'));
-  });
-
-  afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
-  });
+  const tmp = useTempDir('commands-writer-test-');
 
   it('creates .claude/commands/ directory with 2 files', async () => {
-    await writeCommands(makeContext(), tempDir);
-    const commandsDir = join(tempDir, '.claude', 'commands');
+    await writeCommands(makeContext(), tmp.path);
+    const commandsDir = join(tmp.path, '.claude', 'commands');
     const entries = await readdir(commandsDir);
     expect(entries.sort()).toEqual(['add-feature.md', 'analyze.md']);
   });
 
   it('add-feature.md contains Clean Architecture steps', async () => {
-    await writeCommands(makeContext(), tempDir);
+    await writeCommands(makeContext(), tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'commands', 'add-feature.md'),
+      join(tmp.path, '.claude', 'commands', 'add-feature.md'),
       'utf-8',
     );
     expect(content).toContain('Add Feature');
@@ -352,9 +291,9 @@ describe('writeCommands', () => {
     const ctx = makeContext({
       modules: { ...makeContext().modules, auth: { provider: 'firebase' } },
     });
-    await writeCommands(ctx, tempDir);
+    await writeCommands(ctx, tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'commands', 'add-feature.md'),
+      join(tmp.path, '.claude', 'commands', 'add-feature.md'),
       'utf-8',
     );
     expect(content).toContain('Route Guard');
@@ -362,9 +301,9 @@ describe('writeCommands', () => {
   });
 
   it('add-feature.md excludes auth guard when auth is disabled', async () => {
-    await writeCommands(makeContext(), tempDir);
+    await writeCommands(makeContext(), tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'commands', 'add-feature.md'),
+      join(tmp.path, '.claude', 'commands', 'add-feature.md'),
       'utf-8',
     );
     expect(content).not.toContain('Route Guard');
@@ -377,9 +316,9 @@ describe('writeCommands', () => {
         i18n: { defaultLocale: 'en', supportedLocales: ['en', 'de'] },
       },
     });
-    await writeCommands(ctx, tempDir);
+    await writeCommands(ctx, tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'commands', 'add-feature.md'),
+      join(tmp.path, '.claude', 'commands', 'add-feature.md'),
       'utf-8',
     );
     expect(content).toContain('Localization');
@@ -387,9 +326,9 @@ describe('writeCommands', () => {
   });
 
   it('analyze.md contains flutter analyze guide', async () => {
-    await writeCommands(makeContext(), tempDir);
+    await writeCommands(makeContext(), tmp.path);
     const content = await readFile(
-      join(tempDir, '.claude', 'commands', 'analyze.md'),
+      join(tmp.path, '.claude', 'commands', 'analyze.md'),
       'utf-8',
     );
     expect(content).toContain('flutter analyze');

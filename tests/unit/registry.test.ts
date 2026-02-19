@@ -163,6 +163,37 @@ describe('ModuleRegistry', () => {
 
       expect(fromMethod.sort()).toEqual(fromManual.sort());
     });
+
+    it('preserves registration insertion order', () => {
+      const registry = new ModuleRegistry();
+      registry.register(makeManifest({ id: 'auth' }));
+      registry.register(makeManifest({ id: 'api' }));
+      registry.register(makeManifest({ id: 'theme' }));
+
+      // Map preserves insertion order — no sorting should be needed
+      expect(registry.getAllOptionalIds()).toEqual(['auth', 'api', 'theme']);
+    });
+
+    it('reflects a newly registered module immediately', () => {
+      const registry = new ModuleRegistry();
+      registry.register(makeManifest({ id: 'auth' }));
+      expect(registry.getAllOptionalIds()).toEqual(['auth']);
+
+      registry.register(makeManifest({ id: 'api' }));
+      expect(registry.getAllOptionalIds()).toEqual(['auth', 'api']);
+    });
+
+    it('excludes all alwaysIncluded modules when multiple exist', () => {
+      const registry = new ModuleRegistry();
+      registry.register(makeManifest({ id: 'core', alwaysIncluded: true }));
+      registry.register(makeManifest({ id: 'base', alwaysIncluded: true }));
+      registry.register(makeManifest({ id: 'auth' }));
+
+      const ids = registry.getAllOptionalIds();
+      expect(ids).not.toContain('core');
+      expect(ids).not.toContain('base');
+      expect(ids).toContain('auth');
+    });
   });
 
   describe('core module manifest', () => {

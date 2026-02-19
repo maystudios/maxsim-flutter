@@ -136,6 +136,7 @@ describe('README.md multiple modules simultaneously', () => {
   const tmp = useTempDir('readme-all-modules-');
 
   it('README.md lists all enabled modules when all are active', async () => {
+    // Note: 15s timeout — scaffold with all 9 modules is slow on WSL2
     const engine = new ScaffoldEngine({
       templatesDir: TEMPLATES_DIR,
       modulesTemplatesDir: MODULES_DIR,

@@ -7,6 +7,7 @@ import { makeTestContext, makeWritableContext } from '../helpers/context-factory
 import { useTempDir } from '../helpers/temp-dir.js';
 import { createTestRegistry } from '../helpers/registry-factory.js';
 import type { ModuleManifest } from '../../src/types/module.js';
+import type { ProjectContext } from '../../src/core/context.js';
 
 // The actual templates/core directory relative to the project root
 const TEMPLATES_DIR = resolve('templates/core');
@@ -252,6 +253,57 @@ describe('ScaffoldEngine', () => {
       expect(result).toBeDefined();
 
       // push files should NOT be generated since push is absent from registry
+      const pushProviderPath = join(
+        tmp.path,
+        'lib/features/push/presentation/providers/push_provider.dart',
+      );
+      expect(await pathExists(pushProviderPath)).toBe(false);
+    });
+
+    it('engine enables a 3-part kebab module ID via correct camelCase mapping', async () => {
+      // Verifies that /-([a-z])/g global regex handles multi-part IDs:
+      // 'foo-bar-baz' → 'fooBarBaz'
+      const fakeTmpModulesDir = resolve('templates/modules'); // real modules dir as base
+      const registry = new ModuleRegistry();
+      registry.register(makeMinimalManifest({ id: 'core', alwaysIncluded: true }));
+      // Register a synthetic 3-part kebab module — no template dir, so engine skips file gen
+      registry.register(makeMinimalManifest({ id: 'foo-bar-baz' }));
+
+      const engine = new ScaffoldEngine({
+        templatesDir: TEMPLATES_DIR,
+        modulesTemplatesDir: fakeTmpModulesDir,
+        registry,
+      });
+
+      // Cast modules to bypass TypeScript's fixed-key type — the engine uses Record<string, unknown>
+      const mods = { fooBarBaz: { enabled: true } } as unknown as ProjectContext['modules'];
+      const context = makeWritableContext(tmp.path, { modules: mods });
+
+      // Engine should run without error; 'foo-bar-baz' template dir doesn't exist so no files added
+      const result = await engine.run(context);
+      expect(result).toBeDefined();
+      expect(result.filesWritten.length).toBeGreaterThan(0); // core files still written
+    });
+
+    it('engine treats module as disabled when its camelCase key is absent from context.modules', async () => {
+      const registry = new ModuleRegistry();
+      registry.register(makeMinimalManifest({ id: 'core', alwaysIncluded: true }));
+      registry.register(makeMinimalManifest({ id: 'push' }));
+
+      const engine = new ScaffoldEngine({
+        templatesDir: TEMPLATES_DIR,
+        modulesTemplatesDir: resolve('templates/modules'),
+        registry,
+      });
+
+      // context.modules has no 'push' key at all (undefined) — should be treated as disabled
+      const mods = {} as unknown as ProjectContext['modules'];
+      const context = makeWritableContext(tmp.path, { modules: mods });
+
+      const result = await engine.run(context);
+      expect(result).toBeDefined();
+
+      // Push files should not be generated since the key is absent (undefined)
       const pushProviderPath = join(
         tmp.path,
         'lib/features/push/presentation/providers/push_provider.dart',

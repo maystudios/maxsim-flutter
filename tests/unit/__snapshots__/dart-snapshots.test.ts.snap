@@ -1,0 +1,347 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Core template snapshots — base project app_router.dart renders correctly without modules 1`] = `
+"import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../features/home/presentation/pages/home_page.dart';
+
+part 'app_router.g.dart';
+
+@riverpod
+GoRouter router(Ref ref) {
+  return GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const HomePage(),
+      ),
+    ],
+  );
+}
+"
+`;
+
+exports[`Core template snapshots — base project main.dart renders correctly for base project 1`] = `
+"import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'app.dart';
+
+void main() {
+  runApp(
+    const ProviderScope(
+      child: App(),
+    ),
+  );
+}
+"
+`;
+
+exports[`Core template snapshots — base project pubspec.yaml renders correctly for base project 1`] = `
+"name: my_app
+description: A test Flutter app
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+  flutter: ^3.24.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  go_router: ^14.6.2
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.13
+  riverpod_generator: ^2.6.3
+  go_router_builder: ^2.7.1
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+
+flutter:
+  uses-material-design: true
+"
+`;
+
+exports[`Module template snapshots analytics route observer renders correctly 1`] = `
+"import 'package:flutter/widgets.dart';
+import 'package:go_router/go_router.dart';
+import '../../domain/services/analytics_service.dart';
+
+/// A [NavigatorObserver] that automatically logs screen views to analytics
+/// whenever the user navigates to a new route via go_router.
+class AnalyticsRouteObserver extends NavigatorObserver {
+  final AnalyticsService _analytics;
+
+  AnalyticsRouteObserver(this._analytics);
+
+  String? _extractRouteName(Route<dynamic>? route) {
+    if (route == null) return null;
+    final settings = route.settings;
+    return settings.name;
+  }
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPush(route, previousRoute);
+    final name = _extractRouteName(route);
+    if (name != null) {
+      _analytics.logScreenView(
+        screenName: name,
+        screenClass: route.runtimeType.toString(),
+      );
+    }
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+    final name = _extractRouteName(newRoute);
+    if (name != null) {
+      _analytics.logScreenView(
+        screenName: name,
+        screenClass: newRoute?.runtimeType.toString(),
+      );
+    }
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPop(route, previousRoute);
+    final name = _extractRouteName(previousRoute);
+    if (name != null) {
+      _analytics.logScreenView(
+        screenName: name,
+        screenClass: previousRoute?.runtimeType.toString(),
+      );
+    }
+  }
+}
+"
+`;
+
+exports[`Module template snapshots auth login_page.dart renders correctly 1`] = `
+"import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../providers/auth_provider.dart';
+
+class LoginPage extends ConsumerStatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  ConsumerState<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends ConsumerState<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final repository = ref.read(authRepositoryProvider);
+      await repository.signInWithEmail(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      if (mounted) {
+        context.go('/');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Login')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your email';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _passwordController,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(),
+                ),
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your password';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _isLoading ? null : _handleLogin,
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Login'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => context.go('/register'),
+                child: const Text("Don't have an account? Register"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+"
+`;
+
+exports[`Module template snapshots push request_permission_usecase.dart renders correctly 1`] = `
+"import '../repositories/push_repository.dart';
+
+/// Use case for requesting push notification permission from the user.
+class RequestPermissionUseCase {
+  final PushRepository _repository;
+
+  const RequestPermissionUseCase(this._repository);
+
+  Future<bool> call() {
+    return _repository.requestPermission();
+  }
+}
+"
+`;
+
+exports[`app_router.dart module combination snapshots app_router.dart activates deep-link handler when deep-linking enabled 1`] = `
+"import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/deep_linking/presentation/providers/deep_link_provider.dart';
+
+part 'app_router.g.dart';
+
+@riverpod
+GoRouter router(Ref ref) {
+  // Activate deep link handler — listens for incoming links and navigates via go_router
+  ref.watch(deepLinkHandlerProvider);
+  return GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const HomePage(),
+      ),
+    ],
+  );
+}
+"
+`;
+
+exports[`app_router.dart module combination snapshots app_router.dart wires analytics observer when analytics enabled 1`] = `
+"import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/analytics/presentation/providers/analytics_provider.dart';
+
+part 'app_router.g.dart';
+
+@riverpod
+GoRouter router(Ref ref) {
+  return GoRouter(
+    initialLocation: '/',
+    observers: [ref.watch(analyticsRouteObserverProvider)],
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const HomePage(),
+      ),
+    ],
+  );
+}
+"
+`;
+
+exports[`app_router.dart module combination snapshots app_router.dart wires both analytics and deep-linking when both enabled 1`] = `
+"import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/analytics/presentation/providers/analytics_provider.dart';
+import '../../features/deep_linking/presentation/providers/deep_link_provider.dart';
+
+part 'app_router.g.dart';
+
+@riverpod
+GoRouter router(Ref ref) {
+  // Activate deep link handler — listens for incoming links and navigates via go_router
+  ref.watch(deepLinkHandlerProvider);
+  return GoRouter(
+    initialLocation: '/',
+    observers: [ref.watch(analyticsRouteObserverProvider)],
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const HomePage(),
+      ),
+    ],
+  );
+}
+"
+`;

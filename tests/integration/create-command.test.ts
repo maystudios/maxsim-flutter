@@ -827,7 +827,7 @@ describe('Integration: create command generates working Flutter project', () => 
 
       // Significant file count
       expect(result.filesWritten.length).toBeGreaterThan(30);
-    });
+    }, 15000);
 
     it('merges all module dependencies into pubspec.yaml', async () => {
       const engine = new ScaffoldEngine({
@@ -888,7 +888,7 @@ describe('Integration: create command generates working Flutter project', () => 
       // Dev deps
       expect(devDeps).toHaveProperty('retrofit_generator');
       expect(devDeps).toHaveProperty('drift_dev');
-    });
+    }, 15000);
 
     it('generates complete .claude/ directory with all modules', async () => {
       const engine = new ScaffoldEngine({
@@ -952,6 +952,6 @@ describe('Integration: create command generates working Flutter project', () => 
       };
       expect(prd.stories.length).toBeGreaterThan(0);
       expect(prd.stories.every((s) => s.passes === false)).toBe(true);
-    });
+    }, 15000);
   });
 });

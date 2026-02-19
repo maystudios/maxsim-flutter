@@ -68,11 +68,10 @@ export class ScaffoldEngine {
     );
 
     // 2. Handle module templates if any modules are enabled
-    const enabledModuleIds = this.getEnabledModuleIds(context);
+    const registry = await this.getRegistry();
+    const enabledModuleIds = this.getEnabledModuleIds(context, registry);
     if (enabledModuleIds.length > 0) {
-      const registry = await this.getRegistry();
-
-      // Filter to only modules that exist in the registry
+      // Filter to only modules that exist in the registry (safety net)
       const validIds = enabledModuleIds.filter((id) => registry.has(id));
       if (validIds.length > 0) {
         const resolver = new ModuleResolver(registry);
@@ -226,20 +225,17 @@ export class ScaffoldEngine {
   }
 
   /**
-   * Determine which module IDs are enabled from the project context.
+   * Determine which optional module IDs are enabled in the given context,
+   * using the registry as the authoritative list of known modules.
+   * Maps kebab-case module IDs (e.g., 'deep-linking') to camelCase context
+   * keys (e.g., 'deepLinking') for lookup.
    */
-  private getEnabledModuleIds(context: ProjectContext): string[] {
-    const ids: string[] = [];
-    if (context.modules.auth !== false) ids.push('auth');
-    if (context.modules.api !== false) ids.push('api');
-    if (context.modules.database !== false) ids.push('database');
-    if (context.modules.i18n !== false) ids.push('i18n');
-    if (context.modules.theme !== false) ids.push('theme');
-    if (context.modules.push !== false) ids.push('push');
-    if (context.modules.analytics !== false) ids.push('analytics');
-    if (context.modules.cicd !== false) ids.push('cicd');
-    if (context.modules.deepLinking !== false) ids.push('deep-linking');
-    return ids;
+  private getEnabledModuleIds(context: ProjectContext, registry: ModuleRegistry): string[] {
+    const mods = context.modules as Record<string, unknown>;
+    return registry.getAllOptionalIds().filter((id) => {
+      const key = id.replace(/-([a-z])/g, (_, c: string) => (c as string).toUpperCase());
+      return mods[key] !== false && mods[key] !== undefined;
+    });
   }
 
   /**

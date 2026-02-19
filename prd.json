@@ -590,7 +590,7 @@
         "README has Agent Teams section if claude.agentTeams is true",
         "Integration test verifies README generated with correct project name"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P6-003",
@@ -605,7 +605,7 @@
         "Adding a new module requires ONLY module.ts + templates",
         "All existing tests still pass"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P6-004",

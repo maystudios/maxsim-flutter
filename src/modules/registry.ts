@@ -103,6 +103,15 @@ export class ModuleRegistry {
   }
 
   /**
+   * Get the IDs of all optional (user-selectable) modules.
+   * Excludes modules marked alwaysIncluded (e.g., core).
+   * This is the single source of truth for which optional modules the tool supports.
+   */
+  getAllOptionalIds(): string[] {
+    return this.getOptional().map((m) => m.id);
+  }
+
+  /**
    * Get the number of registered modules.
    */
   get size(): number {

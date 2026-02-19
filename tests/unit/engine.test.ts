@@ -2,8 +2,11 @@ import { writeFile, readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { pathExists, ensureDir } from 'fs-extra';
 import { ScaffoldEngine } from '../../src/scaffold/engine.js';
-import { makeTestContext } from '../helpers/context-factory.js';
+import { ModuleRegistry } from '../../src/modules/registry.js';
+import { makeTestContext, makeWritableContext } from '../helpers/context-factory.js';
 import { useTempDir } from '../helpers/temp-dir.js';
+import { createTestRegistry } from '../helpers/registry-factory.js';
+import type { ModuleManifest } from '../../src/types/module.js';
 
 // The actual templates/core directory relative to the project root
 const TEMPLATES_DIR = resolve('templates/core');
@@ -171,6 +174,118 @@ describe('ScaffoldEngine', () => {
       expect(result.filesWritten).toEqual([]);
       expect(result.filesSkipped).toEqual([]);
       expect(result.conflicts).toEqual([]);
+    });
+  });
+
+  describe('registry-driven module enablement', () => {
+    const MODULES_DIR = resolve('templates/modules');
+    const tmp = useTempDir('engine-registry-driven-');
+
+    function makeMinimalManifest(overrides: Partial<ModuleManifest> = {}): ModuleManifest {
+      return {
+        id: 'test-module',
+        name: 'Test Module',
+        description: 'A test module',
+        requires: [],
+        templateDir: 'templates/modules/test-module',
+        ralphPhase: 2,
+        contributions: {},
+        ...overrides,
+      };
+    }
+
+    it('engine generates files for a module enabled in context and registered in registry', async () => {
+      const engine = new ScaffoldEngine({
+        templatesDir: TEMPLATES_DIR,
+        modulesTemplatesDir: MODULES_DIR,
+        registry: createTestRegistry(),
+      });
+      const context = makeWritableContext(tmp.path, {
+        modules: {
+          push: { provider: 'firebase' },
+          auth: false,
+          api: false,
+          database: false,
+          i18n: false,
+          theme: false,
+          analytics: false,
+          cicd: false,
+          deepLinking: false,
+        },
+      });
+      await engine.run(context);
+
+      const pushProviderPath = join(
+        tmp.path,
+        'lib/features/push/presentation/providers/push_provider.dart',
+      );
+      expect(await pathExists(pushProviderPath)).toBe(true);
+    });
+
+    it('engine skips module that is enabled in context but absent from registry', async () => {
+      // Registry with only core and auth — no push
+      const registry = new ModuleRegistry();
+      registry.register(makeMinimalManifest({ id: 'core', alwaysIncluded: true }));
+      registry.register(makeMinimalManifest({ id: 'auth' }));
+
+      const engine = new ScaffoldEngine({
+        templatesDir: TEMPLATES_DIR,
+        modulesTemplatesDir: MODULES_DIR,
+        registry,
+      });
+      const context = makeWritableContext(tmp.path, {
+        modules: {
+          push: { provider: 'firebase' },
+          auth: false,
+          api: false,
+          database: false,
+          i18n: false,
+          theme: false,
+          analytics: false,
+          cicd: false,
+          deepLinking: false,
+        },
+      });
+
+      // Should not throw
+      const result = await engine.run(context);
+      expect(result).toBeDefined();
+
+      // push files should NOT be generated since push is absent from registry
+      const pushProviderPath = join(
+        tmp.path,
+        'lib/features/push/presentation/providers/push_provider.dart',
+      );
+      expect(await pathExists(pushProviderPath)).toBe(false);
+    });
+
+    it('engine correctly enables deep-linking via camelCase context key mapping', async () => {
+      const engine = new ScaffoldEngine({
+        templatesDir: TEMPLATES_DIR,
+        modulesTemplatesDir: MODULES_DIR,
+        registry: createTestRegistry(),
+      });
+      const context = makeWritableContext(tmp.path, {
+        modules: {
+          deepLinking: { scheme: 'myapp', host: 'example.com' },
+          auth: false,
+          api: false,
+          database: false,
+          i18n: false,
+          theme: false,
+          push: false,
+          analytics: false,
+          cicd: false,
+        },
+      });
+      await engine.run(context);
+
+      // deep-linking template files should be generated
+      const deepLinkProviderPath = join(
+        tmp.path,
+        'lib/features/deep_linking/presentation/providers/deep_link_provider.dart',
+      );
+      expect(await pathExists(deepLinkProviderPath)).toBe(true);
     });
   });
 });

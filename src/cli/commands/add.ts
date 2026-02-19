@@ -29,37 +29,12 @@ const __dirname = dirname(__filename);
 
 const { pathExists } = fsExtra;
 
-/** All module IDs that can be added via this command. */
-const ADDABLE_MODULE_IDS = [
-  'auth',
-  'api',
-  'theme',
-  'database',
-  'i18n',
-  'push',
-  'analytics',
-  'cicd',
-  'deep-linking',
-] as const;
-
-const MODULE_LABELS: Record<string, string> = {
-  auth: 'Authentication',
-  api: 'API Client',
-  theme: 'Theme',
-  database: 'Database',
-  i18n: 'Internationalization',
-  push: 'Push Notifications',
-  analytics: 'Analytics',
-  cicd: 'CI/CD',
-  'deep-linking': 'Deep Linking',
-};
-
 export function createAddCommand(): Command {
   const cmd = new Command('add');
 
   cmd
     .description('Add a module to an existing maxsim-flutter project')
-    .argument('[module]', 'Module to add: auth|api|theme|database|i18n|push|analytics|cicd|deep-linking')
+    .argument('[module]', 'Module to add (see `maxsim-flutter list` for available modules)')
     .option('--project-dir <path>', 'Path to the project directory (default: current directory)')
     .option('--dry-run', 'Preview changes without writing files')
     .action(async (moduleArg: string | undefined, options: Record<string, unknown>) => {
@@ -111,9 +86,10 @@ async function runAdd(
 
   if (moduleArg) {
     selectedId = moduleArg.trim();
-    if (!ADDABLE_MODULE_IDS.includes(selectedId as (typeof ADDABLE_MODULE_IDS)[number])) {
+    const allOptionalIds = registry.getAllOptionalIds();
+    if (!allOptionalIds.includes(selectedId)) {
       throw new Error(
-        `Unknown module '${selectedId}'. Valid modules: ${ADDABLE_MODULE_IDS.join(', ')}`,
+        `Unknown module '${selectedId}'. Valid modules: ${allOptionalIds.join(', ')}`,
       );
     }
     if (enabledIds.has(selectedId)) {
@@ -122,7 +98,7 @@ async function runAdd(
       );
     }
   } else {
-    const available = ADDABLE_MODULE_IDS.filter((id) => !enabledIds.has(id));
+    const available = registry.getAllOptionalIds().filter((id) => !enabledIds.has(id));
     if (available.length === 0) {
       throw new Error('All available modules are already enabled in this project.');
     }
@@ -131,7 +107,7 @@ async function runAdd(
       message: 'Which module would you like to add?',
       options: available.map((id) => ({
         value: id,
-        label: MODULE_LABELS[id] ?? id,
+        label: registry.has(id) ? registry.get(id).name : id,
       })),
     });
 

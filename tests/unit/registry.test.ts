@@ -128,6 +128,43 @@ describe('ModuleRegistry', () => {
     });
   });
 
+  describe('getAllOptionalIds', () => {
+    it('returns IDs of all non-core optional modules', () => {
+      const registry = new ModuleRegistry();
+      registry.register(makeManifest({ id: 'core', alwaysIncluded: true }));
+      registry.register(makeManifest({ id: 'auth' }));
+      registry.register(makeManifest({ id: 'api' }));
+
+      const ids = registry.getAllOptionalIds();
+      expect(ids.sort()).toEqual(['api', 'auth']);
+    });
+
+    it('returns empty array when registry only contains alwaysIncluded modules', () => {
+      const registry = new ModuleRegistry();
+      registry.register(makeManifest({ id: 'core', alwaysIncluded: true }));
+
+      expect(registry.getAllOptionalIds()).toEqual([]);
+    });
+
+    it('returns empty array when registry is empty', () => {
+      const registry = new ModuleRegistry();
+      expect(registry.getAllOptionalIds()).toEqual([]);
+    });
+
+    it('result matches getOptional() mapped to IDs', () => {
+      const registry = new ModuleRegistry();
+      registry.register(makeManifest({ id: 'core', alwaysIncluded: true }));
+      registry.register(makeManifest({ id: 'auth' }));
+      registry.register(makeManifest({ id: 'api' }));
+      registry.register(makeManifest({ id: 'theme' }));
+
+      const fromMethod = registry.getAllOptionalIds();
+      const fromManual = registry.getOptional().map((m) => m.id);
+
+      expect(fromMethod.sort()).toEqual(fromManual.sort());
+    });
+  });
+
   describe('core module manifest', () => {
     it('has expected shape when imported directly', async () => {
       const { manifest } = await import(

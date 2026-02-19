@@ -566,3 +566,19 @@ Verification:
 - Created tests/integration/template-coverage.test.ts with 10 behavioral tests
 - All quality gates pass: typecheck, lint, 588 tests passing across 27 suites
 - Status: PASSES
+
+## 2026-02-20T00:02 - P6-002: Generate README.md in scaffolded projects
+- Created templates/core/README.md.hbs with project name, modules list, run instructions
+- Conditional Agent Teams section using {{#if claude.agentTeams}}
+- Updated src/scaffold/template-helpers.ts: added claude context to buildTemplateContext
+- Created tests/integration/readme-generation.test.ts with 8 behavioral tests
+- All quality gates pass: typecheck, lint, 613 tests passing across 28 suites
+- Status: PASSES
+
+## 2026-02-20T00:03 - P6-003: Make module ID lists registry-driven
+- Added ModuleRegistry.getAllOptionalIds() to src/modules/registry.ts
+- Updated src/scaffold/engine.ts: getEnabledModuleIds uses registry
+- Updated src/cli/commands/add.ts: removed ADDABLE_MODULE_IDS + MODULE_LABELS, replaced with registry queries
+- Added 4 new tests in tests/unit/registry.test.ts, 3 in tests/unit/engine.test.ts
+- All quality gates pass: typecheck, lint, 620 tests passing across 28 suites
+- Status: PASSES

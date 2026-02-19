@@ -1,0 +1,88 @@
+# {{project.name}}
+
+{{project.description}}
+
+## Getting Started
+
+### Prerequisites
+
+- Flutter SDK >= 3.24.0
+- Dart SDK >= 3.5.0
+
+### Installation
+
+```bash
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+```
+
+### Running the App
+
+```bash
+flutter run
+```
+
+## Architecture
+
+This project follows Clean Architecture with Riverpod state management and go_router navigation.
+
+```
+lib/
+├── core/          # Shared utilities, router, theme
+│   ├── router/    # go_router configuration
+│   ├── theme/     # App theming
+│   └── providers/ # Global providers
+└── features/      # Feature modules
+    └── home/      # Home feature (presentation, domain, data)
+```
+
+## Enabled Modules
+{{#if modules.auth}}
+- **Authentication** — {{modules.auth.provider}} provider
+{{/if}}
+{{#if modules.api}}
+- **API Client** — HTTP client with interceptors
+{{/if}}
+{{#if modules.database}}
+- **Database** — {{modules.database.engine}} local storage
+{{/if}}
+{{#if modules.push}}
+- **Push Notifications** — {{modules.push.provider}} provider
+{{/if}}
+{{#if modules.analytics}}
+- **Analytics** — Firebase Analytics with route observer
+{{/if}}
+{{#if modules.deepLinking}}
+- **Deep Linking** — Universal links via app_links
+{{/if}}
+{{#if modules.i18n}}
+- **Internationalization** — Multi-locale support
+{{/if}}
+{{#if modules.theme}}
+- **Theming** — Dynamic theme with seed color
+{{/if}}
+{{#if modules.cicd}}
+- **CI/CD** — {{modules.cicd.provider}} pipelines
+{{/if}}
+{{#if claude.agentTeams}}
+
+## AI-Assisted Development (Claude Agent Teams)
+
+This project includes Claude Code Agent Teams configuration for AI-assisted development.
+
+```bash
+CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 claude
+```
+
+See `.claude/` for agent definitions and skills.
+{{/if}}
+
+## Testing
+
+```bash
+flutter test
+```
+
+---
+
+*Scaffolded with [maxsim-flutter](https://github.com/maxsim/maxsim-flutter)*

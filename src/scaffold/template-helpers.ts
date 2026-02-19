@@ -42,6 +42,10 @@ export function buildTemplateContext(ctx: ProjectContext): TemplateContext {
     },
     platforms,
     modules,
+    claude: {
+      enabled: ctx.claude.enabled,
+      agentTeams: ctx.claude.agentTeams,
+    },
   };
 }
 

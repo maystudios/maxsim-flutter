@@ -118,3 +118,23 @@
   - Edge cases (empty selection, duplicates, always-included overlap)
 - All quality gates pass: typecheck, lint, 119 tests passing across 8 suites
 - Status: PASSES
+
+## 2026-02-19T00:06 - P2-003: Implement module composer with pubspec merging
+- Created src/modules/composer.ts with ModuleComposer class and ComposeResult interface
+- compose() takes topologically sorted ModuleManifests + ProjectContext, merges all contributions
+- Pubspec dependency merging with deduplication (newer semver version wins via pickNewerVersion)
+- Dev dependency merging with same deduplication strategy
+- Provider contributions collected from all active modules
+- Route contributions collected from all active modules
+- Environment variables deduplicated across modules via Set
+- isEnabled predicate support: modules with isEnabled returning false are skipped
+- formatPubspecDependencies() generates alphabetically sorted YAML dependency lines
+- generateAppProvidersBarrel() produces Dart export statements with deduplication
+- Created tests/unit/composer.test.ts with 31 tests covering:
+  - pickNewerVersion: major/minor/patch comparison, mixed prefixes, equal versions
+  - compose: empty, single, multi-module, dedup deps/devDeps, providers, routes, envVars
+  - isEnabled predicate filtering, empty contributions, realistic multi-module scenario
+  - formatPubspecDependencies: empty, single, alphabetical sorting
+  - generateAppProvidersBarrel: base export, additions, dedup, router dedup
+- All quality gates pass: typecheck, lint, 150 tests passing across 9 suites
+- Status: PASSES

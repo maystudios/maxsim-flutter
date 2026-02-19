@@ -14,7 +14,7 @@
 - **CLI Framework**: Commander.js
 - **Interactive UI**: @clack/prompts
 - **Process Execution**: execa
-- **Testing**: Jest with ts-jest
+- **Testing**: Jest with ts-jest (ESM mode)
 
 ## Architecture
 
@@ -60,25 +60,153 @@ Each module in `src/modules/definitions/<name>/module.ts` exports a `ModuleManif
 - Use `{{#if modules.auth}}` for conditional sections
 - Pubspec fragments in `pubspec.partial.yaml` per module
 
+## Test-Driven Development (TDD)
+
+### Red-Green-Refactor Cycle
+
+Every feature follows this cycle:
+
+1. **RED** — Write a failing test first
+   ```bash
+   npm test -- --testPathPattern=<test-file>   # Must FAIL
+   ```
+2. **GREEN** — Write minimal code to pass
+   ```bash
+   npm test -- --testPathPattern=<test-file>   # Must PASS
+   ```
+3. **REFACTOR** — Clean up without changing behavior
+   ```bash
+   npm run quality                              # All checks must pass
+   ```
+
+### Test File Conventions
+
+```
+tests/
+├── unit/              # Unit tests for individual modules
+│   ├── engine.test.ts
+│   ├── engine-errors.test.ts
+│   ├── file-writer.test.ts
+│   └── ...
+├── integration/       # End-to-end tests
+│   ├── create-command.test.ts
+│   ├── add-command.test.ts
+│   └── ...
+├── helpers/           # Shared test utilities
+│   ├── context-factory.ts   # makeTestContext(), makeWritableContext()
+│   ├── temp-dir.ts          # useTempDir(), createTempDir()
+│   └── registry-factory.ts  # createTestRegistry()
+└── fixtures/          # Test data files
+```
+
+### Test Structure Pattern (Arrange-Act-Assert)
+
+```typescript
+import { makeTestContext, makeWritableContext } from '../helpers/context-factory.js';
+import { useTempDir } from '../helpers/temp-dir.js';
+import { createTestRegistry } from '../helpers/registry-factory.js';
+
+describe('FeatureName', () => {
+  const tmp = useTempDir('feature-test-');
+
+  it('describes expected behavior in plain English', async () => {
+    // Arrange
+    const context = makeWritableContext(tmp.path, { /* overrides */ });
+    const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
+
+    // Act
+    const result = await engine.run(context);
+
+    // Assert
+    expect(result.filesWritten.length).toBeGreaterThan(0);
+  });
+});
+```
+
+### ESM Mocking Pattern
+
+```typescript
+import { jest } from '@jest/globals';
+
+// 1. Create mock functions
+const mockFn = jest.fn<() => Promise<void>>();
+
+// 2. Register mocks BEFORE importing the module under test
+jest.unstable_mockModule('../../src/some/module.js', () => ({
+  exportedFunction: mockFn,
+}));
+
+// 3. Dynamic import AFTER mocks are registered
+const { ClassUnderTest } = await import('../../src/some/module.js');
+```
+
 ## Build & Test
 
 ```bash
-npm install          # Install dependencies
-npm run build        # Compile TypeScript
-npm run dev          # Watch mode compilation
-npm test             # Run all tests
-npm run typecheck    # Type check without emit
-npm run lint         # ESLint
-npm run lint:fix     # ESLint with auto-fix
+npm install              # Install dependencies
+npm run build            # Compile TypeScript
+npm run dev              # Watch mode compilation
+npm test                 # Run all tests
+npm run test:coverage    # Run tests with coverage report
+npm run test:ci          # Run tests with coverage in CI mode
+npm run typecheck        # Type check without emit
+npm run lint             # ESLint
+npm run lint:fix         # ESLint with auto-fix
+npm run quality          # typecheck + lint + test
+npm run quality:full     # typecheck + lint + test with coverage
 ```
 
-## Quality Gates (for Ralph iterations)
+### Targeted Testing
 
-Before marking any story as complete:
-1. `npm run typecheck` must pass with zero errors
-2. `npm run lint` must pass with zero errors
-3. `npm test` must pass all tests
-4. New code must have corresponding tests in `tests/`
+```bash
+npm test -- --testPathPattern=engine        # Run tests matching "engine"
+npm test -- --testPathPattern=integration   # Run only integration tests
+```
+
+## Quality Gates
+
+Before marking any story as complete, ALL 8 gates must pass:
+
+1. **Tests written FIRST** — verified by reviewer (TDD compliance)
+2. **`npm run typecheck`** must pass with zero errors
+3. **`npm run lint`** must pass with zero errors
+4. **`npm test`** must pass all tests
+5. **Coverage meets thresholds** — statements 80%, branches 75%, functions 80%, lines 80%
+6. **No `it.todo()` or `it.skip()`** left behind in test files
+7. **Test names are behavioral** — describe behavior, not implementation
+8. **Every new public function has >= 2 tests** — happy path + at least one edge case
+
+## Agent Team Coordination
+
+### Team Composition
+
+| Agent | Role | When to Use |
+|-------|------|-------------|
+| `typescript-architect` | Design interfaces, plan architecture | New subsystems, API design, module boundaries |
+| `tdd-driver` | Red-Green-Refactor development | Primary development agent for all features |
+| `typescript-builder` | Implement features (TDD-aware) | Implementation when tests already exist |
+| `tester` | Write tests before implementation | Test spec generation, coverage gaps |
+| `reviewer` | Code review with TDD compliance | Before every commit |
+| `quality-gate-enforcer` | Run all quality checks | Final validation before merge |
+| `flutter-template-expert` | Create/review Handlebars templates | Template creation and Dart code generation |
+
+### Development Flow
+
+```
+Architect → TDD Driver → Tester → Builder → Reviewer → Quality Gate Enforcer
+    │            │          │         │          │              │
+    │   Design   │  Write   │  Write  │  Make    │  Review      │  Final
+    │  specs &   │  failing │  more   │  tests   │  code &      │  quality
+    │  interfaces│  tests   │  tests  │  pass    │  TDD check   │  report
+```
+
+### Communication Protocol
+
+1. **Architect** delivers: interface specs, file paths, test case lists
+2. **TDD Driver/Tester** delivers: failing tests with behavioral names
+3. **Builder** delivers: implementation that passes all tests
+4. **Reviewer** delivers: structured review with TDD compliance check
+5. **Quality Gate Enforcer** delivers: pass/fail report with all 8 gates
 
 ## Development Workflow
 
@@ -91,8 +219,9 @@ CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
 
 Then tell Claude to create a team:
 ```
-Create an agent team from prd.json. Spawn an architect, two builders,
-a tester, and a reviewer. Implement the PRD stories phase by phase.
+Create an agent team from prd.json. Spawn an architect, a TDD driver,
+a tester, a builder, a reviewer, and a quality gate enforcer.
+Implement the PRD stories phase by phase using TDD.
 ```
 
 Claude Code handles everything natively:
@@ -107,6 +236,7 @@ Works without Agent Teams. Good for simpler tasks.
 
 ### For all development iterations:
 - Each iteration implements ONE user story
+- Tests are written FIRST (TDD)
 - Run quality gates before committing
 - Commit with: `feat: [Story-ID] - [Story Title]`
 - Append to `progress.txt` (never overwrite)
@@ -137,7 +267,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `docs: short description` — documentation only
 
 ### Workflow order
-1. Run quality gates first: `npm run typecheck && npm run lint && npm test`
+1. Run quality gates first: `npm run quality`
 2. Stage only the relevant files (`git add <files>`) — never blind `git add -A`
 3. Commit with a clear conventional-commit message
 4. **Push immediately**: `git push` (or `git push -u origin <branch>` for new branches)
@@ -156,3 +286,4 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `src/modules/definitions/core/module.ts` - Reference module implementation
 - `templates/core/` - Base Clean Architecture Flutter templates
 - `templates/claude/` - Claude setup templates for generated projects
+- `tests/helpers/` - Shared test utilities (context factory, temp dir, registry)

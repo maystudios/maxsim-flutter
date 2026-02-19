@@ -26,7 +26,14 @@ You create Handlebars (.hbs) templates that generate Flutter/Dart source code. T
 3. Generated Dart code must pass `dart analyze` with zero errors
 4. Follow Flutter/Dart naming conventions (snake_case files, PascalCase classes)
 5. Use `part` and `part of` for code generation files (.g.dart, .freezed.dart)
-6. Include proper imports - never leave import guesses
+6. Include proper imports — never leave import guesses
+
+## Template Testing
+
+When creating or modifying templates, also verify:
+- `tests/unit/template-integrity.test.ts` — no duplicate provider names, part directives match
+- `tests/integration/create-command.test.ts` — end-to-end project generation works
+- Add assertions in integration tests for new template output
 
 ## Key Patterns
 

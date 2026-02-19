@@ -1,7 +1,7 @@
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { jest } from '@jest/globals';
+import { makeWritableContext } from '../helpers/context-factory.js';
+import { useTempDir } from '../helpers/temp-dir.js';
 
 const TEMPLATES_DIR = resolve('templates/core');
 
@@ -25,59 +25,17 @@ jest.unstable_mockModule('../../src/claude-setup/index.js', () => ({
 
 // Dynamic import after mocks are registered
 const { ScaffoldEngine } = await import('../../src/scaffold/engine.js');
-import type { ProjectContext } from '../../src/core/context.js';
-
-function makeContext(overrides: Partial<ProjectContext> = {}): ProjectContext {
-  const base: ProjectContext = {
-    projectName: 'my_app',
-    orgId: 'com.example',
-    description: 'A test Flutter app',
-    platforms: ['android', 'ios'],
-    modules: {
-      auth: false,
-      api: false,
-      database: false,
-      i18n: false,
-      theme: false,
-      push: false,
-      analytics: false,
-      cicd: false,
-      deepLinking: false,
-    },
-    scaffold: {
-      dryRun: false,
-      overwrite: 'always',
-      postProcessors: {
-        dartFormat: false,
-        flutterPubGet: false,
-        buildRunner: false,
-      },
-    },
-    claude: {
-      enabled: false,
-      agentTeams: false,
-    },
-    outputDir: '/tmp/test-output',
-    rawConfig: {} as ProjectContext['rawConfig'],
-  };
-  return { ...base, ...overrides };
-}
 
 describe('ScaffoldEngine post-processor error handling', () => {
-  let tmpDir: string;
+  const tmp = useTempDir('engine-err-test-');
 
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), 'engine-err-test-'));
+  beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true });
   });
 
   it('returns empty postProcessorErrors when post-processors are disabled', async () => {
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext({ outputDir: tmpDir });
+    const context = makeWritableContext(tmp.path);
 
     const result = await engine.run(context);
 
@@ -89,13 +47,12 @@ describe('ScaffoldEngine post-processor error handling', () => {
     mockRunFlutterPubGet.mockResolvedValue(undefined);
 
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext({
+    const context = makeWritableContext(tmp.path, {
       scaffold: {
         dryRun: false,
         overwrite: 'always',
         postProcessors: { dartFormat: true, flutterPubGet: true, buildRunner: false },
       },
-      outputDir: tmpDir,
     });
 
     const result = await engine.run(context);
@@ -109,13 +66,12 @@ describe('ScaffoldEngine post-processor error handling', () => {
     mockRunDartFormat.mockRejectedValue(new Error('dart not found'));
 
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext({
+    const context = makeWritableContext(tmp.path, {
       scaffold: {
         dryRun: false,
         overwrite: 'always',
         postProcessors: { dartFormat: true, flutterPubGet: false, buildRunner: false },
       },
-      outputDir: tmpDir,
     });
 
     const result = await engine.run(context);
@@ -129,13 +85,12 @@ describe('ScaffoldEngine post-processor error handling', () => {
     mockRunFlutterPubGet.mockRejectedValue(new Error('flutter not installed'));
 
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext({
+    const context = makeWritableContext(tmp.path, {
       scaffold: {
         dryRun: false,
         overwrite: 'always',
         postProcessors: { dartFormat: false, flutterPubGet: true, buildRunner: false },
       },
-      outputDir: tmpDir,
     });
 
     const result = await engine.run(context);
@@ -149,13 +104,12 @@ describe('ScaffoldEngine post-processor error handling', () => {
     mockRunBuildRunner.mockRejectedValue(new Error('build_runner unavailable'));
 
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext({
+    const context = makeWritableContext(tmp.path, {
       scaffold: {
         dryRun: false,
         overwrite: 'always',
         postProcessors: { dartFormat: false, flutterPubGet: false, buildRunner: true },
       },
-      outputDir: tmpDir,
     });
 
     const result = await engine.run(context);
@@ -169,13 +123,12 @@ describe('ScaffoldEngine post-processor error handling', () => {
     mockRunDartFormat.mockRejectedValue('string error value');
 
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext({
+    const context = makeWritableContext(tmp.path, {
       scaffold: {
         dryRun: false,
         overwrite: 'always',
         postProcessors: { dartFormat: true, flutterPubGet: false, buildRunner: false },
       },
-      outputDir: tmpDir,
     });
 
     const result = await engine.run(context);
@@ -185,13 +138,12 @@ describe('ScaffoldEngine post-processor error handling', () => {
 
   it('does not run post-processors in dry-run mode and returns empty errors', async () => {
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext({
+    const context = makeWritableContext(tmp.path, {
       scaffold: {
         dryRun: true,
         overwrite: 'always',
         postProcessors: { dartFormat: true, flutterPubGet: true, buildRunner: true },
       },
-      outputDir: tmpDir,
     });
 
     const result = await engine.run(context);
@@ -206,13 +158,12 @@ describe('ScaffoldEngine post-processor error handling', () => {
     mockRunFlutterPubGet.mockRejectedValue(new Error('flutter missing'));
 
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext({
+    const context = makeWritableContext(tmp.path, {
       scaffold: {
         dryRun: false,
         overwrite: 'always',
         postProcessors: { dartFormat: true, flutterPubGet: true, buildRunner: false },
       },
-      outputDir: tmpDir,
     });
 
     const result = await engine.run(context);

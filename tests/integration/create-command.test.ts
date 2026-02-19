@@ -1,96 +1,23 @@
-import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { load as yamlLoad } from 'js-yaml';
 import fsExtra from 'fs-extra';
 import { ScaffoldEngine } from '../../src/scaffold/engine.js';
-import type { ProjectContext } from '../../src/core/context.js';
-import { ModuleRegistry } from '../../src/modules/registry.js';
-import { manifest as coreManifest } from '../../src/modules/definitions/core/module.js';
-import { manifest as authManifest } from '../../src/modules/definitions/auth/module.js';
-import { manifest as apiManifest } from '../../src/modules/definitions/api/module.js';
-import { manifest as themeManifest } from '../../src/modules/definitions/theme/module.js';
-import { manifest as databaseManifest } from '../../src/modules/definitions/database/module.js';
-import { manifest as i18nManifest } from '../../src/modules/definitions/i18n/module.js';
-import { manifest as pushManifest } from '../../src/modules/definitions/push/module.js';
-import { manifest as analyticsManifest } from '../../src/modules/definitions/analytics/module.js';
-import { manifest as cicdManifest } from '../../src/modules/definitions/cicd/module.js';
-import { manifest as deepLinkingManifest } from '../../src/modules/definitions/deep-linking/module.js';
+import { makeWritableContext } from '../helpers/context-factory.js';
+import { useTempDir } from '../helpers/temp-dir.js';
+import { createTestRegistry } from '../helpers/registry-factory.js';
 
 const { pathExists } = fsExtra;
 
 const TEMPLATES_DIR = resolve('templates/core');
 const MODULES_DIR = resolve('templates/modules');
 
-/** Build a pre-loaded registry with ALL module manifests. */
-function createTestRegistry(): ModuleRegistry {
-  const registry = new ModuleRegistry();
-  registry.register(coreManifest);
-  registry.register(authManifest);
-  registry.register(apiManifest);
-  registry.register(themeManifest);
-  registry.register(databaseManifest);
-  registry.register(i18nManifest);
-  registry.register(pushManifest);
-  registry.register(analyticsManifest);
-  registry.register(cicdManifest);
-  registry.register(deepLinkingManifest);
-  return registry;
-}
-
-function makeContext(
-  outputDir: string,
-  overrides: Partial<ProjectContext> = {},
-): ProjectContext {
-  const base: ProjectContext = {
-    projectName: 'my_app',
-    orgId: 'com.example',
-    description: 'A test Flutter app',
-    platforms: ['android', 'ios'],
-    modules: {
-      auth: false,
-      api: false,
-      database: false,
-      i18n: false,
-      theme: false,
-      push: false,
-      analytics: false,
-      cicd: false,
-      deepLinking: false,
-    },
-    scaffold: {
-      dryRun: false,
-      overwrite: 'always',
-      postProcessors: {
-        dartFormat: false,
-        flutterPubGet: false,
-        buildRunner: false,
-      },
-    },
-    claude: {
-      enabled: false,
-      agentTeams: false,
-    },
-    outputDir,
-    rawConfig: {} as ProjectContext['rawConfig'],
-  };
-  return { ...base, ...overrides };
-}
-
 describe('Integration: create command generates working Flutter project', () => {
-  let tmpDir: string;
-
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), 'integration-test-'));
-  });
-
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true });
-  });
+  const tmp = useTempDir('integration-test-');
 
   it('generates project with correct directory structure', async () => {
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext(tmpDir);
+    const context = makeWritableContext(tmp.path);
     await engine.run(context);
 
     const expectedDirs = [
@@ -108,7 +35,7 @@ describe('Integration: create command generates working Flutter project', () => 
     ];
 
     for (const dir of expectedDirs) {
-      const dirPath = join(tmpDir, dir);
+      const dirPath = join(tmp.path, dir);
       const exists = await pathExists(dirPath);
       expect(exists).toBe(true);
     }
@@ -116,10 +43,10 @@ describe('Integration: create command generates working Flutter project', () => 
 
   it('generates valid pubspec.yaml with required dependencies', async () => {
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext(tmpDir);
+    const context = makeWritableContext(tmp.path);
     await engine.run(context);
 
-    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspecContent = await readFile(join(tmp.path, 'pubspec.yaml'), 'utf-8');
     const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
 
     expect(pubspec).toBeTruthy();
@@ -135,10 +62,10 @@ describe('Integration: create command generates working Flutter project', () => 
 
   it('generates main.dart with ProviderScope', async () => {
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext(tmpDir);
+    const context = makeWritableContext(tmp.path);
     await engine.run(context);
 
-    const mainDartContent = await readFile(join(tmpDir, 'lib', 'main.dart'), 'utf-8');
+    const mainDartContent = await readFile(join(tmp.path, 'lib', 'main.dart'), 'utf-8');
 
     expect(mainDartContent).toContain('ProviderScope');
     expect(mainDartContent).toContain('runApp');
@@ -146,11 +73,11 @@ describe('Integration: create command generates working Flutter project', () => 
 
   it('generates app_router.dart with GoRouter setup', async () => {
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext(tmpDir);
+    const context = makeWritableContext(tmp.path);
     await engine.run(context);
 
     const routerContent = await readFile(
-      join(tmpDir, 'lib', 'core', 'router', 'app_router.dart'),
+      join(tmp.path, 'lib', 'core', 'router', 'app_router.dart'),
       'utf-8',
     );
 
@@ -165,10 +92,10 @@ describe('Integration: create command generates working Flutter project', () => 
 
   it('generates valid analysis_options.yaml', async () => {
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext(tmpDir);
+    const context = makeWritableContext(tmp.path);
     await engine.run(context);
 
-    const analysisContent = await readFile(join(tmpDir, 'analysis_options.yaml'), 'utf-8');
+    const analysisContent = await readFile(join(tmp.path, 'analysis_options.yaml'), 'utf-8');
     const analysisOptions = yamlLoad(analysisContent) as Record<string, unknown>;
 
     expect(analysisOptions).toBeTruthy();
@@ -178,11 +105,11 @@ describe('Integration: create command generates working Flutter project', () => 
 
   it('generates widget_test.dart', async () => {
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext(tmpDir);
+    const context = makeWritableContext(tmp.path);
     await engine.run(context);
 
     const widgetTestContent = await readFile(
-      join(tmpDir, 'test', 'widget_test.dart'),
+      join(tmp.path, 'test', 'widget_test.dart'),
       'utf-8',
     );
 
@@ -192,12 +119,12 @@ describe('Integration: create command generates working Flutter project', () => 
 
   it('writes maxsim.config.yaml when scaffold completes', async () => {
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext(tmpDir);
+    const context = makeWritableContext(tmp.path);
     await engine.run(context);
 
     // Simulate what the create command does: write the config file
     const configContent = `project:\n  name: my_app\n  orgId: com.example\n`;
-    const configPath = join(tmpDir, 'maxsim.config.yaml');
+    const configPath = join(tmp.path, 'maxsim.config.yaml');
     await writeFile(configPath, configContent, 'utf-8');
 
     const configExists = await pathExists(configPath);
@@ -211,10 +138,10 @@ describe('Integration: create command generates working Flutter project', () => 
 
   it('generates project with correct project name in files', async () => {
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-    const context = makeContext(tmpDir, { projectName: 'awesome_app' });
+    const context = makeWritableContext(tmp.path, { projectName: 'awesome_app' });
     await engine.run(context);
 
-    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspecContent = await readFile(join(tmp.path, 'pubspec.yaml'), 'utf-8');
     const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
 
     expect(pubspec['name']).toBe('awesome_app');
@@ -226,7 +153,7 @@ describe('Integration: create command generates working Flutter project', () => 
       modulesTemplatesDir: MODULES_DIR,
       registry: createTestRegistry(),
     });
-    const context = makeContext(tmpDir, {
+    const context = makeWritableContext(tmp.path, {
       modules: {
         auth: { provider: 'firebase' },
         api: false,
@@ -243,16 +170,16 @@ describe('Integration: create command generates working Flutter project', () => 
 
     // Auth module files should exist
     const authProviderPath = join(
-      tmpDir,
+      tmp.path,
       'lib/features/auth/presentation/providers/auth_provider.dart',
     );
     expect(await pathExists(authProviderPath)).toBe(true);
 
-    const loginPagePath = join(tmpDir, 'lib/features/auth/presentation/pages/login_page.dart');
+    const loginPagePath = join(tmp.path, 'lib/features/auth/presentation/pages/login_page.dart');
     expect(await pathExists(loginPagePath)).toBe(true);
 
     // Core files should still exist
-    expect(await pathExists(join(tmpDir, 'lib/main.dart'))).toBe(true);
+    expect(await pathExists(join(tmp.path, 'lib/main.dart'))).toBe(true);
   });
 
   it('generates api module files when api is enabled', async () => {
@@ -261,7 +188,7 @@ describe('Integration: create command generates working Flutter project', () => 
       modulesTemplatesDir: MODULES_DIR,
       registry: createTestRegistry(),
     });
-    const context = makeContext(tmpDir, {
+    const context = makeWritableContext(tmp.path, {
       modules: {
         auth: false,
         api: { baseUrl: 'https://api.test.com' },
@@ -277,11 +204,11 @@ describe('Integration: create command generates working Flutter project', () => 
     await engine.run(context);
 
     // API module files should exist
-    const apiClientPath = join(tmpDir, 'lib/features/api/data/datasources/api_client.dart');
+    const apiClientPath = join(tmp.path, 'lib/features/api/data/datasources/api_client.dart');
     expect(await pathExists(apiClientPath)).toBe(true);
 
     const apiProviderPath = join(
-      tmpDir,
+      tmp.path,
       'lib/features/api/presentation/providers/api_provider.dart',
     );
     expect(await pathExists(apiProviderPath)).toBe(true);
@@ -293,7 +220,7 @@ describe('Integration: create command generates working Flutter project', () => 
       modulesTemplatesDir: MODULES_DIR,
       registry: createTestRegistry(),
     });
-    const context = makeContext(tmpDir, {
+    const context = makeWritableContext(tmp.path, {
       modules: {
         auth: { provider: 'firebase' },
         api: { baseUrl: 'https://api.test.com' },
@@ -308,7 +235,7 @@ describe('Integration: create command generates working Flutter project', () => 
     });
     await engine.run(context);
 
-    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspecContent = await readFile(join(tmp.path, 'pubspec.yaml'), 'utf-8');
     const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
     const deps = pubspec['dependencies'] as Record<string, unknown>;
 
@@ -327,7 +254,7 @@ describe('Integration: create command generates working Flutter project', () => 
       modulesTemplatesDir: MODULES_DIR,
       registry: createTestRegistry(),
     });
-    const context = makeContext(tmpDir, {
+    const context = makeWritableContext(tmp.path, {
       modules: {
         auth: { provider: 'firebase' },
         api: { baseUrl: 'https://api.test.com' },
@@ -346,12 +273,12 @@ describe('Integration: create command generates working Flutter project', () => 
     expect(result.filesWritten.length).toBeGreaterThan(20);
 
     // Verify module-specific files exist
-    expect(await pathExists(join(tmpDir, 'lib/features/auth/presentation/pages/login_page.dart'))).toBe(true);
-    expect(await pathExists(join(tmpDir, 'lib/features/api/data/datasources/api_client.dart'))).toBe(true);
-    expect(await pathExists(join(tmpDir, 'lib/core/theme/app_theme.dart'))).toBe(true);
+    expect(await pathExists(join(tmp.path, 'lib/features/auth/presentation/pages/login_page.dart'))).toBe(true);
+    expect(await pathExists(join(tmp.path, 'lib/features/api/data/datasources/api_client.dart'))).toBe(true);
+    expect(await pathExists(join(tmp.path, 'lib/core/theme/app_theme.dart'))).toBe(true);
 
     // Verify merged pubspec
-    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspecContent = await readFile(join(tmp.path, 'pubspec.yaml'), 'utf-8');
     const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
     const deps = pubspec['dependencies'] as Record<string, unknown>;
     expect(deps).toHaveProperty('flutter_riverpod');
@@ -369,13 +296,13 @@ describe('Integration: create command generates working Flutter project', () => 
       modulesTemplatesDir: MODULES_DIR,
       registry: createTestRegistry(),
     });
-    const context = makeContext(tmpDir);
+    const context = makeWritableContext(tmp.path);
     await engine.run(context);
 
-    expect(await pathExists(join(tmpDir, 'lib/features/auth'))).toBe(false);
-    expect(await pathExists(join(tmpDir, 'lib/features/api'))).toBe(false);
+    expect(await pathExists(join(tmp.path, 'lib/features/auth'))).toBe(false);
+    expect(await pathExists(join(tmp.path, 'lib/features/api'))).toBe(false);
 
-    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspecContent = await readFile(join(tmp.path, 'pubspec.yaml'), 'utf-8');
     const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
     const deps = pubspec['dependencies'] as Record<string, unknown>;
     expect(deps).not.toHaveProperty('firebase_core');
@@ -389,7 +316,7 @@ describe('Integration: create command generates working Flutter project', () => 
       modulesTemplatesDir: MODULES_DIR,
       registry: createTestRegistry(),
     });
-    const context = makeContext(tmpDir, {
+    const context = makeWritableContext(tmp.path, {
       modules: {
         auth: false,
         api: false,
@@ -406,25 +333,25 @@ describe('Integration: create command generates working Flutter project', () => 
 
     // Database module files should exist
     const datasourcePath = join(
-      tmpDir,
+      tmp.path,
       'lib/features/database/data/datasources/database_datasource.dart',
     );
     expect(await pathExists(datasourcePath)).toBe(true);
 
     const repoImplPath = join(
-      tmpDir,
+      tmp.path,
       'lib/features/database/data/repositories/database_repository_impl.dart',
     );
     expect(await pathExists(repoImplPath)).toBe(true);
 
     const providerPath = join(
-      tmpDir,
+      tmp.path,
       'lib/features/database/presentation/providers/database_provider.dart',
     );
     expect(await pathExists(providerPath)).toBe(true);
 
     const domainRepoPath = join(
-      tmpDir,
+      tmp.path,
       'lib/features/database/domain/repositories/database_repository.dart',
     );
     expect(await pathExists(domainRepoPath)).toBe(true);
@@ -435,7 +362,7 @@ describe('Integration: create command generates working Flutter project', () => 
     expect(datasourceContent).toContain('AppDatabase');
 
     // Verify drift deps in pubspec
-    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspecContent = await readFile(join(tmp.path, 'pubspec.yaml'), 'utf-8');
     const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
     const deps = pubspec['dependencies'] as Record<string, unknown>;
     expect(deps).toHaveProperty('drift');
@@ -450,7 +377,7 @@ describe('Integration: create command generates working Flutter project', () => 
       modulesTemplatesDir: MODULES_DIR,
       registry: createTestRegistry(),
     });
-    const context = makeContext(tmpDir, {
+    const context = makeWritableContext(tmp.path, {
       modules: {
         auth: false,
         api: false,
@@ -466,14 +393,14 @@ describe('Integration: create command generates working Flutter project', () => 
     await engine.run(context);
 
     const datasourcePath = join(
-      tmpDir,
+      tmp.path,
       'lib/features/database/data/datasources/database_datasource.dart',
     );
     const datasourceContent = await readFile(datasourcePath, 'utf-8');
     expect(datasourceContent).toContain('HiveDatabaseDataSource');
     expect(datasourceContent).toContain('Hive.initFlutter');
 
-    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspecContent = await readFile(join(tmp.path, 'pubspec.yaml'), 'utf-8');
     const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
     const deps = pubspec['dependencies'] as Record<string, unknown>;
     expect(deps).toHaveProperty('hive_ce_flutter');
@@ -487,7 +414,7 @@ describe('Integration: create command generates working Flutter project', () => 
       modulesTemplatesDir: MODULES_DIR,
       registry: createTestRegistry(),
     });
-    const context = makeContext(tmpDir, {
+    const context = makeWritableContext(tmp.path, {
       modules: {
         auth: false,
         api: false,
@@ -503,14 +430,14 @@ describe('Integration: create command generates working Flutter project', () => 
     await engine.run(context);
 
     const datasourcePath = join(
-      tmpDir,
+      tmp.path,
       'lib/features/database/data/datasources/database_datasource.dart',
     );
     const datasourceContent = await readFile(datasourcePath, 'utf-8');
     expect(datasourceContent).toContain('IsarDatabaseDataSource');
     expect(datasourceContent).toContain('Isar.open');
 
-    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspecContent = await readFile(join(tmp.path, 'pubspec.yaml'), 'utf-8');
     const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
     const deps = pubspec['dependencies'] as Record<string, unknown>;
     expect(deps).toHaveProperty('isar');
@@ -522,12 +449,12 @@ describe('Integration: create command generates working Flutter project', () => 
   describe('Claude setup integration', () => {
     it('generates CLAUDE.md when claude.enabled is true', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         claude: { enabled: true, agentTeams: false },
       });
       await engine.run(context);
 
-      const claudeMdPath = join(tmpDir, 'CLAUDE.md');
+      const claudeMdPath = join(tmp.path, 'CLAUDE.md');
       expect(await pathExists(claudeMdPath)).toBe(true);
 
       const content = await readFile(claudeMdPath, 'utf-8');
@@ -539,12 +466,12 @@ describe('Integration: create command generates working Flutter project', () => 
 
     it('generates .claude/agents/ with 5 agent files', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         claude: { enabled: true, agentTeams: true },
       });
       await engine.run(context);
 
-      const agentsDir = join(tmpDir, '.claude', 'agents');
+      const agentsDir = join(tmp.path, '.claude', 'agents');
       expect(await pathExists(agentsDir)).toBe(true);
 
       const expectedAgents = [
@@ -561,7 +488,7 @@ describe('Integration: create command generates working Flutter project', () => 
 
     it('generates prd.json with stories', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         claude: { enabled: true, agentTeams: false },
         modules: {
           auth: { provider: 'firebase' },
@@ -577,7 +504,7 @@ describe('Integration: create command generates working Flutter project', () => 
       });
       await engine.run(context);
 
-      const prdPath = join(tmpDir, 'prd.json');
+      const prdPath = join(tmp.path, 'prd.json');
       expect(await pathExists(prdPath)).toBe(true);
 
       const prdContent = await readFile(prdPath, 'utf-8');
@@ -603,14 +530,14 @@ describe('Integration: create command generates working Flutter project', () => 
 
     it('skips Claude setup when claude.enabled is false', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         claude: { enabled: false, agentTeams: false },
       });
       await engine.run(context);
 
-      expect(await pathExists(join(tmpDir, 'CLAUDE.md'))).toBe(false);
-      expect(await pathExists(join(tmpDir, '.claude', 'agents'))).toBe(false);
-      expect(await pathExists(join(tmpDir, 'prd.json'))).toBe(false);
+      expect(await pathExists(join(tmp.path, 'CLAUDE.md'))).toBe(false);
+      expect(await pathExists(join(tmp.path, '.claude', 'agents'))).toBe(false);
+      expect(await pathExists(join(tmp.path, 'prd.json'))).toBe(false);
     });
 
     it('skips Claude setup when noClaude option is set', async () => {
@@ -618,45 +545,45 @@ describe('Integration: create command generates working Flutter project', () => 
         templatesDir: TEMPLATES_DIR,
         noClaude: true,
       });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         claude: { enabled: true, agentTeams: true },
       });
       await engine.run(context);
 
-      expect(await pathExists(join(tmpDir, 'CLAUDE.md'))).toBe(false);
-      expect(await pathExists(join(tmpDir, 'prd.json'))).toBe(false);
+      expect(await pathExists(join(tmp.path, 'CLAUDE.md'))).toBe(false);
+      expect(await pathExists(join(tmp.path, 'prd.json'))).toBe(false);
     });
 
     it('generates Agent Teams section in CLAUDE.md when agentTeams is true', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         claude: { enabled: true, agentTeams: true },
       });
       await engine.run(context);
 
-      const content = await readFile(join(tmpDir, 'CLAUDE.md'), 'utf-8');
+      const content = await readFile(join(tmp.path, 'CLAUDE.md'), 'utf-8');
       expect(content).toContain('## Agent Teams Workflow');
       expect(content).toContain('prd.json');
     });
 
     it('generates .mcp.json', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         claude: { enabled: true, agentTeams: false },
       });
       await engine.run(context);
 
-      expect(await pathExists(join(tmpDir, '.mcp.json'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.mcp.json'))).toBe(true);
     });
 
     it('generates .claude/skills/ with 4 skill files', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         claude: { enabled: true, agentTeams: false },
       });
       await engine.run(context);
 
-      const skillsDir = join(tmpDir, '.claude', 'skills');
+      const skillsDir = join(tmp.path, '.claude', 'skills');
       expect(await pathExists(skillsDir)).toBe(true);
 
       const expectedSkills = [
@@ -676,12 +603,12 @@ describe('Integration: create command generates working Flutter project', () => 
 
     it('generates .claude/settings.local.json with hooks', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         claude: { enabled: true, agentTeams: false },
       });
       await engine.run(context);
 
-      const hooksPath = join(tmpDir, '.claude', 'settings.local.json');
+      const hooksPath = join(tmp.path, '.claude', 'settings.local.json');
       expect(await pathExists(hooksPath)).toBe(true);
 
       const hooksContent = await readFile(hooksPath, 'utf-8');
@@ -695,12 +622,12 @@ describe('Integration: create command generates working Flutter project', () => 
 
     it('generates .claude/commands/ with command files', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         claude: { enabled: true, agentTeams: false },
       });
       await engine.run(context);
 
-      const commandsDir = join(tmpDir, '.claude', 'commands');
+      const commandsDir = join(tmp.path, '.claude', 'commands');
       expect(await pathExists(commandsDir)).toBe(true);
 
       const expectedCommands = ['add-feature.md', 'analyze.md'];
@@ -721,7 +648,7 @@ describe('Integration: create command generates working Flutter project', () => 
         modulesTemplatesDir: MODULES_DIR,
         registry: createTestRegistry(),
       });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         modules: {
           auth: false,
           api: false,
@@ -738,12 +665,12 @@ describe('Integration: create command generates working Flutter project', () => 
 
       // Collect all .dart files
       const { readdir: readdirRecursive } = await import('node:fs/promises');
-      const allEntries = await readdirRecursive(tmpDir, { recursive: true });
+      const allEntries = await readdirRecursive(tmp.path, { recursive: true });
       const dartFiles = (allEntries as string[]).filter((f: string) => f.endsWith('.dart'));
 
       let routerProviderCount = 0;
       for (const file of dartFiles) {
-        const content = await readFile(join(tmpDir, file), 'utf-8');
+        const content = await readFile(join(tmp.path, file), 'utf-8');
         // Count @riverpod annotated functions named "router"
         const matches = content.match(/@riverpod[\s\S]*?\n\s*\w+\s+router\s*\(/g);
         if (matches) {
@@ -760,7 +687,7 @@ describe('Integration: create command generates working Flutter project', () => 
         modulesTemplatesDir: MODULES_DIR,
         registry: createTestRegistry(),
       });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         modules: {
           auth: false,
           api: false,
@@ -776,7 +703,7 @@ describe('Integration: create command generates working Flutter project', () => 
       await engine.run(context);
 
       const deepLinkProviderPath = join(
-        tmpDir,
+        tmp.path,
         'lib/features/deep_linking/presentation/providers/deep_link_provider.dart',
       );
       const content = await readFile(deepLinkProviderPath, 'utf-8');
@@ -792,7 +719,7 @@ describe('Integration: create command generates working Flutter project', () => 
       modulesTemplatesDir: MODULES_DIR,
       registry: createTestRegistry(),
     });
-    const context = makeContext(tmpDir, {
+    const context = makeWritableContext(tmp.path, {
       modules: {
         auth: { provider: 'supabase' },
         api: false,
@@ -807,7 +734,7 @@ describe('Integration: create command generates working Flutter project', () => 
     });
     await engine.run(context);
 
-    const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+    const pubspecContent = await readFile(join(tmp.path, 'pubspec.yaml'), 'utf-8');
     const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
     const deps = pubspec['dependencies'] as Record<string, unknown>;
 
@@ -823,7 +750,7 @@ describe('Integration: create command generates working Flutter project', () => 
         modulesTemplatesDir: MODULES_DIR,
         registry: createTestRegistry(),
       });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         modules: {
           auth: { provider: 'firebase' },
           api: { baseUrl: 'https://api.example.com' },
@@ -840,59 +767,59 @@ describe('Integration: create command generates working Flutter project', () => 
       const result = await engine.run(context);
 
       // Core files
-      expect(await pathExists(join(tmpDir, 'lib/main.dart'))).toBe(true);
-      expect(await pathExists(join(tmpDir, 'pubspec.yaml'))).toBe(true);
-      expect(await pathExists(join(tmpDir, 'analysis_options.yaml'))).toBe(true);
+      expect(await pathExists(join(tmp.path, 'lib/main.dart'))).toBe(true);
+      expect(await pathExists(join(tmp.path, 'pubspec.yaml'))).toBe(true);
+      expect(await pathExists(join(tmp.path, 'analysis_options.yaml'))).toBe(true);
 
       // Auth module files
       expect(
-        await pathExists(join(tmpDir, 'lib/features/auth/presentation/pages/login_page.dart')),
+        await pathExists(join(tmp.path, 'lib/features/auth/presentation/pages/login_page.dart')),
       ).toBe(true);
       expect(
-        await pathExists(join(tmpDir, 'lib/features/auth/domain/entities/user_entity.dart')),
+        await pathExists(join(tmp.path, 'lib/features/auth/domain/entities/user_entity.dart')),
       ).toBe(true);
 
       // API module files
       expect(
-        await pathExists(join(tmpDir, 'lib/features/api/data/datasources/api_client.dart')),
+        await pathExists(join(tmp.path, 'lib/features/api/data/datasources/api_client.dart')),
       ).toBe(true);
 
       // Database module files
       expect(
         await pathExists(
-          join(tmpDir, 'lib/features/database/data/datasources/database_datasource.dart'),
+          join(tmp.path, 'lib/features/database/data/datasources/database_datasource.dart'),
         ),
       ).toBe(true);
 
       // i18n module files
-      expect(await pathExists(join(tmpDir, 'l10n.yaml'))).toBe(true);
-      expect(await pathExists(join(tmpDir, 'lib/l10n/app_en.arb'))).toBe(true);
+      expect(await pathExists(join(tmp.path, 'l10n.yaml'))).toBe(true);
+      expect(await pathExists(join(tmp.path, 'lib/l10n/app_en.arb'))).toBe(true);
 
       // Theme module files
-      expect(await pathExists(join(tmpDir, 'lib/core/theme/app_theme.dart'))).toBe(true);
+      expect(await pathExists(join(tmp.path, 'lib/core/theme/app_theme.dart'))).toBe(true);
 
       // Push module files
       expect(
         await pathExists(
-          join(tmpDir, 'lib/features/push/presentation/providers/push_provider.dart'),
+          join(tmp.path, 'lib/features/push/presentation/providers/push_provider.dart'),
         ),
       ).toBe(true);
 
       // Analytics module files
       expect(
         await pathExists(
-          join(tmpDir, 'lib/features/analytics/domain/services/analytics_service.dart'),
+          join(tmp.path, 'lib/features/analytics/domain/services/analytics_service.dart'),
         ),
       ).toBe(true);
 
       // CI/CD module files
-      expect(await pathExists(join(tmpDir, '.github/workflows/ci.yml'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.github/workflows/ci.yml'))).toBe(true);
 
       // Deep linking module files
       expect(
         await pathExists(
           join(
-            tmpDir,
+            tmp.path,
             'lib/features/deep_linking/presentation/providers/deep_link_provider.dart',
           ),
         ),
@@ -908,7 +835,7 @@ describe('Integration: create command generates working Flutter project', () => 
         modulesTemplatesDir: MODULES_DIR,
         registry: createTestRegistry(),
       });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         modules: {
           auth: { provider: 'firebase' },
           api: { baseUrl: 'https://api.example.com' },
@@ -923,7 +850,7 @@ describe('Integration: create command generates working Flutter project', () => 
       });
       await engine.run(context);
 
-      const pubspecContent = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+      const pubspecContent = await readFile(join(tmp.path, 'pubspec.yaml'), 'utf-8');
       const pubspec = yamlLoad(pubspecContent) as Record<string, unknown>;
       const deps = pubspec['dependencies'] as Record<string, unknown>;
       const devDeps = pubspec['dev_dependencies'] as Record<string, unknown>;
@@ -969,7 +896,7 @@ describe('Integration: create command generates working Flutter project', () => 
         modulesTemplatesDir: MODULES_DIR,
         registry: createTestRegistry(),
       });
-      const context = makeContext(tmpDir, {
+      const context = makeWritableContext(tmp.path, {
         modules: {
           auth: { provider: 'firebase' },
           api: { baseUrl: 'https://api.example.com' },
@@ -986,40 +913,40 @@ describe('Integration: create command generates working Flutter project', () => 
       await engine.run(context);
 
       // CLAUDE.md with module-specific sections
-      const claudeMd = await readFile(join(tmpDir, 'CLAUDE.md'), 'utf-8');
+      const claudeMd = await readFile(join(tmp.path, 'CLAUDE.md'), 'utf-8');
       expect(claudeMd).toContain('# CLAUDE.md');
       expect(claudeMd).toContain('## Architecture Rules');
       expect(claudeMd).toContain('## Agent Teams Workflow');
 
       // Agents
-      expect(await pathExists(join(tmpDir, '.claude/agents/flutter-architect.md'))).toBe(true);
-      expect(await pathExists(join(tmpDir, '.claude/agents/flutter-feature-builder.md'))).toBe(
+      expect(await pathExists(join(tmp.path, '.claude/agents/flutter-architect.md'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.claude/agents/flutter-feature-builder.md'))).toBe(
         true,
       );
-      expect(await pathExists(join(tmpDir, '.claude/agents/flutter-tester.md'))).toBe(true);
-      expect(await pathExists(join(tmpDir, '.claude/agents/flutter-reviewer.md'))).toBe(true);
-      expect(await pathExists(join(tmpDir, '.claude/agents/flutter-docs.md'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.claude/agents/flutter-tester.md'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.claude/agents/flutter-reviewer.md'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.claude/agents/flutter-docs.md'))).toBe(true);
 
       // Skills
-      expect(await pathExists(join(tmpDir, '.claude/skills/flutter-patterns.md'))).toBe(true);
-      expect(await pathExists(join(tmpDir, '.claude/skills/go-router-patterns.md'))).toBe(true);
-      expect(await pathExists(join(tmpDir, '.claude/skills/module-conventions.md'))).toBe(true);
-      expect(await pathExists(join(tmpDir, '.claude/skills/prd.md'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.claude/skills/flutter-patterns.md'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.claude/skills/go-router-patterns.md'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.claude/skills/module-conventions.md'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.claude/skills/prd.md'))).toBe(true);
 
       // Hooks
-      const hooks = await readFile(join(tmpDir, '.claude/settings.local.json'), 'utf-8');
+      const hooks = await readFile(join(tmp.path, '.claude/settings.local.json'), 'utf-8');
       expect(hooks).toContain('flutter analyze');
       expect(hooks).toContain('flutter test');
 
       // Commands
-      expect(await pathExists(join(tmpDir, '.claude/commands/add-feature.md'))).toBe(true);
-      expect(await pathExists(join(tmpDir, '.claude/commands/analyze.md'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.claude/commands/add-feature.md'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.claude/commands/analyze.md'))).toBe(true);
 
       // MCP config
-      expect(await pathExists(join(tmpDir, '.mcp.json'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.mcp.json'))).toBe(true);
 
       // PRD
-      const prdContent = await readFile(join(tmpDir, 'prd.json'), 'utf-8');
+      const prdContent = await readFile(join(tmp.path, 'prd.json'), 'utf-8');
       const prd = JSON.parse(prdContent) as {
         stories: Array<{ id: string; phase: number; passes: boolean }>;
       };

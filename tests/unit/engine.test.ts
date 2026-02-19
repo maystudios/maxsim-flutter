@@ -1,54 +1,18 @@
-import { mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { writeFile, readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { pathExists, ensureDir } from 'fs-extra';
 import { ScaffoldEngine } from '../../src/scaffold/engine.js';
-import type { ProjectContext } from '../../src/core/context.js';
+import { makeTestContext } from '../helpers/context-factory.js';
+import { useTempDir } from '../helpers/temp-dir.js';
 
 // The actual templates/core directory relative to the project root
 const TEMPLATES_DIR = resolve('templates/core');
-
-function makeContext(overrides: Partial<ProjectContext> = {}): ProjectContext {
-  const base: ProjectContext = {
-    projectName: 'my_app',
-    orgId: 'com.example',
-    description: 'A test Flutter app',
-    platforms: ['android', 'ios'],
-    modules: {
-      auth: false,
-      api: false,
-      database: false,
-      i18n: false,
-      theme: false,
-      push: false,
-      analytics: false,
-      cicd: false,
-      deepLinking: false,
-    },
-    scaffold: {
-      dryRun: true,
-      overwrite: 'always',
-      postProcessors: {
-        dartFormat: false,
-        flutterPubGet: false,
-        buildRunner: false,
-      },
-    },
-    claude: {
-      enabled: false,
-      agentTeams: false,
-    },
-    outputDir: '/tmp/test-output',
-    rawConfig: {} as ProjectContext['rawConfig'],
-  };
-  return { ...base, ...overrides };
-}
 
 describe('ScaffoldEngine', () => {
   describe('run (dry-run)', () => {
     it('returns a ScaffoldResult with filesWritten from core templates', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext();
+      const context = makeTestContext();
       const result = await engine.run(context);
 
       expect(result).toHaveProperty('filesWritten');
@@ -66,7 +30,7 @@ describe('ScaffoldEngine', () => {
 
     it('includes core template output paths without .hbs extension', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext();
+      const context = makeTestContext();
       const result = await engine.run(context);
 
       // pubspec.yaml.hbs should become pubspec.yaml
@@ -79,7 +43,7 @@ describe('ScaffoldEngine', () => {
 
     it('includes .gitkeep files as-is', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext();
+      const context = makeTestContext();
       const result = await engine.run(context);
 
       expect(result.filesWritten.some((f) => f.endsWith('.gitkeep'))).toBe(true);
@@ -87,7 +51,7 @@ describe('ScaffoldEngine', () => {
 
     it('skips post-processors in dry-run mode even when all are enabled', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext({
+      const context = makeTestContext({
         scaffold: {
           dryRun: true,
           overwrite: 'always',
@@ -105,7 +69,7 @@ describe('ScaffoldEngine', () => {
 
     it('produces more than zero files from core templates', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext();
+      const context = makeTestContext();
       const result = await engine.run(context);
 
       expect(result.filesWritten.length).toBeGreaterThan(0);
@@ -113,19 +77,11 @@ describe('ScaffoldEngine', () => {
   });
 
   describe('run (real write)', () => {
-    let tmpDir: string;
-
-    beforeEach(async () => {
-      tmpDir = await mkdtemp(join(tmpdir(), 'engine-test-'));
-    });
-
-    afterEach(async () => {
-      await rm(tmpDir, { recursive: true, force: true });
-    });
+    const tmp = useTempDir('engine-test-');
 
     it('writes files to outputDir when not in dry-run', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext({
+      const context = makeTestContext({
         scaffold: {
           dryRun: false,
           overwrite: 'always',
@@ -135,7 +91,7 @@ describe('ScaffoldEngine', () => {
             buildRunner: false,
           },
         },
-        outputDir: tmpDir,
+        outputDir: tmp.path,
       });
 
       const result = await engine.run(context);
@@ -143,16 +99,16 @@ describe('ScaffoldEngine', () => {
       expect(result.filesWritten.length).toBeGreaterThan(0);
 
       // Verify actual file was created on disk
-      const pubspecExists = await pathExists(join(tmpDir, 'pubspec.yaml'));
+      const pubspecExists = await pathExists(join(tmp.path, 'pubspec.yaml'));
       expect(pubspecExists).toBe(true);
     });
 
     it('respects overwrite never mode for existing files', async () => {
-      await ensureDir(tmpDir);
-      await writeFile(join(tmpDir, 'pubspec.yaml'), 'original content', 'utf-8');
+      await ensureDir(tmp.path);
+      await writeFile(join(tmp.path, 'pubspec.yaml'), 'original content', 'utf-8');
 
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext({
+      const context = makeTestContext({
         scaffold: {
           dryRun: false,
           overwrite: 'never',
@@ -162,14 +118,14 @@ describe('ScaffoldEngine', () => {
             buildRunner: false,
           },
         },
-        outputDir: tmpDir,
+        outputDir: tmp.path,
       });
 
       const result = await engine.run(context);
 
       expect(result.filesSkipped).toContain('pubspec.yaml');
 
-      const content = await readFile(join(tmpDir, 'pubspec.yaml'), 'utf-8');
+      const content = await readFile(join(tmp.path, 'pubspec.yaml'), 'utf-8');
       expect(content).toBe('original content');
     });
   });
@@ -177,7 +133,7 @@ describe('ScaffoldEngine', () => {
   describe('template context', () => {
     it('maps enabled modules to their config objects', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext({
+      const context = makeTestContext({
         modules: {
           auth: { provider: 'firebase' },
           api: { baseUrl: 'https://api.example.com' },
@@ -198,7 +154,7 @@ describe('ScaffoldEngine', () => {
 
     it('handles all platforms being included', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
-      const context = makeContext({ platforms: ['android', 'ios', 'web', 'macos'] });
+      const context = makeTestContext({ platforms: ['android', 'ios', 'web', 'macos'] });
       const result = await engine.run(context);
       expect(result.filesWritten.length).toBeGreaterThan(0);
     });
@@ -209,7 +165,7 @@ describe('ScaffoldEngine', () => {
       const engine = new ScaffoldEngine({
         templatesDir: '/nonexistent/templates/path',
       });
-      const context = makeContext();
+      const context = makeTestContext();
       const result = await engine.run(context);
 
       expect(result.filesWritten).toEqual([]);

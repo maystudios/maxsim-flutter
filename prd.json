@@ -265,7 +265,7 @@
         "Templates conditionally render based on engine choice",
         "pubspec.partial.yaml includes correct deps per engine"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P2-009",
@@ -279,7 +279,7 @@
         "MaterialApp.router uses localizationsDelegates",
         "pubspec.partial.yaml includes flutter_localizations, intl"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P2-010",
@@ -294,7 +294,7 @@
         "src/modules/definitions/deep-linking/module.ts with go_router integration",
         "All four modules have valid templates and pubspec partials"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P3-001",

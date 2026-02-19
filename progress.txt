@@ -257,3 +257,21 @@
 - Status: PASSES
 
 ## Phase 2 COMPLETE - All 10 stories implemented and passing
+
+## 2026-02-19T02:00 - P3-001: Implement CLAUDE.md generator for Flutter projects
+- Created src/claude-setup/claude-md-generator.ts with generateClaudeMd(context) export
+- Generates comprehensive CLAUDE.md for scaffolded Flutter projects with sections:
+  - Project header with name, description, platforms, active modules
+  - Tech stack (core deps + conditional module-specific deps)
+  - Architecture rules (Clean Architecture layer rules, import constraints)
+  - Riverpod patterns (provider types, conventions, examples)
+  - go_router patterns (route structure, conventions, examples)
+  - Module-specific sections: auth (firebase/supabase/custom), api (Dio), database (drift/hive/isar), i18n, theme, push, analytics, cicd (github/gitlab/bitbucket), deep-linking
+  - Quality gates (flutter analyze, flutter test, dart format)
+  - Build commands reference
+  - Agent Teams workflow (conditional on context.claude.agentTeams)
+  - Development workflow (commit convention, file naming, important paths)
+- All module sections conditionally included based on ProjectContext
+- Created tests/unit/claude-md-generator.test.ts with 40 tests covering all sections
+- All quality gates pass: typecheck, lint, 199 tests passing across 10 suites
+- Status: PASSES

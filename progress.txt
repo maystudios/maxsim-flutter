@@ -558,3 +558,11 @@ Verification:
 - npm test: PASS (462 tests, 20 suites — up from 424/17)
 
 ## Phase 5 COMPLETE - All 9 stories implemented and passing
+
+## 2026-02-20T00:01 - P6-001: Expand template coverage for push, analytics, and deep-linking modules
+- Created templates/modules/push/lib/features/push/domain/usecases/request_permission_usecase.dart.hbs
+- Created templates/modules/push/lib/features/push/domain/usecases/handle_notification_usecase.dart.hbs
+- Modified templates/core/lib/core/router/app_router.dart.hbs: analytics route observer wiring, deep-linking handler wiring
+- Created tests/integration/template-coverage.test.ts with 10 behavioral tests
+- All quality gates pass: typecheck, lint, 588 tests passing across 27 suites
+- Status: PASSES

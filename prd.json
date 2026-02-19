@@ -576,7 +576,7 @@
         "Deep-linking module provider is wired into GoRouter redirect guard",
         "Integration tests verify new files are generated"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P6-002",

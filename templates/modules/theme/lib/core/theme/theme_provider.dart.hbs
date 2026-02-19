@@ -1,0 +1,46 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'app_theme.dart';
+
+part 'theme_provider.g.dart';
+
+{{#if modules.theme.darkMode}}
+/// Notifier that manages the current [ThemeMode] (light, dark, or system).
+@riverpod
+class AppThemeMode extends _$AppThemeMode {
+  @override
+  ThemeMode build() => ThemeMode.system;
+
+  /// Set the theme mode to light.
+  void setLight() => state = ThemeMode.light;
+
+  /// Set the theme mode to dark.
+  void setDark() => state = ThemeMode.dark;
+
+  /// Set the theme mode to follow the system setting.
+  void setSystem() => state = ThemeMode.system;
+
+  /// Toggle between light and dark mode.
+  void toggle() {
+    state = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+  }
+}
+{{else}}
+/// Provides the current theme mode. Dark mode is disabled; always returns light.
+@riverpod
+class AppThemeMode extends _$AppThemeMode {
+  @override
+  ThemeMode build() => ThemeMode.light;
+}
+{{/if}}
+
+/// Provides the light [ThemeData] from [AppTheme].
+@riverpod
+ThemeData lightTheme(Ref ref) => AppTheme.light;
+
+{{#if modules.theme.darkMode}}
+/// Provides the dark [ThemeData] from [AppTheme].
+@riverpod
+ThemeData darkTheme(Ref ref) => AppTheme.dark;
+{{/if}}

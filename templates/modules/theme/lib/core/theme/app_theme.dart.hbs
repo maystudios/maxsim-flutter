@@ -1,0 +1,74 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+/// Application theme configuration using Material 3 with ColorScheme.fromSeed.
+abstract final class AppTheme {
+  /// Seed color used to generate the color scheme.
+  static final Color seedColor = _colorFromHex('{{modules.theme.seedColor}}');
+
+  /// Light theme with Material 3 seed-based color scheme.
+  static ThemeData get light => _buildTheme(Brightness.light);
+
+{{#if modules.theme.darkMode}}
+  /// Dark theme with Material 3 seed-based color scheme.
+  static ThemeData get dark => _buildTheme(Brightness.dark);
+{{/if}}
+
+  static Color _colorFromHex(String hex) {
+    final buffer = StringBuffer();
+    if (hex.startsWith('#')) hex = hex.substring(1);
+    if (hex.length == 6) buffer.write('FF');
+    buffer.write(hex);
+    return Color(int.parse(buffer.toString(), radix: 16));
+  }
+
+  static ThemeData _buildTheme(Brightness brightness) {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: seedColor,
+      brightness: brightness,
+    );
+
+    final textTheme = GoogleFonts.interTextTheme(
+      ThemeData(brightness: brightness).textTheme,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      textTheme: textTheme,
+      appBarTheme: AppBarTheme(
+        centerTitle: true,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
+        elevation: 0,
+      ),
+      cardTheme: CardTheme(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        color: colorScheme.surfaceContainerLow,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+}

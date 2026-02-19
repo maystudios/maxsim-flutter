@@ -236,7 +236,7 @@
         "Theme provider supports light/dark mode switching via Riverpod",
         "pubspec.partial.yaml has theme-related deps"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P2-007",

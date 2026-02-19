@@ -174,3 +174,21 @@
 - Created templates/modules/api/pubspec.partial.yaml with dio, retrofit, json_annotation deps
 - All quality gates pass: typecheck, lint, 150 tests passing across 9 suites
 - Status: PASSES
+
+## 2026-02-19T00:09 - P2-006: Implement theme module definition and templates
+- Created src/modules/definitions/theme/module.ts with full ModuleManifest
+  - No dependencies on other modules (requires: [])
+  - Questions for seed color (hex, default #6750A4) and dark mode toggle
+  - Contributions: pubspec deps (google_fonts), provider (appThemeModeProvider)
+  - isEnabled predicate checks context.modules.theme !== false
+- Created templates/modules/theme/lib/core/theme/ with:
+  - app_theme.dart.hbs: Material 3 ThemeData with ColorScheme.fromSeed, Google Fonts (Inter)
+  - Configurable seed color via hex string parsing at runtime
+  - Themed AppBar, Card, InputDecoration, ElevatedButton styles
+  - Conditional dark theme generation based on darkMode config
+  - theme_provider.dart.hbs: Riverpod AppThemeMode notifier with setLight/setDark/setSystem/toggle
+  - Light-only mode when darkMode is false
+  - Providers for lightTheme and darkTheme ThemeData
+- Created templates/modules/theme/pubspec.partial.yaml with google_fonts dependency
+- All quality gates pass: typecheck, lint, 150 tests passing across 9 suites
+- Status: PASSES

@@ -1,0 +1,71 @@
+name: Flutter Template Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'templates/**'
+      - 'src/scaffold/**'
+      - 'src/modules/**'
+      - 'src/core/**'
+      - '.github/workflows/flutter-validate.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: core-only
+            app-name: test_core
+            create-args: '--yes --org com.test --no-claude'
+
+          - name: core-auth-firebase
+            app-name: test_auth
+            create-args: '--yes --org com.test --modules auth --auth-provider firebase --no-claude'
+
+          - name: core-api
+            app-name: test_api
+            create-args: '--yes --org com.test --modules api --no-claude'
+
+          - name: core-auth-api-theme
+            app-name: test_full
+            create-args: '--yes --org com.test --modules auth,api,theme --auth-provider firebase --no-claude'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+          channel: 'stable'
+          cache: true
+
+      - name: Install and build maxsim-flutter
+        run: npm ci && npm run build
+
+      - name: Scaffold Flutter project
+        run: node dist/cli/index.js create ${{ matrix.app-name }} ${{ matrix.create-args }}
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+        working-directory: ${{ matrix.app-name }}
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+        working-directory: ${{ matrix.app-name }}
+
+      - name: Analyze generated Dart code
+        run: flutter analyze
+        working-directory: ${{ matrix.app-name }}

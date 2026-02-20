@@ -14,7 +14,7 @@ const REGISTRY_URL = 'https://registry.npmjs.org/maxsim-flutter/latest';
 const CACHE_DIR = join(homedir(), '.maxsim-flutter');
 const CACHE_FILE = join(CACHE_DIR, 'last-update-check');
 
-function getCurrentVersion(): string {
+export function getCurrentVersion(): string {
   try {
     const pkgPath = join(__dirname, '../../package.json');
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { version: string };

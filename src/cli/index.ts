@@ -7,13 +7,13 @@ import { createMigrateCommand } from './commands/migrate.js';
 import { createListCommand } from './commands/list.js';
 import { createUpgradeCommand } from './commands/upgrade.js';
 import { createPlanCommand } from './commands/plan.js';
-import { checkForUpdate } from './version-check.js';
+import { checkForUpdate, getCurrentVersion } from './version-check.js';
 
 const program = new Command();
 
 program
   .name('maxsim-flutter')
-  .version('0.1.0')
+  .version(getCurrentVersion())
   .description('AI-powered Flutter app scaffolding with Clean Architecture, Riverpod, and autonomous development via Ralph')
   .option('--no-update-check', 'Skip the npm update check');
 
@@ -32,7 +32,7 @@ if (opts.updateCheck !== false) {
   checkForUpdate()
     .then((latestVersion) => {
       if (latestVersion) {
-        const current = program.version() ?? '0.1.0';
+        const current = program.version() ?? getCurrentVersion();
         console.log(
           chalk.yellow(
             `\nUpdate available: ${current} → ${latestVersion}. Run npm install -g maxsim-flutter to update.`,

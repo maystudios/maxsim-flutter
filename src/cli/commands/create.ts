@@ -117,6 +117,7 @@ async function runCreate(
         ? (options.platforms as string).split(',')
         : undefined,
       modules,
+      claude: { preset: 'standard' },
       scaffold: {
         dryRun: options.dryRun === true,
       },
@@ -148,6 +149,7 @@ async function runCreate(
       },
       platforms: answers.platforms,
       modules,
+      claude: isCustom ? {} : { preset: presetId as 'minimal' | 'standard' | 'full' },
       scaffold: {
         dryRun: options.dryRun === true,
       },

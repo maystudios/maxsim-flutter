@@ -765,3 +765,25 @@ Verification:
 - Files: src/claude-setup/hooks-writer.ts, tests/unit/hooks-writer-v2.test.ts, tests/unit/hooks-writer-edge-cases.test.ts
 - Tests: 52 new test cases (23 TDD + 29 edge cases)
 - Date: 2026-02-20
+
+## [P11-003] - Generate settings.json with deny permissions and proper hook registration
+- Status: COMPLETE
+- Files: src/claude-setup/settings-writer.ts (NEW), src/claude-setup/hooks-writer.ts, src/claude-setup/setup-orchestrator.ts, src/claude-setup/index.ts, tests/unit/settings-writer.test.ts, tests/unit/settings-writer-edge-cases.test.ts
+- Tests: 52 new test cases (24 TDD + 28 edge cases)
+- Date: 2026-02-20
+
+## [P11-004] - Generate .claude/rules/ with path-scoped rule files
+- Status: COMPLETE
+- Files: src/claude-setup/rules-writer.ts, tests/unit/rules-writer-v2.test.ts, tests/unit/rules-writer-edge-cases.test.ts
+- Tests: 52 new test cases (18 TDD + 34 edge cases)
+- Date: 2026-02-20
+
+## [P11-005] - Make quality-related skills proactively activatable
+- Status: COMPLETE
+- Files: src/claude-setup/skill-writer.ts, tests/unit/skill-writer-v2.test.ts, tests/unit/skill-writer-edge-cases.test.ts
+- Tests: 45 new test cases (11 TDD + 34 edge cases)
+- Date: 2026-02-20
+- Status: COMPLETE
+- Files: src/claude-setup/hooks-writer.ts, tests/unit/hooks-writer-v2.test.ts, tests/unit/hooks-writer-edge-cases.test.ts
+- Tests: 52 new test cases (23 TDD + 29 edge cases)
+- Date: 2026-02-20

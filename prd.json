@@ -1349,7 +1349,7 @@
         "setup-orchestrator.ts calls the settings generation",
         "npm run quality passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P11-004",
@@ -1368,7 +1368,7 @@
         "New code-quality.md rule generated with flutter analyze expectations",
         "npm run quality passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P11-005",
@@ -1385,7 +1385,7 @@
         "Skill frontmatter correctly emitted in generated SKILL.md files",
         "npm run quality passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P11-006",

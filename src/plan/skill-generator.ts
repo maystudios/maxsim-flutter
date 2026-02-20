@@ -7,6 +7,8 @@ export function generatePlanAppSkill(input?: SkillInput): string {
   const name = input?.name ?? 'your_app';
   const description = input?.description ?? 'A Flutter app';
 
+  const ticks = '```';
+
   return `---
 description: AI-guided planning for ${name}. Leads through vision, features, technical decisions, and PRD generation. Ask questions one at a time.
 model: claude-opus-4-6
@@ -115,15 +117,157 @@ Summarize all decisions collected in Steps 1-4:
 
 **Question 5.1** — Does this summary accurately reflect your app? Should we proceed with generating the config and PRD, or would you like to adjust anything?
 
-Once the user confirms and approves, generate:
+Once the user confirms and approves, proceed through Steps 6-9.
 
-1. **Complete \`maxsim.config.yaml\`** with all selected modules configured
-2. **\`prd.json\`** with user stories organized by phase
-3. **\`docs/architecture.md\`** with system design overview
+---
 
-Then tell the user:
-\`\`\`
-maxsim-flutter create --config maxsim.config.yaml
-\`\`\`
+## Step 6: Generate project-brief.md
+
+Synthesize the conversation into a complete \`docs/project-brief.md\` file:
+
+${ticks}markdown
+# Project Brief — ${name}
+
+## Description
+${description}
+
+## Problem Statement
+[from Question 1.1]
+
+## Core User Journey
+[from Question 1.2]
+
+## Core Features (v1)
+[from Question 2.1]
+
+## Non-Goals (v1)
+[from Question 2.2]
+
+## Technical Decisions
+- Auth: [result]
+- Database: [result]
+- Platforms: [result]
+- Modules: [final list]
+${ticks}
+
+Write this file to: \`docs/project-brief.md\`
+
+---
+
+## Step 7: Generate architecture.md
+
+Create \`docs/architecture.md\` with provider tree and navigation flow ASCII diagrams.
+
+### Provider Tree (Riverpod ASCII Diagram)
+
+${ticks}
+AppProviders
+├── authStateProvider (StreamProvider)
+│   └── userProvider (derived)
+├── [featureNameProvider] (StateNotifierProvider)
+│   └── [featureNameState]
+└── routerProvider (go_router routing)
+${ticks}
+
+### Navigation Flow (go_router ASCII Diagram)
+
+${ticks}
+/ (root)
+├── /login
+├── /home
+│   ├── /home/[feature-1]
+│   └── /home/[feature-2]
+└── /settings
+${ticks}
+
+### Clean Architecture Layers
+
+For each enabled module, describe domain / data / presentation layers.
+
+### Database Schema (if database module enabled)
+
+Describe key data models and relationships.
+
+Write to: \`docs/architecture.md\`
+
+---
+
+## Step 8: Generate complete maxsim.config.yaml
+
+Using all decisions from Steps 1-5, generate a complete \`maxsim.config.yaml\`:
+
+${ticks}yaml
+project:
+  name: ${name}
+  description: >-
+    ${description}
+  orgId: com.example
+
+platforms:
+  - android
+  - ios
+
+modules:
+  auth:
+    enabled: true
+    provider: firebase
+  # ... other selected modules
+
+claude:
+  preset: standard
+${ticks}
+
+Write to: \`maxsim.config.yaml\` (overwrites the partial config).
+
+---
+
+## Step 9: Generate prd.json
+
+Create \`prd.json\` in v2 format. Derive user stories from the user journeys and core features.
+Organize stories across **4 phases**.
+
+${ticks}json
+{
+  "version": "2.0.0",
+  "project": "${name}",
+  "phases": [
+    { "phase": 1, "title": "Core Infrastructure", "description": "Auth, navigation, theme" },
+    { "phase": 2, "title": "Core Features", "description": "Primary user journey features" },
+    { "phase": 3, "title": "Secondary Features", "description": "Additional features" },
+    { "phase": 4, "title": "Polish & Optimization", "description": "Analytics, CI/CD, i18n" }
+  ],
+  "stories": [
+    {
+      "id": "S-001",
+      "phase": 1,
+      "priority": "P0",
+      "title": "...",
+      "description": "As a user, I want to...",
+      "storyPoints": 3,
+      "dependencies": [],
+      "acceptanceCriteria": [{ "description": "..." }],
+      "passes": false
+    }
+  ]
+}
+${ticks}
+
+Write to: \`prd.json\`
+
+---
+
+## Next Steps
+
+Once all artifacts are generated, tell the user:
+
+${ticks}
+✅ Planning complete! Your planning workspace is ready.
+
+Next steps:
+  1. Review docs/project-brief.md and docs/architecture.md
+  2. Run: maxsim-flutter create --config maxsim.config.yaml
+  3. Then: cd ${name} && claude
+  4. Start implementing stories from prd.json with Ralph
+${ticks}
 `;
 }

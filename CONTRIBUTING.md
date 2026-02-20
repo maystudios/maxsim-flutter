@@ -54,6 +54,7 @@ src/
 ├── modules/        # ModuleRegistry, ModuleResolver, ModuleComposer, definitions
 ├── ralph/          # PRD JSON generation and story sizing
 ├── claude-setup/   # Generates .claude/ directory for scaffolded projects
+├── plan/           # Plan command — AI-guided planning workspace bootstrap
 └── types/          # Shared TypeScript interfaces (ModuleManifest, ProjectContext, …)
 
 templates/
@@ -68,6 +69,24 @@ tests/
 ```
 
 See [docs/architecture.md](docs/architecture.md) for a deeper description of each subsystem.
+
+### `src/plan/` Module
+
+The `plan/` directory implements the `maxsim-flutter plan` command — an AI-guided planning workflow that bootstraps a workspace before `create`.
+
+| File | Purpose |
+|------|---------|
+| `types.ts` | `PlanInput`, `PlanResult` interfaces; `isValidSnakeCase()` validator |
+| `config-writer.ts` | `writePartialConfig()` — writes partial `maxsim.config.yaml` |
+| `brief-template-generator.ts` | `generateBriefTemplate()` — Markdown template with problem/users/journeys/non-goals/metrics |
+| `skill-generator.ts` | `generatePlanAppSkill()` — 9-step Claude Code skill (model: opus) with decision matrix |
+| `app-type-classifier.ts` | `classifyAppType()` — keyword classifier returning AppType + confidence + module suggestions |
+| `architecture-generator.ts` | `generateArchitectureDoc()` — architecture.md with Riverpod provider tree + go_router flow |
+| `journey-to-stories.ts` | `generateJourneyDecompositionPrompt()` — converts user journeys to PRD stories |
+| `plan-orchestrator.ts` | `runPlan()` — orchestrates file generation and returns `PlanResult` |
+| `index.ts` | Barrel export of all public API |
+
+The `plan` command lives at `src/cli/commands/plan.ts` and is registered in `src/cli/index.ts`.
 
 ---
 

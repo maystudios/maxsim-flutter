@@ -142,6 +142,68 @@ Available module identifiers: `auth`, `api`, `theme`, `database`, `i18n`, `push`
 
 ---
 
+### `maxsim-flutter plan [app-name]`
+
+Bootstrap an AI-guided planning workspace before creating your Flutter app. The `plan` command collects your project name and a short description, then generates three artifacts:
+
+| Artifact | Path | Purpose |
+|----------|------|---------|
+| Planning skill | `.claude/skills/plan-app.md` | 9-step Claude Code skill that guides you from vision to PRD |
+| Brief template | `docs/project-brief-template.md` | Structured template for problem statement, user journeys, non-goals |
+| Partial config | `maxsim.config.yaml` | Pre-filled with project name and description |
+
+**Arguments**
+
+| Argument | Description |
+|----------|-------------|
+| `[app-name]` | Project name in `snake_case` (prompted if omitted) |
+
+**Flags**
+
+| Flag | Description |
+|------|-------------|
+| `--description <text>` | Short description of the app (1-2 sentences; prompted if omitted) |
+
+**Examples**
+
+```bash
+# Interactive — prompts for name and description
+maxsim-flutter plan
+
+# Non-interactive
+maxsim-flutter plan my_team_app --description "A chat app for small teams."
+```
+
+**Workflow**
+
+```bash
+# 1. Bootstrap the planning workspace
+maxsim-flutter plan my_app
+
+# 2. Navigate to the new directory and open Claude Code
+cd my_app
+claude
+
+# 3. Run the AI planning skill (guides you through 9 steps)
+/plan-app
+
+# 4. After Claude generates maxsim.config.yaml with your chosen modules, scaffold
+maxsim-flutter create --config maxsim.config.yaml
+```
+
+The `/plan-app` skill leads Claude through:
+1. Understanding your app's vision and core problem
+2. Defining core features and explicit non-goals
+3. Technical decisions (auth provider, database, platforms)
+4. Context-aware module suggestions (REQUIRED / RECOMMENDED / NICE-TO-HAVE)
+5. Confirmation and approval
+6. Generating `docs/project-brief.md`
+7. Generating `docs/architecture.md` with Riverpod provider tree and go_router navigation flow
+8. Generating complete `maxsim.config.yaml`
+9. Generating `prd.json` v2 with stories derived from user journeys
+
+---
+
 ### `maxsim-flutter migrate [path]`
 
 Analyses an existing Flutter project and, optionally, migrates it to maxsim conventions. Detected architecture, state management, routing, and dependencies are reported. On confirmation the command writes `maxsim.config.yaml`, generates a `.claude/` directory, and creates a `prd.json` file containing story-by-story migration tasks.

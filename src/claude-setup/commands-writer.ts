@@ -13,6 +13,7 @@ export async function writeCommands(context: ProjectContext, outputPath: string)
   await Promise.all([
     fs.writeFile(path.join(commandsDir, 'add-feature.md'), generateAddFeatureCommand(context)),
     fs.writeFile(path.join(commandsDir, 'analyze.md'), generateAnalyzeCommand()),
+    fs.writeFile(path.join(commandsDir, 'start-team.md'), generateStartTeamCommand()),
   ]);
 }
 
@@ -308,5 +309,66 @@ flutter test
 \`\`\`bash
 flutter analyze && flutter test && dart format --set-exit-if-changed .
 \`\`\`
+`;
+}
+
+function generateStartTeamCommand(): string {
+  return `# Start Team Sprint
+
+Orchestrate a Claude Code Agent Team sprint from \`prd.json\`.
+
+## Pre-Flight Checks
+
+Before starting, verify the project is in a clean state:
+
+\`\`\`bash
+git status                    # Working tree must be clean
+flutter analyze               # Zero errors/warnings
+flutter test                  # All tests pass
+\`\`\`
+
+## Step 1 — Read prd.json
+
+Load \`prd.json\` and identify incomplete stories (\`passes: false\`). Group by phase, pick the next batch of stories to implement.
+
+## Step 2 — Create Team
+
+Create a team named \`flutter-sprint\` using TeamCreate. Create TaskCreate entries for each story.
+
+## Step 3 — Spawn Agents
+
+Spawn 4 agents with the following roles and models:
+
+| Agent | Model | Role |
+|-------|-------|------|
+| **architect** | opus | Designs implementation approach, identifies files and interfaces |
+| **builder** | opus | Writes failing tests (RED), then minimal code to pass (GREEN) |
+| **tester** | sonnet | Validates implementation, runs quality gates, checks coverage |
+| **reviewer** | haiku | Reviews code for Clean Architecture compliance and best practices |
+
+## Step 4 — TDD Flow Per Story
+
+For each story, follow this orchestration:
+
+1. **Architect** designs the implementation spec with file list and test cases
+2. **Builder** writes failing tests (RED phase), then implements minimal code (GREEN phase)
+3. **Tester** runs \`flutter analyze && flutter test\`, checks coverage
+4. **Reviewer** reviews code for architecture compliance
+
+## Step 5 — Commit + Push
+
+After each story passes all quality gates:
+
+\`\`\`bash
+git add <changed-files>
+git commit -m "feat: [Story-ID] - Story title"
+git push
+\`\`\`
+
+Mark the story as \`passes: true\` in \`prd.json\`.
+
+## Step 6 — Repeat
+
+Continue with the next story until the sprint batch is complete. Shut down agents when done.
 `;
 }

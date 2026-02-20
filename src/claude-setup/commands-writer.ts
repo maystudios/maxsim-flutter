@@ -47,7 +47,10 @@ flutter gen-l10n
 `
     : '';
 
-  return `# Add Feature
+  return `---
+model: sonnet
+---
+# Add Feature
 
 Add a new feature to this Flutter project following Clean Architecture.
 

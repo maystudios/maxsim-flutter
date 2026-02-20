@@ -14,6 +14,17 @@ export interface ClaudeSetupResult {
 }
 
 /**
+ * Options for runClaudeSetup. All fields optional for backward compatibility.
+ */
+export interface ClaudeSetupOptions {
+  /**
+   * If true, skip regenerating prd.json.
+   * Use this for the upgrade command since users may have marked stories complete.
+   */
+  skipPrd?: boolean;
+}
+
+/**
  * Runs the full Claude setup for a scaffolded Flutter project.
  * Generates CLAUDE.md, agent definitions, skills, hooks, MCP config,
  * slash commands, and prd.json.
@@ -21,6 +32,7 @@ export interface ClaudeSetupResult {
 export async function runClaudeSetup(
   context: ProjectContext,
   outputPath: string,
+  options?: ClaudeSetupOptions,
 ): Promise<ClaudeSetupResult> {
   const filesWritten: string[] = [];
 
@@ -61,11 +73,13 @@ export async function runClaudeSetup(
     join(outputPath, '.claude', 'commands', 'analyze.md'),
   );
 
-  // 7. Generate and write prd.json
-  const prdContent = generatePrd(context);
-  const prdPath = join(outputPath, 'prd.json');
-  await writeFile(prdPath, prdContent, 'utf-8');
-  filesWritten.push(prdPath);
+  // 7. Generate and write prd.json (skipped when skipPrd is true)
+  if (!options?.skipPrd) {
+    const prdContent = generatePrd(context);
+    const prdPath = join(outputPath, 'prd.json');
+    await writeFile(prdPath, prdContent, 'utf-8');
+    filesWritten.push(prdPath);
+  }
 
   return { filesWritten };
 }

@@ -749,3 +749,13 @@ Verification:
 - Total snapshots: 14
 - New src/plan/ module: 9 files (types, config-writer, brief-template-generator, skill-generator, app-type-classifier, architecture-generator, journey-to-stories, plan-orchestrator, index)
 - All quality gates passing: typecheck, lint, tests, coverage
+
+---
+
+## Phase 11 — Agentic Coding Best Practices
+
+## [P11-001] - Upgrade generated agent definitions with best-practice patterns
+- Status: COMPLETE
+- Files: src/claude-setup/agent-writer.ts, tests/unit/agent-writer-v2.test.ts, tests/unit/agent-writer-edge-cases.test.ts, tests/unit/agent-writer.test.ts, tests/integration/claude-setup-output.test.ts, tests/unit/__snapshots__/generated-snapshots.test.ts.snap
+- Tests: 55 new test cases (27 TDD + 28 edge cases)
+- Date: 2026-02-20

@@ -1314,7 +1314,7 @@
         "All 4 agents have 'Scope Boundaries' section with Do NOT rules",
         "npm run quality passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P11-002",

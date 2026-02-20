@@ -459,12 +459,12 @@ describe('Integration: create command generates working Flutter project', () => 
 
       const content = await readFile(claudeMdPath, 'utf-8');
       expect(content).toContain('# CLAUDE.md');
-      expect(content).toContain('## Architecture Rules');
+      expect(content).toContain('@.claude/rules/architecture.md');
       expect(content).toContain('## Quality Gates');
       expect(content).toContain('## Development Workflow');
     });
 
-    it('generates .claude/agents/ with 5 agent files', async () => {
+    it('generates .claude/agents/ with 3 agent files', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
       const context = makeWritableContext(tmp.path, {
         claude: { enabled: true, agentTeams: true },
@@ -475,11 +475,9 @@ describe('Integration: create command generates working Flutter project', () => 
       expect(await pathExists(agentsDir)).toBe(true);
 
       const expectedAgents = [
-        'flutter-architect.md',
-        'flutter-feature-builder.md',
+        'flutter-builder.md',
         'flutter-tester.md',
         'flutter-reviewer.md',
-        'flutter-docs.md',
       ];
       for (const agentFile of expectedAgents) {
         expect(await pathExists(join(agentsDir, agentFile))).toBe(true);
@@ -913,20 +911,16 @@ describe('Integration: create command generates working Flutter project', () => 
       });
       await engine.run(context);
 
-      // CLAUDE.md with module-specific sections
+      // CLAUDE.md with slim format + @-imports
       const claudeMd = await readFile(join(tmp.path, 'CLAUDE.md'), 'utf-8');
       expect(claudeMd).toContain('# CLAUDE.md');
-      expect(claudeMd).toContain('## Architecture Rules');
+      expect(claudeMd).toContain('@.claude/rules/architecture.md');
       expect(claudeMd).toContain('## Agent Teams Workflow');
 
       // Agents
-      expect(await pathExists(join(tmp.path, '.claude/agents/flutter-architect.md'))).toBe(true);
-      expect(await pathExists(join(tmp.path, '.claude/agents/flutter-feature-builder.md'))).toBe(
-        true,
-      );
+      expect(await pathExists(join(tmp.path, '.claude/agents/flutter-builder.md'))).toBe(true);
       expect(await pathExists(join(tmp.path, '.claude/agents/flutter-tester.md'))).toBe(true);
       expect(await pathExists(join(tmp.path, '.claude/agents/flutter-reviewer.md'))).toBe(true);
-      expect(await pathExists(join(tmp.path, '.claude/agents/flutter-docs.md'))).toBe(true);
 
       // Skills
       expect(await pathExists(join(tmp.path, '.claude/skills/flutter-patterns.md'))).toBe(true);

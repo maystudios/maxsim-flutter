@@ -135,4 +135,54 @@ describe('checkForUpdate', () => {
     const result = await checkForUpdate();
     expect(result).toBe('0.2.0');
   });
+
+  it('falls back to version 0.0.0 and still returns update when package.json cannot be read', async () => {
+    mockReadFile.mockRejectedValueOnce(new Error('ENOENT'));
+    mockReadFileSync.mockImplementation(() => {
+      throw new Error('ENOENT: no such file or directory');
+    });
+    mockFetch('0.2.0');
+
+    // 0.2.0 > 0.0.0 so an update should still be reported
+    const result = await checkForUpdate();
+    expect(result).toBe('0.2.0');
+  });
+
+  it('returns null when registry response has no version field (data.version is undefined)', async () => {
+    // Covers: `data.version ?? ''` false branch + `!latestVersion` true branch
+    mockReadFile.mockRejectedValueOnce(new Error('ENOENT'));
+    global.fetch = jest.fn<typeof fetch>().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({}), // no 'version' field in response
+    } as Response);
+
+    const result = await checkForUpdate();
+    expect(result).toBeNull();
+  });
+
+  it('returns null when registry response version is empty string', async () => {
+    // Covers the `!latestVersion` true branch (latestVersion = '' is falsy)
+    mockReadFile.mockRejectedValueOnce(new Error('ENOENT'));
+    global.fetch = jest.fn<typeof fetch>().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ version: '' }),
+    } as Response);
+
+    const result = await checkForUpdate();
+    expect(result).toBeNull();
+  });
+
+  it('compareVersions handles version strings with fewer than 3 parts (covers ?? 0 fallback)', async () => {
+    // Version '2' has only 1 part; partsA[1] is undefined → uses ?? 0 fallback
+    mockReadFile.mockRejectedValueOnce(new Error('ENOENT'));
+    mockReadFileSync.mockReturnValue(JSON.stringify({ version: '1' }));
+    global.fetch = jest.fn<typeof fetch>().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ version: '2' }),
+    } as Response);
+
+    // '2' > '1' so update should be detected
+    const result = await checkForUpdate();
+    expect(result).toBe('2');
+  });
 });

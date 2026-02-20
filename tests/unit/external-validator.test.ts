@@ -80,4 +80,52 @@ describe('validateExternalManifest', () => {
       /maxsim-module-stripe/,
     );
   });
+
+  it('throws when ralphPhase is 0 (below valid range 1-4)', () => {
+    const bad = { ...makeValidManifest(), ralphPhase: 0 };
+    expect(() => validateExternalManifest(bad, 'maxsim-module-stripe')).toThrow(
+      /maxsim-module-stripe/,
+    );
+  });
+
+  it('throws when name is an empty string', () => {
+    const bad = { ...makeValidManifest(), name: '' };
+    expect(() => validateExternalManifest(bad, 'maxsim-module-stripe')).toThrow(
+      /maxsim-module-stripe/,
+    );
+  });
+
+  it('throws when description is missing (undefined)', () => {
+    const bad = { ...makeValidManifest(), description: undefined };
+    expect(() => validateExternalManifest(bad, 'maxsim-module-stripe')).toThrow(
+      /maxsim-module-stripe/,
+    );
+  });
+
+  it('throws when contributions is null', () => {
+    const bad = { ...makeValidManifest(), contributions: null };
+    expect(() => validateExternalManifest(bad, 'maxsim-module-stripe')).toThrow(
+      /maxsim-module-stripe/,
+    );
+  });
+
+  it('error message identifies the field when contributions is null', () => {
+    const bad = { ...makeValidManifest(), contributions: null };
+    expect(() => validateExternalManifest(bad, 'maxsim-module-stripe')).toThrow(
+      /contributions/,
+    );
+  });
+
+  it('error message identifies the field when description is missing', () => {
+    const bad = { ...makeValidManifest(), description: undefined };
+    expect(() => validateExternalManifest(bad, 'maxsim-module-stripe')).toThrow(
+      /description/,
+    );
+  });
+
+  it('includes the scoped package name in error message', () => {
+    expect(() => validateExternalManifest(null, '@org/maxsim-module-x')).toThrow(
+      /@org\/maxsim-module-x/,
+    );
+  });
 });

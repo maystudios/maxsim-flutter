@@ -4,10 +4,12 @@ import { pathExists, ensureDir } from 'fs-extra';
 import { ScaffoldEngine } from '../../src/scaffold/engine.js';
 import { ModuleRegistry } from '../../src/modules/registry.js';
 import { makeTestContext, makeWritableContext } from '../helpers/context-factory.js';
-import { useTempDir } from '../helpers/temp-dir.js';
+import { useTempDir, createTempDir, removeTempDir } from '../helpers/temp-dir.js';
 import { createTestRegistry } from '../helpers/registry-factory.js';
 import type { ModuleManifest } from '../../src/types/module.js';
 import type { ProjectContext } from '../../src/core/context.js';
+import { TemplateRenderer } from '../../src/scaffold/renderer.js';
+import { processPubspecPartial } from '../../src/scaffold/template-helpers.js';
 
 // The actual templates/core directory relative to the project root
 const TEMPLATES_DIR = resolve('templates/core');
@@ -339,5 +341,39 @@ describe('ScaffoldEngine', () => {
       );
       expect(await pathExists(deepLinkProviderPath)).toBe(true);
     });
+  });
+});
+
+describe('processPubspecPartial', () => {
+  const minimalContext = {
+    project: { name: 'test_app', org: 'com.example', description: 'test' },
+    platforms: {},
+    modules: {},
+  };
+
+  it('maps object-valued dependencies to their Map entries as objects (covers typeof=object branch)', async () => {
+    const defsDir = await createTempDir('pubspec-partial-obj-');
+    try {
+      const partialPath = join(defsDir, 'pubspec.partial.yaml');
+      const yamlContent = [
+        'dependencies:',
+        '  firebase_core:',
+        '    git:',
+        '      url: https://github.com/example/firebase_core.git',
+        'dev_dependencies:',
+        '  build_runner_extra:',
+        '    git:',
+        '      url: https://github.com/example/build_runner.git',
+      ].join('\n');
+      await writeFile(partialPath, yamlContent, 'utf-8');
+
+      const renderer = new TemplateRenderer();
+      const result = await processPubspecPartial(partialPath, renderer, minimalContext);
+
+      expect(typeof result.deps.get('firebase_core')).toBe('object');
+      expect(typeof result.devDeps.get('build_runner_extra')).toBe('object');
+    } finally {
+      await removeTempDir(defsDir);
+    }
   });
 });

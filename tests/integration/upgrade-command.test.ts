@@ -143,4 +143,31 @@ describe('Integration: upgrade command', () => {
     const hasPrd = writtenPaths.some((p) => p.endsWith('prd.json'));
     expect(hasPrd).toBe(false);
   });
+
+  it('passing empty options {} still generates prd.json (skipPrd defaults to undefined → falsy)', async () => {
+    const projectRoot = await setupProject();
+    const context = makeWritableContext(projectRoot, { claude: { enabled: true, agentTeams: false } });
+
+    // Pass options object but omit skipPrd — should behave same as skipPrd: false
+    const result = await runClaudeSetup(context, projectRoot, {});
+
+    const hasPrd = result.filesWritten.some((p) => p.endsWith('prd.json'));
+    expect(hasPrd).toBe(true);
+  });
+
+  it('backupAgentFiles skips subdirectories inside agents dir — does not throw', async () => {
+    const projectRoot = await setupProject();
+    const agentsDir = join(projectRoot, '.claude', 'agents');
+    await mkdir(agentsDir, { recursive: true });
+    // Subdirectory with .md-like name should be skipped by stat().isFile() guard
+    await mkdir(join(agentsDir, 'nested.md'), { recursive: true });
+    await writeFile(join(agentsDir, 'flutter-architect.md'), '# Architect', 'utf-8');
+
+    const baks = await backupAgentFiles(agentsDir);
+
+    // Only the real .md file should be backed up — not the subdirectory
+    expect(baks).toHaveLength(1);
+    expect(baks[0]).toContain('flutter-architect.md.bak');
+    expect(await pathExists(join(agentsDir, 'nested.md.bak'))).toBe(false);
+  });
 });

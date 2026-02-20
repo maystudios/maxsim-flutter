@@ -106,4 +106,48 @@ describe('ModuleRegistry.loadExternal', () => {
     expect(retrieved.id).toBe('my-external-module');
     expect(retrieved.name).toBe(manifest.name);
   });
+
+  it('calls loader with scoped package name (@org/maxsim-module-x) unchanged', async () => {
+    const registry = new ModuleRegistry();
+    const calls: string[] = [];
+    const loader: ExternalLoader = async (pkg: string) => {
+      calls.push(pkg);
+      return { manifest: makeValidManifest({ id: 'scoped-module' }) };
+    };
+
+    await registry.loadExternal('@org/maxsim-module-x', loader);
+
+    expect(calls).toEqual(['@org/maxsim-module-x']);
+    expect(registry.has('scoped-module')).toBe(true);
+  });
+
+  it('does not register any module when loadExternal fails manifest validation', async () => {
+    const registry = new ModuleRegistry();
+    const loader = makeLoader({ id: '', name: 'Bad', description: 'x', requires: [], templateDir: 'x', ralphPhase: 2, contributions: {} });
+
+    await expect(registry.loadExternal('maxsim-module-bad', loader)).rejects.toThrow();
+
+    expect(registry.size).toBe(0);
+    expect(registry.has('')).toBe(false);
+  });
+
+  it('does not register any module when loader throws (package not found)', async () => {
+    const registry = new ModuleRegistry();
+    const loader: ExternalLoader = async () => {
+      throw new Error("Cannot find module 'maxsim-module-missing'");
+    };
+
+    await expect(registry.loadExternal('maxsim-module-missing', loader)).rejects.toThrow();
+
+    expect(registry.size).toBe(0);
+  });
+
+  it('throws when loadExternal is called without a loader and package does not exist in node_modules', async () => {
+    // Exercises the defaultLoader code path (line 9 of registry.ts)
+    const registry = new ModuleRegistry();
+
+    await expect(
+      registry.loadExternal('maxsim-module-this-package-does-not-exist-xyz-abc-12345'),
+    ).rejects.toThrow();
+  });
 });

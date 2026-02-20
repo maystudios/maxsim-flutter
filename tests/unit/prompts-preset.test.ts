@@ -28,4 +28,17 @@ describe('getPresetModules()', () => {
   it('returns empty array for custom preset', () => {
     expect(getPresetModules('custom')).toEqual([]);
   });
+
+  it('returns all 9 modules for full preset', () => {
+    const modules = getPresetModules('full');
+    expect(modules).toHaveLength(9);
+    expect(modules).toContain('auth');
+    expect(modules).toContain('deep-linking');
+  });
+
+  it('returns empty array (fallback) when presetId does not match any preset', () => {
+    // Cast needed since TypeScript restricts PresetId to the 4 known values
+    const result = getPresetModules('unknown' as 'minimal');
+    expect(result).toEqual([]);
+  });
 });

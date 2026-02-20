@@ -116,4 +116,31 @@ describe('backupAgentFiles', () => {
     expect(await pathExists(join(agentsDir, '.gitkeep.bak'))).toBe(false);
     expect(await pathExists(join(agentsDir, 'README.txt.bak'))).toBe(false);
   });
+
+  it('does NOT back up a subdirectory even if it has a .md-like name', async () => {
+    const agentsDir = join(tmp.path, 'agents-subdir');
+    await mkdir(agentsDir, { recursive: true });
+    // Create a subdirectory whose name ends in .md (edge case for stat().isFile() guard)
+    const subdir = join(agentsDir, 'nested.md');
+    await mkdir(subdir, { recursive: true });
+
+    const result = await backupAgentFiles(agentsDir);
+
+    // Subdirectory must not be backed up — stat().isFile() returns false
+    expect(result).toEqual([]);
+    expect(await pathExists(join(agentsDir, 'nested.md.bak'))).toBe(false);
+  });
+
+  it('does NOT back up .md.bak files — they do not end with .md', async () => {
+    const agentsDir = join(tmp.path, 'agents-bak-only');
+    await mkdir(agentsDir, { recursive: true });
+    // Simulate a directory that only has pre-existing .bak files (no .md originals)
+    await writeFile(join(agentsDir, 'flutter-architect.md.bak'), 'old backup', 'utf-8');
+    await writeFile(join(agentsDir, 'flutter-tester.md.bak'), 'old backup', 'utf-8');
+
+    const result = await backupAgentFiles(agentsDir);
+
+    // .md.bak files don't end with '.md' — nothing should be backed up
+    expect(result).toEqual([]);
+  });
 });

@@ -136,6 +136,40 @@ describe('ScaffoldEngine post-processor error handling', () => {
     expect(result.postProcessorErrors[0]).toContain('string error value');
   });
 
+  it('captures non-Error thrown value as string for flutter pub get', async () => {
+    mockRunFlutterPubGet.mockRejectedValue('flutter-string-error');
+
+    const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
+    const context = makeWritableContext(tmp.path, {
+      scaffold: {
+        dryRun: false,
+        overwrite: 'always',
+        postProcessors: { dartFormat: false, flutterPubGet: true, buildRunner: false },
+      },
+    });
+
+    const result = await engine.run(context);
+
+    expect(result.postProcessorErrors[0]).toContain('flutter-string-error');
+  });
+
+  it('captures non-Error thrown value as string for build runner', async () => {
+    mockRunBuildRunner.mockRejectedValue('build-runner-string-error');
+
+    const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
+    const context = makeWritableContext(tmp.path, {
+      scaffold: {
+        dryRun: false,
+        overwrite: 'always',
+        postProcessors: { dartFormat: false, flutterPubGet: false, buildRunner: true },
+      },
+    });
+
+    const result = await engine.run(context);
+
+    expect(result.postProcessorErrors[0]).toContain('build-runner-string-error');
+  });
+
   it('does not run post-processors in dry-run mode and returns empty errors', async () => {
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
     const context = makeWritableContext(tmp.path, {

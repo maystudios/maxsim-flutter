@@ -126,6 +126,102 @@ describe('ModuleRegistry', () => {
       expect(registry.size).toBe(0);
       expect(registry.getAll()).toEqual([]);
     });
+
+    it('loads manifest from a module.js with a valid id string', async () => {
+      const { createTempDir, removeTempDir } = await import('../helpers/temp-dir.js');
+      const { mkdir, writeFile } = await import('node:fs/promises');
+      const { join } = await import('node:path');
+
+      const defsDir = await createTempDir('registry-loadall-valid-');
+      try {
+        // Mark the temp dir as ESM so .js files are parsed as ES modules
+        await writeFile(join(defsDir, 'package.json'), JSON.stringify({ type: 'module' }), 'utf-8');
+        const modDir = join(defsDir, 'my-mod');
+        await mkdir(modDir, { recursive: true });
+        await writeFile(
+          join(modDir, 'module.js'),
+          `export const manifest = { id: 'my-mod', name: 'My Mod', description: 'test', requires: [], templateDir: 'x', ralphPhase: 2, contributions: {} };`,
+          'utf-8',
+        );
+
+        const registry = new ModuleRegistry(defsDir);
+        await registry.loadAll();
+
+        expect(registry.has('my-mod')).toBe(true);
+        expect(registry.size).toBe(1);
+      } finally {
+        await removeTempDir(defsDir);
+      }
+    });
+
+    it('skips a module entry whose module.js exports no manifest', async () => {
+      const { createTempDir, removeTempDir } = await import('../helpers/temp-dir.js');
+      const { mkdir, writeFile } = await import('node:fs/promises');
+      const { join } = await import('node:path');
+
+      const defsDir = await createTempDir('registry-loadall-nomanifest-');
+      try {
+        await writeFile(join(defsDir, 'package.json'), JSON.stringify({ type: 'module' }), 'utf-8');
+        const modDir = join(defsDir, 'no-manifest-mod');
+        await mkdir(modDir, { recursive: true });
+        await writeFile(
+          join(modDir, 'module.js'),
+          `export const notManifest = { id: 'ignored' };`,
+          'utf-8',
+        );
+
+        const registry = new ModuleRegistry(defsDir);
+        await registry.loadAll();
+
+        expect(registry.size).toBe(0);
+      } finally {
+        await removeTempDir(defsDir);
+      }
+    });
+
+    it('skips a module entry whose manifest.id is not a string', async () => {
+      const { createTempDir, removeTempDir } = await import('../helpers/temp-dir.js');
+      const { mkdir, writeFile } = await import('node:fs/promises');
+      const { join } = await import('node:path');
+
+      const defsDir = await createTempDir('registry-loadall-badid-');
+      try {
+        await writeFile(join(defsDir, 'package.json'), JSON.stringify({ type: 'module' }), 'utf-8');
+        const modDir = join(defsDir, 'bad-id-mod');
+        await mkdir(modDir, { recursive: true });
+        await writeFile(
+          join(modDir, 'module.js'),
+          `export const manifest = { id: 42, name: 'Bad', description: 'x', requires: [], templateDir: 'x', ralphPhase: 2, contributions: {} };`,
+          'utf-8',
+        );
+
+        const registry = new ModuleRegistry(defsDir);
+        await registry.loadAll();
+
+        expect(registry.size).toBe(0);
+      } finally {
+        await removeTempDir(defsDir);
+      }
+    });
+
+    it('skips file entries (non-directories) in the definitions dir', async () => {
+      const { createTempDir, removeTempDir } = await import('../helpers/temp-dir.js');
+      const { writeFile } = await import('node:fs/promises');
+      const { join } = await import('node:path');
+
+      const defsDir = await createTempDir('registry-loadall-file-');
+      try {
+        // A plain file in the definitions dir (not a subdirectory) — should be skipped
+        await writeFile(join(defsDir, 'README.md'), '# readme', 'utf-8');
+
+        const registry = new ModuleRegistry(defsDir);
+        await registry.loadAll();
+
+        expect(registry.size).toBe(0);
+      } finally {
+        await removeTempDir(defsDir);
+      }
+    });
   });
 
   describe('getAllOptionalIds', () => {

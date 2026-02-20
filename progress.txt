@@ -618,3 +618,13 @@ Verification:
 - 22 new tests across 3 test files
 - All quality gates pass: typecheck, lint, 673 tests passing across 30+ suites
 - Status: PASSES
+
+## 2026-02-20T00:20 - P7-002: Implement upgrade command to refresh .claude/ directory
+- Created src/cli/commands/upgrade.ts with createUpgradeCommand()
+- Registered upgrade command in src/cli/index.ts
+- Backs up user-edited agent files with .bak extension before overwrite
+- --dry-run shows what would change without writing
+- Success message lists all updated files
+- 19 new tests (unit + integration)
+- All quality gates pass: typecheck, lint, 702 tests passing across 35 suites
+- Status: PASSES

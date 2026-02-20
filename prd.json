@@ -677,7 +677,7 @@
         "--dry-run shows what would change",
         "Success message lists updated files"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P7-003",

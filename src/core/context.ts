@@ -37,6 +37,7 @@ export interface ProjectContext {
   // Claude setup
   claude: {
     enabled: boolean;
+    preset?: 'minimal' | 'standard' | 'full';
     agentTeams: boolean;
   };
 
@@ -152,6 +153,7 @@ export function createProjectContext(config: MaxsimConfig, outputDir: string): P
 
     claude: {
       enabled: config.claude.enabled,
+      preset: config.claude.preset,
       agentTeams: config.claude.agentTeams,
     },
 

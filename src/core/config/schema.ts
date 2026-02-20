@@ -108,6 +108,18 @@ export const MaxsimConfigSchema = z.object({
   claude: z
     .object({
       enabled: z.boolean().default(true),
+      preset: z.enum(['minimal', 'standard', 'full']).optional(),
+      overrides: z
+        .object({
+          claudeMd: z.boolean().optional(),
+          rules: z.boolean().optional(),
+          agents: z.boolean().optional(),
+          hooks: z.boolean().optional(),
+          skills: z.boolean().optional(),
+          commands: z.boolean().optional(),
+          mcp: z.boolean().optional(),
+        })
+        .optional(),
       generateAgents: z.boolean().default(false),
       generateSkills: z.boolean().default(false),
       generateHooks: z.boolean().default(false),

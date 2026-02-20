@@ -155,6 +155,100 @@ describe('MaxsimConfigSchema', () => {
       });
       expect(result.success).toBe(true);
     });
+
+    it('accepts claude.preset: minimal', () => {
+      const result = MaxsimConfigSchema.safeParse({
+        project: { name: 'my_app', orgId: 'com.example' },
+        claude: { preset: 'minimal' },
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.claude.preset).toBe('minimal');
+      }
+    });
+
+    it('accepts claude.preset: standard', () => {
+      const result = MaxsimConfigSchema.safeParse({
+        project: { name: 'my_app', orgId: 'com.example' },
+        claude: { preset: 'standard' },
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.claude.preset).toBe('standard');
+      }
+    });
+
+    it('accepts claude.preset: full', () => {
+      const result = MaxsimConfigSchema.safeParse({
+        project: { name: 'my_app', orgId: 'com.example' },
+        claude: { preset: 'full' },
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.claude.preset).toBe('full');
+      }
+    });
+
+    it('rejects invalid claude.preset value', () => {
+      const result = MaxsimConfigSchema.safeParse({
+        project: { name: 'my_app', orgId: 'com.example' },
+        claude: { preset: 'invalid' },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('accepts claude.overrides with boolean fields', () => {
+      const result = MaxsimConfigSchema.safeParse({
+        project: { name: 'my_app', orgId: 'com.example' },
+        claude: {
+          overrides: {
+            claudeMd: true,
+            rules: false,
+            agents: true,
+            hooks: false,
+            skills: true,
+            commands: false,
+            mcp: true,
+          },
+        },
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.claude.overrides?.claudeMd).toBe(true);
+        expect(result.data.claude.overrides?.agents).toBe(true);
+        expect(result.data.claude.overrides?.hooks).toBe(false);
+      }
+    });
+
+    it('accepts claude.overrides with partial fields', () => {
+      const result = MaxsimConfigSchema.safeParse({
+        project: { name: 'my_app', orgId: 'com.example' },
+        claude: { overrides: { claudeMd: true } },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('old boolean flags still work for backward compat', () => {
+      const result = MaxsimConfigSchema.safeParse({
+        project: { name: 'my_app', orgId: 'com.example' },
+        claude: {
+          enabled: true,
+          generateAgents: true,
+          generateSkills: true,
+          generateHooks: true,
+          agentTeams: true,
+          mcpServers: ['context7'],
+        },
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.claude.generateAgents).toBe(true);
+        expect(result.data.claude.generateSkills).toBe(true);
+        expect(result.data.claude.generateHooks).toBe(true);
+        expect(result.data.claude.agentTeams).toBe(true);
+        expect(result.data.claude.mcpServers).toEqual(['context7']);
+      }
+    });
   });
 });
 

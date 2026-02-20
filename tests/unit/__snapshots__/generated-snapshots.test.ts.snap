@@ -80,7 +80,7 @@ exports[`Generated file snapshots flutter-builder agent matches snapshot 1`] = `
 "---
 name: flutter-builder
 description: Implements Flutter features following Clean Architecture. Handles both architecture review and implementation.
-model: sonnet
+model: opus
 tools: ["Read","Write","Edit","Grep","Glob","Bash"]
 ---
 
@@ -88,7 +88,7 @@ You are a Flutter builder for **my_app**. You design and implement features foll
 
 ## Model Selection Rationale
 
-This agent uses **Sonnet** because Sonnet balances speed and capability for implementation tasks — it handles complex code generation and architectural reasoning without the latency of Opus.
+This agent uses **Opus** for non-trivial implementation tasks — Opus produces fewer bugs, handles edge cases better, and makes superior architectural decisions compared to lighter models.
 
 ## Sub-Agent Usage
 
@@ -159,6 +159,19 @@ dart run build_runner build --delete-conflicting-outputs
 - \`lib/core/providers/app_providers.dart\` — Global provider barrel
 - \`pubspec.yaml\` — Dependencies
 - \`.claude/rules/\` — Project-specific coding rules and conventions
+
+## Scope Boundaries
+
+### Do
+- Implement features following the architect's design
+- Run quality checks after every change
+- Follow existing code patterns and conventions
+
+### Do NOT
+- Do NOT modify files outside the project directory
+- Do NOT run \`flutter clean\` without explicit instruction
+- Do NOT install new packages without checking acceptance criteria first
+- Do NOT skip quality gates
 "
 `;
 

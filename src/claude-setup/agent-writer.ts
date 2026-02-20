@@ -6,9 +6,12 @@ interface AgentDefinition {
   filename: string;
   name: string;
   description: string;
-  model: 'sonnet' | 'haiku';
+  model: 'opus' | 'sonnet' | 'haiku';
   tools: string[];
   body: string;
+  isolation?: 'worktree';
+  memory?: 'user' | 'project' | 'local';
+  maxTurns?: number;
 }
 
 /**
@@ -41,6 +44,7 @@ export async function writeAgents(
  */
 export function buildAgentDefinitions(context: ProjectContext): AgentDefinition[] {
   return [
+    buildFlutterArchitectAgent(context),
     buildFlutterBuilderAgent(context),
     buildFlutterTesterAgent(context),
     buildFlutterReviewerAgent(context),
@@ -49,15 +53,24 @@ export function buildAgentDefinitions(context: ProjectContext): AgentDefinition[
 
 function formatAgentMarkdown(agent: AgentDefinition): string {
   const toolsList = JSON.stringify(agent.tools);
-  return `---
+  let frontmatter = `---
 name: ${agent.name}
 description: ${agent.description}
 model: ${agent.model}
-tools: ${toolsList}
----
+tools: ${toolsList}`;
 
-${agent.body}
-`;
+  if (agent.isolation) {
+    frontmatter += `\nisolation: ${agent.isolation}`;
+  }
+  if (agent.memory) {
+    frontmatter += `\nmemory: ${agent.memory}`;
+  }
+  if (agent.maxTurns !== undefined) {
+    frontmatter += `\nmaxTurns: ${agent.maxTurns}`;
+  }
+
+  frontmatter += `\n---\n\n${agent.body}\n`;
+  return frontmatter;
 }
 
 function getEnabledModulesList(context: ProjectContext): string[] {
@@ -82,6 +95,71 @@ function buildModuleContext(context: ProjectContext): string {
   return `Active modules: ${modules.join(', ')}. Be aware of module boundaries and inter-module dependencies.`;
 }
 
+function buildFlutterArchitectAgent(context: ProjectContext): AgentDefinition {
+  const moduleContext = buildModuleContext(context);
+
+  return {
+    filename: 'flutter-architect.md',
+    name: 'flutter-architect',
+    description:
+      'Read-only planning agent. Designs feature architecture, defines interfaces, and plans implementation before coding begins.',
+    model: 'opus',
+    tools: ['Read', 'Grep', 'Glob', 'WebSearch'],
+    maxTurns: 30,
+    body: `You are a Flutter architect for **${context.projectName}**. You design feature architecture, define interfaces, and plan implementation before coding begins.
+
+## Model Selection Rationale
+
+This agent uses **Opus** for complex architectural reasoning — designing interfaces, analyzing dependencies, and planning multi-layer implementations requires deep reasoning that benefits from Opus-level capability.
+
+## Your Role
+
+You are a **planning** teammate. You:
+1. Read the story requirements and acceptance criteria
+2. Analyze the existing codebase for relevant patterns
+3. Design interfaces and data models following Clean Architecture
+4. Plan the implementation order across layers
+5. Hand off the design to the builder with clear specifications
+
+## Architecture Planning Workflow
+
+1. **Analyze**: Read the story, identify affected layers and modules
+2. **Design**: Define domain entities, repository interfaces, and use case signatures
+3. **Plan**: Specify implementation order (Domain → Data → Presentation)
+4. **Review**: Check for dependency violations and circular imports
+5. **Hand off**: Provide the builder with interface specs, file paths, and test case suggestions
+
+## Clean Architecture Compliance
+
+Verify all designs follow the layer rules:
+- **Domain** (entities, repository interfaces, use cases) — no external dependencies
+- **Data** (repository implementations, data sources, models) — depends only on Domain
+- **Presentation** (pages, widgets, Riverpod providers) — depends on Domain, never directly on Data
+
+## Module Context
+
+${moduleContext}
+
+## Rules Reference
+
+Consult \`.claude/rules/\` for the full set of project-specific rules and conventions before finalizing any design.
+
+## Scope Boundaries
+
+### Do
+- Read and analyze existing code patterns
+- Design interfaces and plan implementations
+- Check dependency graphs between features
+- Reference documentation and best practices
+
+### Do NOT
+- Do NOT write or edit files — planning only
+- Do NOT make implementation decisions without checking existing patterns
+- Do NOT skip dependency analysis between features
+- Do NOT approve designs that violate Clean Architecture layer rules`,
+  };
+}
+
 function buildFlutterBuilderAgent(context: ProjectContext): AgentDefinition {
   const moduleContext = buildModuleContext(context);
 
@@ -90,13 +168,15 @@ function buildFlutterBuilderAgent(context: ProjectContext): AgentDefinition {
     name: 'flutter-builder',
     description:
       'Implements Flutter features following Clean Architecture. Handles both architecture review and implementation.',
-    model: 'sonnet',
+    model: 'opus',
     tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash'],
+    isolation: 'worktree',
+    maxTurns: 50,
     body: `You are a Flutter builder for **${context.projectName}**. You design and implement features following Clean Architecture and Riverpod patterns.
 
 ## Model Selection Rationale
 
-This agent uses **Sonnet** because Sonnet balances speed and capability for implementation tasks — it handles complex code generation and architectural reasoning without the latency of Opus.
+This agent uses **Opus** for non-trivial implementation tasks — Opus produces fewer bugs, handles edge cases better, and makes superior architectural decisions compared to lighter models.
 
 ## Sub-Agent Usage
 
@@ -166,7 +246,20 @@ dart run build_runner build --delete-conflicting-outputs
 - \`lib/core/router/app_router.dart\` — Route definitions
 - \`lib/core/providers/app_providers.dart\` — Global provider barrel
 - \`pubspec.yaml\` — Dependencies
-- \`.claude/rules/\` — Project-specific coding rules and conventions`,
+- \`.claude/rules/\` — Project-specific coding rules and conventions
+
+## Scope Boundaries
+
+### Do
+- Implement features following the architect's design
+- Run quality checks after every change
+- Follow existing code patterns and conventions
+
+### Do NOT
+- Do NOT modify files outside the project directory
+- Do NOT run \`flutter clean\` without explicit instruction
+- Do NOT install new packages without checking acceptance criteria first
+- Do NOT skip quality gates`,
   };
 }
 
@@ -180,6 +273,8 @@ function buildFlutterTesterAgent(context: ProjectContext): AgentDefinition {
       'TDD-first testing agent. Writes tests before implementation and validates that features meet acceptance criteria.',
     model: 'sonnet',
     tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash'],
+    isolation: 'worktree',
+    maxTurns: 40,
     body: `You are a Flutter test engineer for **${context.projectName}**. You practice TDD and validate that implementations meet acceptance criteria.
 
 ## Model Selection Rationale
@@ -244,7 +339,20 @@ dart format --set-exit-if-changed .  # Code is formatted
 - Message the builder when tests fail with specific error details and reproduction steps
 - Confirm to the reviewer when all tests pass
 - Flag any untestable code patterns — these indicate a design problem
-- See \`.claude/rules/\` for naming conventions and test file placement`,
+- See \`.claude/rules/\` for naming conventions and test file placement
+
+## Scope Boundaries
+
+### Do
+- Write comprehensive tests covering happy paths and edge cases
+- Validate acceptance criteria through tests
+- Report test failures with reproduction steps
+
+### Do NOT
+- Do NOT write implementation code — only tests
+- Do NOT modify source files outside \`test/\`
+- Do NOT mark tasks complete without all tests passing
+- Do NOT skip edge case tests`,
   };
 }
 
@@ -258,6 +366,8 @@ function buildFlutterReviewerAgent(context: ProjectContext): AgentDefinition {
       'Read-only compliance checker. Reviews code for Clean Architecture violations, Riverpod patterns, and code quality.',
     model: 'haiku',
     tools: ['Read', 'Grep', 'Glob'],
+    memory: 'user',
+    maxTurns: 20,
     body: `You are a Flutter code reviewer for **${context.projectName}**. You review completed implementations for architecture compliance and code quality.
 
 ## Model Selection Rationale
@@ -315,6 +425,19 @@ Consult \`.claude/rules/\` for the full set of project-specific rules and conven
 
 - Approve implementations that pass all checks
 - Send specific, actionable feedback for issues found
-- Prioritize critical issues (architecture violations) over style suggestions`,
+- Prioritize critical issues (architecture violations) over style suggestions
+
+## Scope Boundaries
+
+### Do
+- Review all changed files against the checklist
+- Provide specific, actionable feedback with file/line references
+- Check for architecture violations and anti-patterns
+
+### Do NOT
+- Do NOT write or edit any files — read-only analysis only
+- Do NOT approve code with unresolved architecture violations
+- Do NOT skip the review checklist
+- Do NOT suggest changes without specific file/line references`,
   };
 }

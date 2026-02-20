@@ -135,7 +135,8 @@ describe('Claude setup output integration', () => {
     const agentsDir = join(tmp.path, '.claude', 'agents');
     const files = await readdir(agentsDir);
 
-    expect(files.length).toBe(3);
+    expect(files.length).toBe(4);
+    expect(files).toContain('flutter-architect.md');
     expect(files).toContain('flutter-builder.md');
     expect(files).toContain('flutter-tester.md');
     expect(files).toContain('flutter-reviewer.md');

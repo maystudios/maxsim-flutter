@@ -8,7 +8,7 @@ import { createProjectContext } from '../../core/context.js';
 import { validateEnvironment } from '../../core/validator.js';
 import { ScaffoldEngine } from '../../scaffold/engine.js';
 import { createSpinner } from '../ui/spinner.js';
-import { promptForProjectCreation, promptForModuleConfig } from '../ui/prompts.js';
+import { promptForProjectCreation, promptForModuleConfig, promptForPreset, getPresetModules } from '../ui/prompts.js';
 import type { MaxsimConfig } from '../../types/config.js';
 
 const { writeFile, ensureDir } = fsExtra;
@@ -122,10 +122,17 @@ async function runCreate(
       },
     });
   } else {
-    // Interactive prompts
-    const answers = await promptForProjectCreation({
-      projectName: appName,
-    });
+    // Interactive: preset first, then project details
+    const presetId = await promptForPreset();
+    const isCustom = presetId === 'custom';
+
+    const answers = await promptForProjectCreation(
+      { projectName: appName },
+      {
+        skipModules: !isCustom,
+        defaultModules: getPresetModules(presetId),
+      },
+    );
 
     // Build module config: prompt for per-module settings for configurable modules
     const modules: Record<string, unknown> = {};

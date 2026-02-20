@@ -1,5 +1,80 @@
 import * as p from '@clack/prompts';
 
+/** Identifies which preset the user chose. */
+export type PresetId = 'minimal' | 'standard' | 'full' | 'custom';
+
+/** A named bundle of pre-selected modules. */
+export interface Preset {
+  readonly id: PresetId;
+  readonly label: string;
+  readonly description: string;
+  readonly modules: readonly string[];
+}
+
+/** Options for promptForProjectCreation — second parameter (optional). */
+export interface CreateOptions {
+  /** When true, skip the module multiselect and use defaultModules instead. */
+  skipModules?: boolean;
+  /** Modules to return when skipModules is true. */
+  defaultModules?: readonly string[];
+}
+
+export const PRESETS: readonly Preset[] = [
+  {
+    id: 'minimal',
+    label: 'Minimal',
+    description: 'Core only — Clean Architecture skeleton, Riverpod, go_router',
+    modules: [],
+  },
+  {
+    id: 'standard',
+    label: 'Standard',
+    description: 'Auth + API client + Theme — the typical production starter',
+    modules: ['auth', 'api', 'theme'],
+  },
+  {
+    id: 'full',
+    label: 'Full Featured',
+    description: 'All 9 modules — kitchen sink for large projects',
+    modules: ['auth', 'api', 'theme', 'database', 'i18n', 'push', 'analytics', 'cicd', 'deep-linking'],
+  },
+  {
+    id: 'custom',
+    label: 'Custom',
+    description: 'Pick modules manually from the full list',
+    modules: [],
+  },
+];
+
+/**
+ * Returns the module IDs for the given preset.
+ * For 'custom', returns an empty array (caller shows the multiselect).
+ */
+export function getPresetModules(presetId: PresetId): readonly string[] {
+  const preset = PRESETS.find((p) => p.id === presetId);
+  return preset?.modules ?? [];
+}
+
+/**
+ * Shows a preset selection prompt before the main project creation flow.
+ * Returns the chosen PresetId. Exits on cancel.
+ */
+export async function promptForPreset(): Promise<PresetId> {
+  const result = await p.select({
+    message: 'Choose a project preset',
+    options: PRESETS.map((preset) => ({
+      value: preset.id,
+      label: preset.label,
+      hint: preset.description,
+    })),
+  });
+  if (p.isCancel(result)) {
+    p.cancel('Project creation cancelled.');
+    process.exit(0);
+  }
+  return result as PresetId;
+}
+
 export interface CreateAnswers {
   projectName: string;
   orgId: string;
@@ -10,6 +85,7 @@ export interface CreateAnswers {
 
 export async function promptForProjectCreation(
   defaults?: Partial<CreateAnswers>,
+  options?: CreateOptions,
 ): Promise<CreateAnswers> {
   const answers = await p.group(
     {
@@ -60,22 +136,24 @@ export async function promptForProjectCreation(
         }),
 
       modules: () =>
-        p.multiselect({
-          message: 'Select modules to include',
-          options: [
-            { value: 'auth', label: 'Authentication', hint: 'Firebase / Supabase / Custom' },
-            { value: 'api', label: 'API Client', hint: 'Dio + interceptors' },
-            { value: 'theme', label: 'Theme', hint: 'Material 3 + dark mode' },
-            { value: 'database', label: 'Database', hint: 'Drift / Hive / Isar' },
-            { value: 'i18n', label: 'Internationalization', hint: 'ARB + Flutter localizations' },
-            { value: 'push', label: 'Push Notifications', hint: 'Firebase / OneSignal' },
-            { value: 'analytics', label: 'Analytics', hint: 'Service abstraction' },
-            { value: 'cicd', label: 'CI/CD', hint: 'GitHub Actions / GitLab CI' },
-            { value: 'deep-linking', label: 'Deep Linking', hint: 'App links + go_router' },
-          ],
-          initialValues: defaults?.modules ?? [],
-          required: false,
-        }),
+        options?.skipModules
+          ? Promise.resolve((options.defaultModules ?? []) as string[])
+          : p.multiselect({
+              message: 'Select modules to include',
+              options: [
+                { value: 'auth', label: 'Authentication', hint: 'Firebase / Supabase / Custom' },
+                { value: 'api', label: 'API Client', hint: 'Dio + interceptors' },
+                { value: 'theme', label: 'Theme', hint: 'Material 3 + dark mode' },
+                { value: 'database', label: 'Database', hint: 'Drift / Hive / Isar' },
+                { value: 'i18n', label: 'Internationalization', hint: 'ARB + Flutter localizations' },
+                { value: 'push', label: 'Push Notifications', hint: 'Firebase / OneSignal' },
+                { value: 'analytics', label: 'Analytics', hint: 'Service abstraction' },
+                { value: 'cicd', label: 'CI/CD', hint: 'GitHub Actions / GitLab CI' },
+                { value: 'deep-linking', label: 'Deep Linking', hint: 'App links + go_router' },
+              ],
+              initialValues: defaults?.modules ?? [],
+              required: false,
+            }),
     },
     {
       onCancel() {

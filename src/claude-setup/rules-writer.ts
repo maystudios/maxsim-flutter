@@ -82,18 +82,40 @@ All features must have corresponding test coverage.
 
 function generateSecurityRule(): string {
   return (
-    frontmatter(['lib/**']) +
+    frontmatter(['**']) +
     `# Security Guidelines
 
 Follow these security best practices in all code.
 
-## Rules
+## Secrets & Credentials
 - Never hardcode secrets, API keys, or credentials in source code.
-- Use \`flutter_secure_storage\` for sensitive user data.
+- Use \`flutter_secure_storage\` for all sensitive user data and auth tokens.
+- Add \`.env\` files and any secrets files to \`.gitignore\`.
+- Rotate credentials immediately if they are ever committed accidentally.
+
+## Input Validation
 - Validate and sanitize all user inputs before use.
+- Use strong typing and Dart's type system to prevent unsafe data flows.
+- Avoid \`dynamic\` types for data received from external sources.
+- Reject malformed inputs at the boundary — never pass raw external data into business logic.
+
+## Dependency Security
+- Only use trusted packages from pub.dev with high scores and active maintenance.
+- Pin dependency versions in \`pubspec.yaml\` to avoid unintended upgrades.
+- Regularly audit packages with \`flutter pub outdated\` and \`dart pub deps\`.
+- Review changelogs before upgrading dependencies with breaking changes.
+
+## API Security
 - Use HTTPS for all network requests; never allow plain HTTP in production.
-- Apply the principle of least privilege for permissions.
-- Redact sensitive data from logs.
+- Implement certificate pinning for high-security endpoints.
+- Store auth tokens in \`flutter_secure_storage\`, never in SharedPreferences.
+- Never include sensitive data in URL query parameters — use request bodies instead.
+
+## Data Handling & Privacy
+- Never log PII (personally identifiable information) such as names, emails, or tokens.
+- Use structured logging and redact sensitive fields before writing to any logging output.
+- Apply encryption at rest for any sensitive data stored locally.
+- Request only the minimum permissions needed; apply the principle of least privilege.
 `
   );
 }

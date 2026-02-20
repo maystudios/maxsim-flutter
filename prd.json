@@ -1296,6 +1296,170 @@
         "npm run quality:full passes completely"
       ],
       "passes": true
+    },
+    {
+      "id": "P11-001",
+      "phase": 11,
+      "priority": 84,
+      "title": "Upgrade generated agent definitions with best-practice patterns",
+      "description": "Overhaul agent-writer.ts to generate agents that follow agentic coding best practices (see docs/agentic-claude-code-reference.md). Currently generates 3 agents (flutter-builder, flutter-tester, flutter-reviewer). Improvements: (1) Add AgentDefinition.isolation field support — set 'worktree' for builder and tester to prevent file conflicts in team mode. (2) Add AgentDefinition.memory field — set true for reviewer so it learns project patterns across sessions. (3) Add explicit 'Scope Boundaries' section to each agent body with 'Do NOT...' rules. (4) Fix model selection: builder should use 'opus' (not sonnet) per best practices — non-trivial implementation work benefits from Opus. (5) Add a new 'flutter-architect' agent (read-only: Read, Grep, Glob, WebSearch) for planning architecture before implementation. (6) Update AgentDefinition interface to include optional isolation, memory, maxTurns fields. (7) Update formatAgentMarkdown() to emit new frontmatter fields. Reference docs/agentic-claude-code-reference.md Section 1 for complete frontmatter spec.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "AgentDefinition interface includes isolation?, memory?, maxTurns? fields",
+        "formatAgentMarkdown() emits isolation, memory, maxTurns when present",
+        "flutter-builder agent uses model opus and isolation worktree",
+        "flutter-tester agent uses isolation worktree",
+        "flutter-reviewer agent has memory: true",
+        "New flutter-architect agent generated with read-only tools",
+        "All 4 agents have 'Scope Boundaries' section with Do NOT rules",
+        "npm run quality passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P11-002",
+      "phase": 11,
+      "priority": 85,
+      "title": "Add protect-secrets hook and notification hook to generated setup",
+      "description": "Extend hooks-writer.ts to generate additional hooks following best practices (see docs/agentic-claude-code-reference.md Section 3). Currently generates block-dangerous.sh and format-dart.sh. Add: (1) protect-secrets.sh — PreToolUse hook on Read|Edit|Write that blocks access to .env, .env.*, credentials*, secrets*, *.pem, *.key files. Uses JSON decision output format: {decision:block, reason:...}. (2) notify-waiting.sh — Notification hook that sends desktop notifications (cross-platform: osascript on macOS, notify-send on Linux, PowerShell toast on Windows). (3) Update HooksConfig to register both new hooks. (4) Add timeout field to hook entries (5 seconds for secrets, 10 for notification). Reference docs/agentic-claude-code-reference.md Section 3 for hook event types and JSON schemas.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "protect-secrets.sh generated in .claude/hooks/ with correct file-blocking logic",
+        "notify-waiting.sh generated with cross-platform notification support",
+        "HooksConfig registers protect-secrets as PreToolUse on Read|Edit|Write",
+        "HooksConfig registers notify-waiting as Notification hook",
+        "Hook entries include timeout field",
+        "All generated scripts are chmod 755",
+        "npm run quality passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P11-003",
+      "phase": 11,
+      "priority": 86,
+      "title": "Generate settings.json with deny permissions and proper hook registration",
+      "description": "Currently hooks-writer.ts only generates settings.local.json with hooks config. Add generation of .claude/settings.json (team-shared config) containing: (1) hooks section — move hook registration from settings.local.json to settings.json since hooks should be shared. (2) Add deny permissions array blocking .env, .env.*, credentials*, secrets*, *.pem, *.key. (3) Keep settings.local.json for local-only allow permissions (flutter commands, git operations). This follows the best practice of separating shared config (settings.json committed to git) from local config (settings.local.json gitignored). Reference docs/agentic-claude-code-reference.md Section 6 for permission system and evaluation order (Deny > Ask > Allow).",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        ".claude/settings.json generated with hooks and deny permissions",
+        "settings.json contains deny rules for .env, credentials, secrets, pem, key files",
+        "settings.local.json contains only allow permissions for flutter/git commands",
+        "Hook registration moved from settings.local to settings.json",
+        "setup-orchestrator.ts calls the settings generation",
+        "npm run quality passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P11-004",
+      "phase": 11,
+      "priority": 87,
+      "title": "Generate .claude/rules/ with path-scoped rule files",
+      "description": "Enhance rules-writer.ts to add YAML frontmatter with 'paths' field to all generated rule files, following the .claude/rules/ best practice (see docs/agentic-claude-code-reference.md Section 4 and 7). Currently generates rule files without paths frontmatter. Add: (1) 'paths' frontmatter to every rule file so rules only load when editing matching files. Examples: architecture.md paths: ['lib/**'], testing.md paths: ['test/**'], riverpod.md paths: ['lib/**/providers/**', 'lib/**/presentation/**']. (2) Add a new 'git-workflow.md' rule with commit conventions, branch naming for Flutter projects. (3) Add 'code-quality.md' rule with flutter analyze, dart format, test coverage expectations. This makes rules context-aware: Claude only sees architecture rules when editing lib/, testing rules when editing test/, etc.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "All existing rule files include paths frontmatter with relevant glob patterns",
+        "architecture.md scoped to lib/**",
+        "testing.md scoped to test/**",
+        "riverpod.md scoped to lib/**/providers/**, lib/**/presentation/**",
+        "go-router.md scoped to lib/**/router/**, lib/**/routes/**",
+        "New git-workflow.md rule generated with commit conventions",
+        "New code-quality.md rule generated with flutter analyze expectations",
+        "npm run quality passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P11-005",
+      "phase": 11,
+      "priority": 88,
+      "title": "Make quality-related skills proactively activatable",
+      "description": "Update skill-writer.ts so that quality-focused skills can be auto-triggered by Claude (see docs/agentic-claude-code-reference.md Section 2). Currently all skills use string bodies without frontmatter control. Changes: (1) Add disable-model-invocation: false to security-review and performance-check skills so Claude can auto-trigger them before commits. (2) Improve descriptions with clear trigger phrases: 'Use proactively before git commits, after completing feature work, or when user asks about code quality/security/performance.' (3) Add a new 'quality-gate' skill that runs flutter analyze + flutter test + coverage check as a combined pre-commit validation. (4) Update SkillDefinition interface to support frontmatter fields: disable-model-invocation, user-invocable, allowed-tools, context. Reference docs/agentic-claude-code-reference.md Section 2 for the decision matrix and activation patterns.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "SkillDefinition interface includes disableModelInvocation?, userInvocable?, allowedTools?, context? fields",
+        "security-review skill has proactive trigger description",
+        "performance-check skill has proactive trigger description",
+        "New quality-gate skill generated with combined flutter analyze + test",
+        "Skill frontmatter correctly emitted in generated SKILL.md files",
+        "npm run quality passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P11-006",
+      "phase": 11,
+      "priority": 89,
+      "title": "Add start-team command for generated Flutter projects",
+      "description": "Add a new 'start-team' slash command to commands-writer.ts that orchestrates Claude Code Agent Teams for Flutter projects (see docs/agentic-claude-code-reference.md Section 5). The generated /start-team command should: (1) Read prd.json to find incomplete stories in current phase. (2) Pre-flight: git clean, flutter analyze passes, flutter test passes. (3) Create team 'flutter-sprint' with TaskCreate for each story. (4) Spawn 4 agents: architect (opus), builder (opus), tester (sonnet), reviewer (haiku). (5) Orchestrate TDD flow: Architect → Builder (RED+GREEN) → Tester (edge cases) → Reviewer → Quality gates. (6) Commit + push after each story passes. (7) Use correct model assignments per best practices. This is the most complex command and should reference the agent team patterns from the docs.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "start-team.md command generated in .claude/commands/",
+        "Command reads prd.json for sprint planning",
+        "Pre-flight checks: git status, flutter analyze, flutter test",
+        "Spawns 4 agents with correct models (architect=opus, builder=opus, tester=sonnet, reviewer=haiku)",
+        "TDD flow orchestration documented (Architect → Builder → Tester → Reviewer)",
+        "Commit + push protocol after each story",
+        "npm run quality passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P11-007",
+      "phase": 11,
+      "priority": 90,
+      "title": "Shorten generated CLAUDE.md and use @-imports for rules",
+      "description": "Optimize claude-md-generator.ts to produce a shorter, more focused CLAUDE.md following the under-150-lines best practice (see docs/agentic-claude-code-reference.md Section 4). Currently generates ~80-100 lines which is good, but: (1) Replace inline rule descriptions with @.claude/rules/filename.md imports where already present. (2) Remove information Claude can infer from reading code (standard Flutter conventions, obvious file naming). (3) Add emphasis markers (IMPORTANT, NEVER, MUST) for critical rules only. (4) Add model usage policy section: Opus for non-trivial work, Sonnet for simple tasks, Haiku for scans. (5) Add link to docs/agentic-claude-code-reference.md as detailed reference for agents. (6) Ensure generated CLAUDE.md stays under 120 lines total.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "Generated CLAUDE.md is under 120 lines",
+        "Uses @.claude/rules/ imports instead of inline rule descriptions",
+        "Model usage policy section present (Opus/Sonnet/Haiku guidance)",
+        "Critical rules use IMPORTANT/NEVER/MUST emphasis",
+        "No redundant information Claude can infer from code",
+        "npm run quality passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P11-008",
+      "phase": 11,
+      "priority": 91,
+      "title": "Add TaskCompleted quality-gate hook with proper JSON decision format",
+      "description": "Upgrade the TaskCompleted hook in hooks-writer.ts from a simple inline command to a proper shell script with JSON decision output (see docs/agentic-claude-code-reference.md Section 3). Currently: TaskCompleted runs 'flutter analyze && flutter test' as inline command. Problems: no structured output, no timeout, no conditional logic. Fix: (1) Create quality-gate-task.sh that reads JSON stdin, checks if task is an implementation task (not review/status), runs flutter analyze + flutter test, outputs structured feedback. (2) Add timeout: 60 to the hook (flutter test can be slow). (3) Output reminder message listing quality checks when implementation tasks complete. (4) Ensure the hook doesn't block on non-implementation tasks (reviews, status checks).",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "quality-gate-task.sh generated as proper shell script",
+        "Script reads JSON stdin and extracts task subject",
+        "Only triggers for implementation tasks (pattern: P\\d+-)",
+        "Outputs quality reminder with specific checks",
+        "Hook registered with timeout: 60",
+        "Inline 'flutter analyze && flutter test' replaced with script reference",
+        "npm run quality passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P11-009",
+      "phase": 11,
+      "priority": 92,
+      "title": "Integration tests for all Phase 11 generated output",
+      "description": "Write comprehensive integration tests verifying all Phase 11 changes produce correct output. Tests should: (1) Verify 4 agents generated (not 3) with correct frontmatter (isolation, memory, model). (2) Verify protect-secrets.sh and notify-waiting.sh exist and are executable. (3) Verify settings.json has deny permissions and hook registration. (4) Verify all rule files have paths frontmatter. (5) Verify quality-related skills have proactive descriptions. (6) Verify start-team.md command exists with correct team composition. (7) Verify CLAUDE.md is under 120 lines with @-imports. (8) Verify quality-gate-task.sh exists as proper script. (9) Test with all 3 presets (minimal, standard, full) to ensure feature flags work.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "Integration test covers all 3 presets (minimal/standard/full)",
+        "Agent count verified: 4 agents for standard/full preset",
+        "Hook scripts verified: 4 scripts (block-dangerous, format-dart, protect-secrets, notify-waiting)",
+        "settings.json verified with deny permissions",
+        "Rule files verified with paths frontmatter",
+        "Skill proactive activation verified",
+        "start-team command verified",
+        "CLAUDE.md line count verified under 120",
+        "All existing tests still pass",
+        "npm run quality passes"
+      ],
+      "passes": false
     }
   ]
 }

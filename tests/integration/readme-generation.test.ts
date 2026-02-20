@@ -136,7 +136,6 @@ describe('README.md multiple modules simultaneously', () => {
   const tmp = useTempDir('readme-all-modules-');
 
   it('README.md lists all enabled modules when all are active', async () => {
-    // Note: 15s timeout — scaffold with all 9 modules is slow on WSL2
     const engine = new ScaffoldEngine({
       templatesDir: TEMPLATES_DIR,
       modulesTemplatesDir: MODULES_DIR,
@@ -167,7 +166,7 @@ describe('README.md multiple modules simultaneously', () => {
     expect(content).toContain('Internationalization');
     expect(content).toContain('Theming');
     expect(content).toContain('CI/CD');
-  });
+  }, 15000);
 
   it('README.md interpolates module provider/engine values in module list', async () => {
     const engine = new ScaffoldEngine({
@@ -195,7 +194,7 @@ describe('README.md multiple modules simultaneously', () => {
     expect(content).toContain('hive local storage');
     expect(content).toContain('onesignal provider');
     expect(content).toContain('github pipelines');
-  });
+  }, 15000);
 
   it('README.md has no module bullet points when no modules are enabled', async () => {
     const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });

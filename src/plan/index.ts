@@ -7,5 +7,3 @@ export type { BriefTemplateInput } from './brief-template-generator.js';
 export { generatePlanAppSkill } from './skill-generator.js';
 export type { SkillInput } from './skill-generator.js';
 export { runPlan } from './plan-orchestrator.js';
-export { classifyAppType } from './app-type-classifier.js';
-export type { AppType, AppTypeResult, ModuleSuggestion } from './app-type-classifier.js';

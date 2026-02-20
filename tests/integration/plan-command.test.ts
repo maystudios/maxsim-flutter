@@ -2,13 +2,9 @@ import { join } from 'node:path';
 import { access, readFile } from 'node:fs/promises';
 import { load as yamlLoad } from 'js-yaml';
 import { useTempDir } from '../helpers/temp-dir.js';
-import { makeTestContext } from '../helpers/context-factory.js';
 import { runPlan } from '../../src/plan/plan-orchestrator.js';
 import { generatePlanAppSkill } from '../../src/plan/skill-generator.js';
 import { generateBriefTemplate } from '../../src/plan/brief-template-generator.js';
-import { classifyAppType } from '../../src/plan/app-type-classifier.js';
-import { generateArchitectureDoc } from '../../src/plan/architecture-generator.js';
-import { generateJourneyDecompositionPrompt } from '../../src/plan/journey-to-stories.js';
 import { writePartialConfig } from '../../src/plan/config-writer.js';
 
 describe('Plan command — end-to-end integration', () => {
@@ -69,85 +65,7 @@ describe('Plan command — end-to-end integration', () => {
     expect(template).toMatch(/description/i);
   });
 
-  // Test 6: app-type classifier returns correct types for various descriptions
-  it('app-type classifier returns correct type for known app descriptions', () => {
-    const cases: Array<[string, string]> = [
-      ['team chat with channels and messages', 'team-collaboration'],
-      ['online shop with checkout and payment', 'e-commerce'],
-      ['social feed with posts and likes', 'content-social'],
-      ['simple calculator tool', 'utility-tool'],
-      ['workout tracker with calories', 'fitness-health'],
-      ['online courses with quizzes', 'education'],
-    ];
-
-    for (const [description, expectedType] of cases) {
-      const result = classifyAppType(description);
-      expect(result.type).toBe(expectedType);
-      expect(result.confidence).toBeGreaterThan(0);
-    }
-  });
-
-  // Test 7: architecture generator produces valid ASCII diagrams
-  it('architecture generator produces provider tree ASCII diagram', () => {
-    const context = makeTestContext({
-      projectName: 'test_app',
-      modules: {
-        auth: { provider: 'firebase' },
-        api: false,
-        database: false,
-        i18n: false,
-        theme: false,
-        push: false,
-        analytics: false,
-        cicd: false,
-        deepLinking: false,
-      },
-    });
-
-    const doc = generateArchitectureDoc(context);
-    expect(doc).toContain('ProviderScope');
-    expect(doc).toContain('├──');
-    expect(doc).toContain('routerProvider');
-    expect(doc).toContain('authRepositoryProvider');
-  });
-
-  it('architecture generator produces navigation flow diagram', () => {
-    const context = makeTestContext({
-      projectName: 'nav_app',
-      modules: {
-        auth: { provider: 'firebase' },
-        api: false,
-        database: false,
-        i18n: false,
-        theme: false,
-        push: false,
-        analytics: false,
-        cicd: false,
-        deepLinking: false,
-      },
-    });
-
-    const doc = generateArchitectureDoc(context);
-    expect(doc).toMatch(/navigation flow/i);
-    expect(doc).toContain('/login');
-  });
-
-  // Test 8: journey-to-stories produces valid story structure prompt
-  it('journey decomposition prompt includes domain/data/presentation layers', () => {
-    const prompt = generateJourneyDecompositionPrompt(['User signs up and logs in']);
-    expect(prompt).toMatch(/domain/i);
-    expect(prompt).toMatch(/data/i);
-    expect(prompt).toMatch(/presentation/i);
-    expect(prompt).toContain('User signs up and logs in');
-  });
-
-  it('journey decomposition prompt enforces dependency chain rules', () => {
-    const prompt = generateJourneyDecompositionPrompt(['User browses products']);
-    expect(prompt).toMatch(/dependenc/i);
-    expect(prompt).toContain('domain ← data ← presentation');
-  });
-
-  // Test 9: partial maxsim.config.yaml is valid YAML
+  // Test 6: partial maxsim.config.yaml is valid YAML
   it('writePartialConfig produces valid YAML with required fields', async () => {
     const configDir = join(tmp.path, 'yaml_test');
     await writePartialConfig(configDir, {

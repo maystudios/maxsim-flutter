@@ -22,12 +22,7 @@ const config = {
   extensionsToTreatAsEsm: ['.ts'],
   transformIgnorePatterns: ['/node_modules/(?!(chalk|ansi-styles|#ansi-styles)/)'],
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
-  coveragePathIgnorePatterns: [
-    '/node_modules/',
-    'src/ralph/ralph-converter.ts',
-    'src/ralph/story-sizer.ts',
-    'src/ralph/prd-generator.ts',
-  ],
+  coveragePathIgnorePatterns: ['/node_modules/'],
   coverageReporters: ['text', 'text-summary', 'lcov'],
   coverageThreshold: {
     global: {

@@ -11,7 +11,7 @@ Check TDD compliance across the project:
 
 2. **Coverage Check**:
    - Run `npm run test:coverage`
-   - Verify thresholds: statements >= 80%, branches >= 75%, functions >= 80%, lines >= 80%
+   - Compare against thresholds in `jest.config.mjs` `coverageThreshold.global` (never hardcode values)
 
 3. **No Incomplete Tests**:
    - Search all test files for `it.todo(` and `it.skip(`

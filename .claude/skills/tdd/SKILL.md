@@ -36,11 +36,7 @@ Given a feature or story, produce a list of test cases (behavioral descriptions)
 
 ### coverage — Check Coverage
 1. Run: `npm run test:coverage`
-2. Report coverage percentages vs thresholds:
-   - Statements: >= 80%
-   - Branches: >= 75%
-   - Functions: >= 80%
-   - Lines: >= 80%
+2. Compare against thresholds in `jest.config.mjs` `coverageThreshold.global` (never hardcode)
 3. Identify uncovered lines/branches
 
 ### status — TDD Progress

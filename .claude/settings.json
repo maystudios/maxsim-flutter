@@ -13,6 +13,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Read|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/protect-secrets.sh",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "Stop": [
@@ -23,6 +33,30 @@
             "type": "command",
             "command": ".claude/hooks/remind-quality.sh",
             "timeout": 5
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/quality-gate-task.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/notify-waiting.sh",
+            "timeout": 10
           }
         ]
       }

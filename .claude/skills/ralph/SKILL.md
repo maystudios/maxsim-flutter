@@ -42,7 +42,7 @@ Ralph iterations follow TDD discipline:
 - Quality gates include test-first verification
 - Each story must have tests written before implementation
 - `npm run quality` is run before marking any story complete
-- Coverage thresholds must be met: statements 80%, branches 75%, functions 80%, lines 80%
+- Coverage thresholds from `jest.config.mjs` `coverageThreshold.global` must be met (never hardcode)
 
 ## Monitoring
 

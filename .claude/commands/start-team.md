@@ -48,11 +48,11 @@ Spawn all 6 agent roles using the Task tool with `team_name: "prd-sprint"`:
 
 | Name | subagent_type | Model | Role |
 |------|--------------|-------|------|
-| `architect` | `typescript-architect` | `sonnet` | Reviews architecture before implementation starts |
-| `tdd-driver` | `tdd-driver` | `sonnet` | Writes failing tests first (RED), then implements (GREEN) |
+| `architect` | `typescript-architect` | `opus` | Reviews architecture before implementation starts |
+| `tdd-driver` | `tdd-driver` | `opus` | Writes failing tests first (RED), then implements (GREEN) |
 | `tester` | `tester` | `sonnet` | Writes additional tests, validates coverage |
-| `builder` | `typescript-builder` | `sonnet` | Implements features to make tests pass |
-| `reviewer` | `reviewer` | `haiku` | Reviews code for quality and TDD compliance |
+| `builder` | `typescript-builder` | `opus` | Implements features to make tests pass |
+| `reviewer` | `reviewer` | `sonnet` | Reviews code for quality and TDD compliance |
 | `quality-gate` | `quality-gate-enforcer` | `haiku` | Runs all 8 quality gates before story completion |
 
 Give each teammate this initial prompt:

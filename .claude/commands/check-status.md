@@ -17,7 +17,7 @@ Check the current development status:
 
 4. Run `npm run test:coverage` for coverage summary:
    - Statements, branches, functions, lines percentages
-   - Whether thresholds are met (80/75/80/80)
+   - Whether thresholds from `jest.config.mjs` are met (never hardcode values)
 
 5. Report:
    - Phase progress (e.g., "Phase 2: 4/8 stories complete")

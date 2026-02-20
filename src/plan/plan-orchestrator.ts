@@ -20,7 +20,7 @@ export async function runPlan(input: PlanInput): Promise<PlanResult> {
   const skillsDir = join(outputDir, '.claude', 'skills');
   await mkdir(skillsDir, { recursive: true });
   const skillPath = join(skillsDir, 'plan-app.md');
-  await writeFile(skillPath, generatePlanAppSkill(), 'utf-8');
+  await writeFile(skillPath, generatePlanAppSkill({ name, description }), 'utf-8');
   filesCreated.push(skillPath);
 
   // Write docs/project-brief-template.md

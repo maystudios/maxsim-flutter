@@ -6,46 +6,64 @@ export interface BriefTemplateInput {
 export function generateBriefTemplate(input: BriefTemplateInput): string {
   return `# Project Brief — ${input.name}
 
-> ${input.description}
+## App Description
 
-## Vision
+${input.description}
 
-<!-- What problem does this app solve? Who is the target user? -->
+## Problem Statement
 
-## Core Features
+<!-- What specific problem does this app solve? Why does it need to exist? -->
 
-<!-- List the 3-5 most important features. Be specific. -->
+## Target Users
 
-1.
-2.
-3.
+<!-- Who are the primary users of this app? -->
 
-## User Journeys
+### Persona: [Primary User Type]
 
-<!-- Describe the key user flows step by step. -->
+- **Role**: (e.g., freelancer, student, team manager)
+- **Goal**: What they want to accomplish
+- **Pain point**: What frustrates them today
+- **Tech comfort**: Low / Medium / High
 
-### Primary Journey
+### Persona: [Secondary User Type] (optional)
 
-1. User opens the app
-2.
+- **Role**:
+- **Goal**:
+- **Pain point**:
 
-## Technical Constraints
+## Core User Journeys
 
-<!-- Platform targets, performance requirements, integrations. -->
+<!-- Describe the 3-5 most important flows a user will complete. -->
 
-- Platforms: iOS, Android
--
+1. **[Journey 1]**: (e.g., Sign up → complete profile → create first item)
+2. **[Journey 2]**:
+3. **[Journey 3]**:
+4.
+5.
+
+## Explicit Non-Goals
+
+<!-- What are you NOT building in v1? Be specific to avoid scope creep. -->
+
+- Not building:
+- Not supporting:
+- Deferred to v2:
 
 ## Success Metrics
 
-<!-- How will you measure if the app is successful? -->
+<!-- How will you know the app is successful? -->
 
--
+- Activation: (e.g., X% of users complete onboarding)
+- Engagement: (e.g., DAU/MAU ratio)
+- Retention: (e.g., 30-day retention rate)
 
-## Out of Scope
+## Technical Constraints
 
-<!-- What are you explicitly NOT building in v1? -->
+<!-- Platform targets, integrations, performance requirements. -->
 
--
+- Platforms: iOS, Android
+- Authentication:
+- Backend / API:
+- Offline support: Yes / No
 `;
 }

@@ -10,6 +10,7 @@ export function generateClaudeMd(context: ProjectContext): string {
     generateRules(context),
     generateBuildCommands(),
     generateQualityGates(),
+    generateModelPolicy(),
     generateDevelopmentWorkflow(),
     generateKeyPaths(),
   ];
@@ -53,6 +54,8 @@ function generateRules(context: ProjectContext): string {
     '@.claude/rules/go-router.md',
     '@.claude/rules/testing.md',
     '@.claude/rules/security.md',
+    '@.claude/rules/git-workflow.md',
+    '@.claude/rules/code-quality.md',
   ];
 
   if (context.modules.auth) imports.push('@.claude/rules/auth.md');
@@ -83,9 +86,19 @@ flutter analyze
 function generateQualityGates(): string {
   return `## Quality Gates
 
+**IMPORTANT:** All gates MUST pass before every commit. NEVER skip these checks.
+
 - \`flutter analyze\` — zero warnings
 - \`flutter test\` — all pass
 - \`dart format --set-exit-if-changed .\` — formatted`;
+}
+
+function generateModelPolicy(): string {
+  return `## Model Usage Policy
+
+- **Opus**: Architecture, planning, non-trivial implementation. Prefer when in doubt.
+- **Sonnet**: Simple, well-defined tasks with clear requirements.
+- **Haiku**: Trivial tasks only (formatting, simple scans).`;
 }
 
 function generateDevelopmentWorkflow(): string {

@@ -1,7 +1,6 @@
 ---
 name: quality-gate-enforcer
 description: Runs all quality checks, verifies test-source correspondence, and blocks non-compliant code. Use this agent to validate work before committing.
-model: haiku
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---
 

@@ -1196,6 +1196,106 @@
         "npm run typecheck passes"
       ],
       "passes": true
+    },
+    {
+      "id": "P10-001",
+      "phase": 10,
+      "priority": 78,
+      "title": "Remove dead ralph stub files",
+      "description": "src/ralph/prd-generator.ts, src/ralph/ralph-converter.ts, and src/ralph/story-sizer.ts are empty stubs with only a TODO comment referencing P3-006. They are never imported anywhere. The working PRD generator lives in src/claude-setup/prd-generator.ts. Remove all three stub files and the src/ralph/ directory entirely. If any imports or barrel exports reference them, remove those too.",
+      "acceptanceCriteria": [
+        "src/ralph/ directory no longer exists",
+        "No imports referencing src/ralph/ remain in the codebase",
+        "npm run typecheck passes",
+        "npm run lint passes",
+        "npm test passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P10-002",
+      "phase": 10,
+      "priority": 79,
+      "title": "Add missing rules for theme, push, analytics, cicd, and deep-linking modules",
+      "description": "claude-md-generator.ts generates @.claude/rules/ imports for theme.md, push.md, analytics.md, cicd.md, and deep-linking.md when those modules are enabled, but rules-writer.ts never creates those files. This produces broken references in the generated CLAUDE.md. Add rule generation functions for all 5 missing modules in rules-writer.ts and wire them into writeRules() with the appropriate module guards.",
+      "acceptanceCriteria": [
+        "rules-writer.ts generates theme.md when context.modules.theme is enabled",
+        "rules-writer.ts generates push.md when context.modules.push is enabled",
+        "rules-writer.ts generates analytics.md when context.modules.analytics is enabled",
+        "rules-writer.ts generates cicd.md when context.modules.cicd is enabled",
+        "rules-writer.ts generates deep-linking.md when context.modules.deepLinking is enabled",
+        "Each rule file has correct YAML frontmatter with relevant path globs",
+        "Each rule file contains concise, actionable guidelines specific to the module",
+        "No broken @.claude/rules/ references in generated CLAUDE.md for any module combination",
+        "npm run typecheck passes",
+        "npm test passes",
+        ">= 5 new tests (one per missing rule file)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P10-003",
+      "phase": 10,
+      "priority": 80,
+      "title": "Remove or wire unused plan helper modules",
+      "description": "src/plan/app-type-classifier.ts, src/plan/architecture-generator.ts, and src/plan/journey-to-stories.ts are implemented and have tests, but are never imported by any production code. The plan command delegates all artifact generation to the interactive Claude skill (plan-app.md), so these modules serve no runtime purpose. Per YAGNI, either remove them entirely (including their tests) or wire them into the plan orchestrator if they provide value. Decision: remove them since the skill handles this interactively.",
+      "acceptanceCriteria": [
+        "src/plan/app-type-classifier.ts is removed",
+        "src/plan/architecture-generator.ts is removed",
+        "src/plan/journey-to-stories.ts is removed",
+        "Corresponding test files are removed",
+        "No dangling imports remain in the codebase",
+        "src/plan/index.ts barrel export (if any) is updated",
+        "npm run typecheck passes",
+        "npm run lint passes",
+        "npm test passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P10-004",
+      "phase": 10,
+      "priority": 81,
+      "title": "Add --no-claude flag to add command",
+      "description": "The create command supports --no-claude to skip Claude setup generation, but the add command always regenerates .claude/ setup when adding a module. Add the same --no-claude flag to the add command so users can opt out of Claude setup regeneration when adding modules.",
+      "acceptanceCriteria": [
+        "maxsim-flutter add --no-claude skips Claude setup regeneration",
+        "maxsim-flutter add --help shows the --no-claude option",
+        "Default behavior (without flag) still regenerates Claude setup as before",
+        "npm run typecheck passes",
+        ">= 2 tests (with and without --no-claude flag)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P10-005",
+      "phase": 10,
+      "priority": 82,
+      "title": "Fix P9-010 failing integration tests for plan command",
+      "description": "P9-010 (Integration tests for plan command) is the only story still marked as passes: false. Investigate why the tests fail, fix the root cause, and ensure all 10+ integration test scenarios pass. Then mark P9-010 as passes: true.",
+      "acceptanceCriteria": [
+        "tests/integration/plan-command.test.ts exists with >= 10 test cases",
+        "All plan command integration tests pass",
+        "npm test passes all tests",
+        "P9-010 can be marked as passes: true"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P10-006",
+      "phase": 10,
+      "priority": 83,
+      "title": "Audit and fix all quality gates",
+      "description": "Run the full quality suite (npm run quality:full) and fix any issues found. This includes: typecheck must pass with zero errors, lint must pass with zero errors, all tests must pass, coverage must meet thresholds defined in jest.config.mjs. Also verify there are no it.skip() or it.todo() left in any test files.",
+      "acceptanceCriteria": [
+        "npm run typecheck passes with zero errors",
+        "npm run lint passes with zero errors",
+        "npm test passes all tests",
+        "Coverage meets all thresholds from jest.config.mjs",
+        "No it.skip() or it.todo() in any test file",
+        "npm run quality:full passes completely"
+      ],
+      "passes": false
     }
   ]
 }

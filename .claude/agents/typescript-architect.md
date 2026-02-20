@@ -1,7 +1,6 @@
 ---
 name: typescript-architect
 description: Use this agent when designing TypeScript architecture, reviewing module boundaries, planning the scaffold pipeline, or resolving design decisions in the maxsim-flutter CLI tool.
-model: sonnet
 tools: ["Read", "Grep", "Glob", "WebSearch", "WebFetch"]
 ---
 

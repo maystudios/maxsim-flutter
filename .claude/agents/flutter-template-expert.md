@@ -1,7 +1,6 @@
 ---
 name: flutter-template-expert
 description: Use this agent when creating or reviewing Handlebars templates that generate Flutter/Dart code. This agent knows Flutter, Dart, Riverpod, go_router, and Clean Architecture deeply.
-model: sonnet
 tools: ["Read", "Write", "Edit", "Grep", "Glob", "WebSearch"]
 ---
 

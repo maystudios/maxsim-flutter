@@ -1,7 +1,6 @@
 ---
 name: typescript-builder
 description: Use this agent for implementing TypeScript features, writing modules, creating templates, and building the scaffold pipeline. This is the primary implementation agent.
-model: sonnet
 tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"]
 ---
 

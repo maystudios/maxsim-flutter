@@ -1,7 +1,6 @@
 ---
 name: reviewer
 description: Use this agent for code review, checking architectural compliance, identifying bugs, and ensuring code quality before committing.
-model: haiku
 tools: ["Read", "Grep", "Glob"]
 ---
 

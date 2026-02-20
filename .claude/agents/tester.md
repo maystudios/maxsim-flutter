@@ -1,7 +1,6 @@
 ---
 name: tester
 description: Use this agent for writing and running tests, verifying implementation correctness, and ensuring quality gates pass.
-model: sonnet
 tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"]
 ---
 

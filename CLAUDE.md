@@ -305,11 +305,11 @@ Works without Agent Teams. Good for simpler tasks.
 The system must automatically assemble a task-specific team by selecting the appropriate roles required to complete the objective. Roles may include backend developer, frontend developer, architect, tester, reviewer, analyst, or any other relevant function.
 
 Model usage policy:
-- **Haiku**: Simple, lightweight tasks (scanning, formatting, basic analysis)
-- **Sonnet 4.6**: Default for majority of work (implementation, refactoring, tests)
-- **Opus 4.6**: Reserved strictly for very high-complexity tasks
-
-Effort selection: Low/Medium for everyday work, High only for genuinely complex tasks.
+- No agent has a hardcoded model — model selection is free at runtime.
+- **Opus 4.6** should be used generously — not only for planning and architecture, but also as implementer. Opus produces significantly fewer bugs, handles edge cases better, and gets implementations right on the first attempt. Use Opus for any non-trivial implementation work to avoid costly fix cycles.
+- **Sonnet 4.6** is acceptable for simple, well-defined tasks where the requirements are crystal clear and the code is straightforward.
+- **Haiku**: Only for truly trivial tasks (formatting, simple scans).
+- When in doubt, prefer Opus — one correct Opus implementation is cheaper than multiple Sonnet attempts with bug fixes.
 
 ## Git Commit & Push Policy
 

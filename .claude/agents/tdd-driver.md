@@ -1,7 +1,6 @@
 ---
 name: tdd-driver
 description: Primary development agent that follows Red-Green-Refactor strictly. Use this agent for implementing features with TDD discipline.
-model: sonnet
 tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"]
 ---
 

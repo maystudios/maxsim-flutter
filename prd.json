@@ -721,7 +721,7 @@
         "Custom falls through to existing module multi-select",
         "--yes skips preset and defaults to minimal"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

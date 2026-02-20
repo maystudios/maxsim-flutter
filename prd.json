@@ -619,7 +619,7 @@
         "Snapshot update workflow documented",
         "CI fails if snapshots drift without being updated"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P6-005",
@@ -634,7 +634,7 @@
         "AnalysisReport.detectedFeatures field contains discovered feature names",
         "Updated unit tests for enhanced detector"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P6-006",
@@ -648,7 +648,7 @@
         "Unit test for prompt flow using mock answers",
         "No regression on existing --yes non-interactive path"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P7-001",

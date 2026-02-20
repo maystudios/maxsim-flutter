@@ -582,3 +582,30 @@ Verification:
 - Added 4 new tests in tests/unit/registry.test.ts, 3 in tests/unit/engine.test.ts
 - All quality gates pass: typecheck, lint, 620 tests passing across 28 suites
 - Status: PASSES
+
+## 2026-02-20T00:04 - P6-004: Add snapshot tests for generated Dart file content
+- Created tests/unit/dart-snapshots.test.ts with 9 snapshot tests
+- Snapshots cover: main.dart (core-only, auth+api+theme, all modules), pubspec.yaml, app_router.dart (3 combos), auth login_page, push usecase, analytics observer
+- Snapshots stored in tests/unit/__snapshots__/dart-snapshots.test.ts.snap
+- All quality gates pass: typecheck, lint, 642 tests + 9 snapshots passing across 29 suites
+- Status: PASSES
+
+## 2026-02-20T00:05 - P6-005: Improve migrate detector with lib/ directory structure analysis
+- Enhanced src/core/detector.ts: analyzeProject() scans lib/features/ for subdirectories
+- Added detectedFeatures field to AnalysisReport with discovered feature names
+- Identifies direct presentation-to-data imports as layer violations
+- Updated tests/unit/detector.test.ts and tests/unit/migrate-command.test.ts
+- Status: PASSES
+
+## 2026-02-20T00:06 - P6-006: Add per-module configuration prompts in interactive create flow
+- Added promptForModuleConfig() to src/cli/ui/prompts.ts
+- Auth/push prompt for provider (firebase/supabase/custom, firebase/onesignal)
+- Database prompts for engine (drift/hive/isar)
+- Other modules return { enabled: true } as default
+- Wired into interactive runCreate() path in create.ts
+- Created tests/unit/module-config-prompts.test.ts with 9 tests using ESM mocks
+- --yes flag skips follow-up prompts and uses defaults
+- All quality gates pass: typecheck, lint, 651 tests + 9 snapshots passing across 30 suites
+- Status: PASSES
+
+## Phase 6 COMPLETE - All 6 stories implemented and passing

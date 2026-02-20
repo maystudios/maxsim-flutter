@@ -17,15 +17,18 @@ function makeContext(overrides: Partial<Parameters<typeof makeTestContext>[0]> =
 describe('writeSkills', () => {
   const tmp = useTempDir('skill-writer-test-');
 
-  it('creates .claude/skills/ directory with 4 files', async () => {
+  it('creates .claude/skills/ directory with all skill files', async () => {
     await writeSkills(makeContext(), tmp.path);
     const skillsDir = join(tmp.path, '.claude', 'skills');
     const entries = await readdir(skillsDir);
     expect(entries.sort()).toEqual([
+      'add-feature.md',
       'flutter-patterns.md',
       'go-router-patterns.md',
       'module-conventions.md',
+      'performance-check.md',
       'prd.md',
+      'security-review.md',
     ]);
   });
 

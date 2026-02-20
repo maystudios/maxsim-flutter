@@ -1034,7 +1034,7 @@
         "npm run typecheck passes",
         ">= 4 tests"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P9-002",
@@ -1049,7 +1049,7 @@
         "npm run typecheck passes",
         ">= 2 tests"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P9-003",
@@ -1066,7 +1066,7 @@
         "npm run typecheck passes",
         ">= 4 tests (skill content, variable injection, question count)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P9-004",
@@ -1083,7 +1083,7 @@
         "npm run typecheck passes",
         ">= 4 tests (suggestion matrix, rationale presence, app type coverage)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P9-005",
@@ -1102,7 +1102,7 @@
         "npm run typecheck passes",
         ">= 6 tests (each artifact generation, content validation)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P9-006",
@@ -1118,7 +1118,7 @@
         "npm run typecheck passes",
         ">= 6 tests (each app type, keyword matching, default case)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P9-007",
@@ -1134,7 +1134,7 @@
         "npm run typecheck passes",
         ">= 4 tests (full modules, minimal, provider tree, nav flow)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P9-008",
@@ -1151,7 +1151,7 @@
         "npm run typecheck passes",
         ">= 6 tests (decomposition pattern, dependency chain, criteria format)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P9-009",
@@ -1166,7 +1166,7 @@
         "npm run typecheck passes",
         ">= 3 tests"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P9-010",
@@ -1195,7 +1195,7 @@
         "CONTRIBUTING.md describes src/plan/ module structure",
         "npm run typecheck passes"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

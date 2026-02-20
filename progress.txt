@@ -663,8 +663,89 @@ Verification:
 ## ALL PHASES COMPLETE - 48/48 stories passing
 ## PRD FULLY IMPLEMENTED - 2026-02-20
 
-### Final Statistics
+### Final Statistics (Phase 7)
 - Total stories: 48 across 7 phases
 - Total tests: 743 across 40 suites
 - Total snapshots: 9
+- All quality gates passing: typecheck, lint, tests, coverage
+
+## Phase 8 COMPLETE - All 18 stories implemented and passing (2026-02-20)
+- Preset system (minimal/standard/full), slim CLAUDE.md with @-imports
+- 3 focused agents, rules-writer, hook scripts, 7 skills, PRD v2
+- 900 tests, 56 suites, 14 snapshots
+
+## Phase 9: Bootstrap Agentic — plan command, AI-guided planning (2026-02-20)
+
+### P9-001: Implement plan CLI command
+- Created src/cli/commands/plan.ts with @clack/prompts (snake_case validation)
+- Created src/plan/plan-orchestrator.ts, types.ts, config-writer.ts
+- Generates planning workspace: .claude/skills/plan-app.md, docs/project-brief-template.md, maxsim.config.yaml
+- Status: COMPLETE
+
+### P9-002: Generate project-brief template
+- Created src/plan/brief-template-generator.ts
+- Sections: Problem Statement, Target Users (persona), Core User Journeys (1-5), Non-Goals, Success Metrics
+- Project name and description pre-filled
+- Status: COMPLETE
+
+### P9-003: Generate plan-app skill — Vision & Features phase (Steps 1-3)
+- Created src/plan/skill-generator.ts with model: opus frontmatter
+- Step 1: Understand Vision (2 questions), Step 2: Define Features (3 questions), Step 3: Technical Decisions (decision tree)
+- Questions labeled with step.number format, asked one at a time
+- Status: COMPLETE
+
+### P9-004: Generate plan-app skill — Module suggestions phase (Steps 4-5)
+- Extended skill-generator.ts with module decision matrix (7 app types x 9 modules)
+- REQUIRED/RECOMMENDED/NICE-TO-HAVE priority levels with rationale
+- Step 5: Confirmation step summarizing all decisions
+- Status: COMPLETE
+
+### P9-005: Generate plan-app skill — Artifact generation phase (Steps 6-9)
+- Step 6: project-brief.md, Step 7: architecture.md (ASCII diagrams), Step 8: maxsim.config.yaml, Step 9: prd.json v2
+- Clear next-steps instructions at end
+- Status: COMPLETE
+
+### P9-006: Create app-type classifier for module suggestions
+- Created src/plan/app-type-classifier.ts
+- 7 AppTypes: team-collaboration, e-commerce, content-social, utility-tool, fitness-health, education, general
+- Keyword-based classification with confidence scoring
+- Each type maps to module suggestions with rationale
+- Status: COMPLETE
+
+### P9-007: Create architecture document generator
+- Created src/plan/architecture-generator.ts
+- Generates: tech stack table, module overview, ASCII provider tree, navigation flow, conditional database schema
+- Uses ProjectContext directly (consistent with existing patterns)
+- 42 tests
+- Status: COMPLETE
+
+### P9-008: Create journey-to-stories converter
+- Created src/plan/journey-to-stories.ts
+- Prompt template for decomposing user journeys into PRD stories
+- Domain → data → presentation → tests layer pattern
+- Fibonacci story points, acceptance criteria with predicates
+- Status: COMPLETE
+
+### P9-009: Wire plan command into CLI
+- Created src/plan/index.ts barrel export
+- Registered plan command in src/cli/index.ts
+- Status: COMPLETE
+
+### P9-010: Integration tests for plan command
+- Created tests/integration/plan-command.test.ts with 12 scenarios
+- Validates directory structure, skill content, brief template, config, ASCII diagrams
+- Status: COMPLETE
+
+### P9-011: Update documentation and README
+- Added plan command section to README.md with example workflow
+- Updated CONTRIBUTING.md with src/plan/ module structure
+- Status: COMPLETE
+
+## Phase 9 COMPLETE - All 11 stories implemented and passing
+
+### Final Statistics (Phase 9)
+- Total stories: 77 across 9 phases (48 P1-7 + 18 P8 + 11 P9)
+- Total tests: 1032 across 66 suites (+132 new tests)
+- Total snapshots: 14
+- New src/plan/ module: 9 files (types, config-writer, brief-template-generator, skill-generator, app-type-classifier, architecture-generator, journey-to-stories, plan-orchestrator, index)
 - All quality gates passing: typecheck, lint, tests, coverage

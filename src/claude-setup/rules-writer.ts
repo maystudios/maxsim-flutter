@@ -1,0 +1,193 @@
+import { writeFile, mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import type { ProjectContext } from '../core/context.js';
+
+function frontmatter(paths: string[]): string {
+  const pathLines = paths.map((p) => `  - "${p}"`).join('\n');
+  return `---\npaths:\n${pathLines}\n---\n\n`;
+}
+
+function generateArchitectureRule(): string {
+  return (
+    frontmatter(['lib/**', 'test/**']) +
+    `# Clean Architecture Rules
+
+This project follows Clean Architecture with three layers:
+
+- **domain**: Entities, repository interfaces, use cases. No Flutter or package dependencies.
+- **data**: Repository implementations, data sources, DTOs. Implements domain interfaces.
+- **presentation**: UI widgets, controllers, Riverpod providers. Depends on domain use cases only.
+
+## Rules
+- Never import from \`presentation\` into \`domain\` or \`data\`.
+- Never import from \`data\` into \`domain\`.
+- Use cases live in \`domain/use_cases/\` and contain business logic only.
+- Repository interfaces are defined in \`domain/repositories/\`.
+- All external dependencies (network, database) are injected via interfaces.
+`
+  );
+}
+
+function generateRiverpodRule(): string {
+  return (
+    frontmatter(['lib/**']) +
+    `# Riverpod Patterns
+
+Use Riverpod for all state management and dependency injection.
+
+## Rules
+- Use \`ref.watch\` for reactive reads inside \`build()\` methods.
+- Use \`ref.read\` for one-time reads in event handlers.
+- Prefer \`AsyncNotifierProvider\` for async state with loading/error handling.
+- Annotate providers with \`@riverpod\` and run \`build_runner\` to generate code.
+- Keep providers small and focused — one responsibility per provider.
+`
+  );
+}
+
+function generateGoRouterRule(): string {
+  return (
+    frontmatter(['lib/**']) +
+    `# go_router Navigation Rules
+
+Use go_router for declarative navigation.
+
+## Rules
+- Define all routes in a central \`AppRouter\` class.
+- Use typed routes with \`GoRoute\` path parameters.
+- Redirect guards for authentication go in the \`redirect\` callback.
+- Prefer \`context.go()\` for full navigation stack replacement.
+- Use \`context.push()\` for stacked navigation.
+`
+  );
+}
+
+function generateTestingRule(): string {
+  return (
+    frontmatter(['test/**']) +
+    `# Testing Conventions
+
+All features must have corresponding test coverage.
+
+## Rules
+- Mirror the \`lib/\` structure under \`test/\`.
+- Unit test every use case, repository, and provider.
+- Use \`mocktail\` or \`mockito\` for mocking dependencies.
+- Widget tests go in \`test/presentation/\`.
+- Integration tests go in \`test/integration/\`.
+- Aim for 80%+ statement and branch coverage.
+`
+  );
+}
+
+function generateSecurityRule(): string {
+  return (
+    frontmatter(['lib/**']) +
+    `# Security Guidelines
+
+Follow these security best practices in all code.
+
+## Rules
+- Never hardcode secrets, API keys, or credentials in source code.
+- Use \`flutter_secure_storage\` for sensitive user data.
+- Validate and sanitize all user inputs before use.
+- Use HTTPS for all network requests; never allow plain HTTP in production.
+- Apply the principle of least privilege for permissions.
+- Redact sensitive data from logs.
+`
+  );
+}
+
+function generateAuthRule(): string {
+  return (
+    frontmatter(['lib/features/auth/**', 'test/features/auth/**']) +
+    `# Authentication Rules
+
+Guidelines for the auth feature module.
+
+## Rules
+- All auth state is managed through the auth provider — never store tokens in plain SharedPreferences.
+- Use secure storage for auth tokens and session data.
+- Protect routes by checking auth state in go_router redirect guards.
+- On logout, clear all cached user data and navigate to the login screen.
+- Handle token refresh transparently in the API client interceptor.
+`
+  );
+}
+
+function generateApiRule(): string {
+  return (
+    frontmatter(['lib/core/api/**', 'lib/data/**']) +
+    `# API & HTTP Client Rules
+
+Guidelines for HTTP networking with Dio.
+
+## Rules
+- All API calls go through the central Dio client configured in \`core/api/\`.
+- Use interceptors for auth token injection and token refresh.
+- Map HTTP error responses to typed domain failures — never expose raw Dio exceptions to use cases.
+- Use \`retrofit\` or a repository pattern to abstract API endpoints.
+- Log requests and responses only in debug mode; never log sensitive data.
+`
+  );
+}
+
+function generateDatabaseRule(): string {
+  return (
+    frontmatter(['lib/data/**', 'test/data/**']) +
+    `# Database & Local Storage Rules
+
+Guidelines for local database and storage access.
+
+## Rules
+- All database access is encapsulated in repository implementations under \`data/\`.
+- Use Drift (or Hive/Isar) for structured local data; never raw file I/O for app data.
+- Define database schema migrations explicitly — never drop and recreate tables.
+- Expose only domain models from repositories — never leak database entities to \`domain\` or \`presentation\`.
+- Use transactions for multi-step writes to ensure consistency.
+`
+  );
+}
+
+function generateI18nRule(): string {
+  return (
+    frontmatter(['lib/**']) +
+    `# Internationalization (i18n) Rules
+
+Guidelines for localization.
+
+## Rules
+- All user-visible strings must be externalized in ARB files under \`l10n/\`.
+- Never hardcode display strings in widget code.
+- Use \`AppLocalizations.of(context)!\` to access translations.
+- Add new strings to all supported locale files before shipping.
+- Use ICU message format for plurals and gender variations.
+`
+  );
+}
+
+export async function writeRules(context: ProjectContext, outputPath: string): Promise<void> {
+  const rulesDir = join(outputPath, '.claude', 'rules');
+  await mkdir(rulesDir, { recursive: true });
+
+  // Core rules — always generated
+  await writeFile(join(rulesDir, 'architecture.md'), generateArchitectureRule(), 'utf-8');
+  await writeFile(join(rulesDir, 'riverpod.md'), generateRiverpodRule(), 'utf-8');
+  await writeFile(join(rulesDir, 'go-router.md'), generateGoRouterRule(), 'utf-8');
+  await writeFile(join(rulesDir, 'testing.md'), generateTestingRule(), 'utf-8');
+  await writeFile(join(rulesDir, 'security.md'), generateSecurityRule(), 'utf-8');
+
+  // Conditional module rules
+  if (context.modules.auth) {
+    await writeFile(join(rulesDir, 'auth.md'), generateAuthRule(), 'utf-8');
+  }
+  if (context.modules.api) {
+    await writeFile(join(rulesDir, 'api.md'), generateApiRule(), 'utf-8');
+  }
+  if (context.modules.database) {
+    await writeFile(join(rulesDir, 'database.md'), generateDatabaseRule(), 'utf-8');
+  }
+  if (context.modules.i18n) {
+    await writeFile(join(rulesDir, 'i18n.md'), generateI18nRule(), 'utf-8');
+  }
+}

@@ -722,6 +722,480 @@
         "--yes skips preset and defaults to minimal"
       ],
       "passes": true
+    },
+    {
+      "id": "P8-001",
+      "phase": 8,
+      "priority": 49,
+      "title": "Add claude.preset to config schema",
+      "description": "Replace the granular claude.generateAgents, claude.generateSkills, claude.generateHooks, claude.agentTeams boolean flags with a single claude.preset field supporting 'minimal', 'standard', 'full'. Add claude.overrides object for per-component override. Maintain backward compatibility with old boolean flags.",
+      "acceptanceCriteria": [
+        "MaxsimConfigSchema accepts claude.preset: 'minimal' | 'standard' | 'full'",
+        "Old boolean flags (generateAgents, etc.) still work for backward compatibility",
+        "claude.overrides can override individual preset components",
+        "Zod validation rejects invalid preset values",
+        "npm run typecheck passes",
+        ">= 4 tests (schema validation happy path, each preset, override, backward compat)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-002",
+      "phase": 8,
+      "priority": 50,
+      "title": "Implement preset resolver",
+      "description": "Create src/claude-setup/preset-resolver.ts that resolves claude.preset + claude.overrides into concrete boolean flags (ResolvedClaudeOptions) for each component: claudeMd, rules, agents, hooks, skills, commands, mcp. Wire into setup-orchestrator.",
+      "acceptanceCriteria": [
+        "resolvePreset('minimal') returns only claudeMd + rules enabled",
+        "resolvePreset('standard') returns all except MCP",
+        "resolvePreset('full') returns all enabled",
+        "Overrides correctly override preset defaults",
+        ">= 6 tests (3 presets + 3 override scenarios)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-003",
+      "phase": 8,
+      "priority": 51,
+      "title": "Update interactive create wizard for preset selection",
+      "description": "Add preset selection to the interactive create command prompts. Interactive mode shows preset selection: minimal / standard (default) / full. Non-interactive --yes defaults to standard. --config file with claude.preset is respected.",
+      "acceptanceCriteria": [
+        "Interactive mode shows preset selection: minimal / standard (default) / full",
+        "Non-interactive --yes defaults to standard",
+        "--config file with claude.preset is respected",
+        ">= 2 tests"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-004",
+      "phase": 8,
+      "priority": 52,
+      "title": "Overhaul CLAUDE.md generator (slim ~80 lines)",
+      "description": "Completely rewrite claude-md-generator.ts to produce a slim CLAUDE.md (~80 lines) that acts as an index file with @ imports to .claude/rules/ files. Include: project header with active modules/platforms, build commands, quality gates, @-imports to rule files, development workflow, key paths.",
+      "acceptanceCriteria": [
+        "Generated CLAUDE.md is <= 100 lines",
+        "Contains @ imports to all generated rule files",
+        "Module-conditional content (only shows enabled modules)",
+        "Build commands, quality gates, and key paths included",
+        "npm run typecheck passes",
+        ">= 4 tests (full module set, minimal, no-claude, content assertions)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-005",
+      "phase": 8,
+      "priority": 53,
+      "title": "Create rules-writer module",
+      "description": "Create src/claude-setup/rules-writer.ts that generates .claude/rules/ files with path-specific YAML frontmatter. Generate: architecture.md (Clean Architecture layers), riverpod.md (provider patterns), go-router.md (routing), testing.md (test conventions), security.md (always generated), plus conditional module-specific rules for auth, api, database, i18n.",
+      "acceptanceCriteria": [
+        "writeRules(context, outputPath) generates .claude/rules/ directory",
+        "Each rule file has YAML frontmatter with paths array",
+        "architecture.md always generated with layer rules",
+        "security.md always generated",
+        "Module-specific rules only generated when module is enabled",
+        "Rules content is concise and actionable (not prose)",
+        "npm run typecheck passes",
+        ">= 8 tests (each rule file, conditional generation, path filtering)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-006",
+      "phase": 8,
+      "priority": 54,
+      "title": "Add security rules to generated projects",
+      "description": "Ensure security.md is always generated in .claude/rules/ regardless of preset. Content covers: secrets & credentials (no hardcoded keys, use flutter_secure_storage), input validation (sanitize, strong typing), dependencies (pub.dev trust), API security (HTTPS, cert pinning, secure token storage), file & data handling (no PII logging, encryption at rest).",
+      "acceptanceCriteria": [
+        "security.md is always generated regardless of preset",
+        "Content covers secrets, input validation, dependencies, API security, data handling",
+        "No path restriction (applies to all code)",
+        ">= 2 tests"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-007",
+      "phase": 8,
+      "priority": 55,
+      "title": "Overhaul agent-writer with 3 focused agents + intelligent model routing",
+      "description": "Rewrite agent-writer.ts to generate 3 focused agents instead of 5: flutter-builder (sonnet, all tools, implementation + architecture), flutter-tester (sonnet, all tools, TDD-first), flutter-reviewer (haiku, read-only tools, compliance checking). Each agent includes model selection rationale, sub-agent usage guidance, module context, and references to .claude/rules/.",
+      "acceptanceCriteria": [
+        "writeAgents() generates exactly 3 agent files (not 5)",
+        "flutter-builder uses model: sonnet with all implementation tools",
+        "flutter-tester uses model: sonnet with all tools including Bash",
+        "flutter-reviewer uses model: haiku with read-only tools (Read, Grep, Glob)",
+        "Each agent body includes model selection rationale",
+        "Builder and tester include sub-agent usage guidance",
+        "Reviewer explicitly states no sub-agents needed",
+        "Each agent body includes module context from enabled modules",
+        "Agent prompts reference .claude/rules/ files",
+        "npm run typecheck passes",
+        ">= 8 tests (agent count, each agent's tools/model/content, sub-agent guidance)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-008",
+      "phase": 8,
+      "priority": 56,
+      "title": "Create hook script generators",
+      "description": "Generate executable hook scripts and comprehensive hooks configuration. Create .claude/hooks/block-dangerous.sh (PreToolUse on Bash, blocks rm -rf, --no-verify, --force, git reset --hard, git clean -f), .claude/hooks/format-dart.sh (PostToolUse on Edit|Write, auto-formats .dart files), and .claude/settings.local.json registering all hooks including TaskCompleted (flutter analyze + flutter test).",
+      "acceptanceCriteria": [
+        "writeHooks() generates .claude/hooks/ directory with 2 shell scripts",
+        "Shell scripts have executable permissions (mode 0o755)",
+        "block-dangerous.sh reads JSON from stdin, blocks dangerous patterns, exits 2 on block",
+        "format-dart.sh reads JSON from stdin, formats .dart files only",
+        "settings.local.json registers PreToolUse, PostToolUse, and TaskCompleted hooks",
+        "Hooks only generated when preset includes hooks (standard/full)",
+        "npm run typecheck passes",
+        ">= 6 tests (script content, settings structure, preset gating, file permissions)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-009",
+      "phase": 8,
+      "priority": 57,
+      "title": "Improve existing skill content",
+      "description": "Enhance the 4 existing skills with better examples and more practical patterns. flutter-patterns: add freezed data class patterns, error handling with AsyncValue. go-router-patterns: add ShellRoute example, nested navigation, redirect patterns. module-conventions: add concrete step-by-step 'how to add a feature'. prd: update to reflect new PRD format with acceptance criteria + dependencies.",
+      "acceptanceCriteria": [
+        "Each skill content is improved with more practical examples",
+        "prd.md skill reflects new PRD schema (acceptance criteria, dependencies, etc.)",
+        "flutter-patterns includes freezed and AsyncValue error handling",
+        "npm run typecheck passes",
+        ">= 4 tests (content assertions for each skill)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-010",
+      "phase": 8,
+      "priority": 58,
+      "title": "Create security-review and performance-check skills with model hints",
+      "description": "Add two new skills to the generator. security-review.md (model: sonnet) covers secrets, input validation, API security, data protection. performance-check.md (model: haiku) covers widget rebuilds, provider efficiency, images/assets, lists/scrolling. Also add add-feature skill (model: sonnet). Skills only generated when preset includes skills (standard/full).",
+      "acceptanceCriteria": [
+        "writeSkills() generates 6 skill files (4 existing + 2 new)",
+        "security-review.md has model: sonnet in frontmatter",
+        "performance-check.md has model: haiku in frontmatter",
+        "security-review.md covers secrets, input validation, API security, data protection",
+        "performance-check.md covers rebuilds, providers, images, lists",
+        "Skills only generated when preset includes skills (standard/full)",
+        "npm run typecheck passes",
+        ">= 5 tests (new skill content, count, preset gating, model hints)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-011",
+      "phase": 8,
+      "priority": 59,
+      "title": "Create add-feature command",
+      "description": "Add an /add-feature slash command to generated projects. Generated .claude/commands/add-feature.md is a step-by-step guided workflow (10 steps) for adding a new feature following Clean Architecture: create directory structure, domain entities (freezed), repository interface, use cases, data model, data source, repository implementation, Riverpod providers, page (ConsumerWidget), route registration. Uses model: sonnet hint.",
+      "acceptanceCriteria": [
+        "writeCommands() generates add-feature.md alongside existing commands",
+        "Command includes 10 concrete steps",
+        "Steps reference Clean Architecture layers in correct order",
+        "Conditional auth guard section if auth module enabled",
+        "npm run typecheck passes",
+        ">= 2 tests"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-012",
+      "phase": 8,
+      "priority": 60,
+      "title": "Define new PRD schema",
+      "description": "Create src/claude-setup/prd-schema.ts with a Zod schema for the new PRD format (version 2.0.0). Include: story fields (id, phase, priority enum P0-P3, title, description, module, storyPoints 1-13, dependencies array, acceptanceCriteria with description + optional machine-verifiable predicate, passes boolean). Top-level: version, project, generatedAt timestamp, phases array, stories array.",
+      "acceptanceCriteria": [
+        "PrdSchema validates the new PRD format with Zod",
+        "Schema includes id, phase, priority, title, description, module, storyPoints",
+        "acceptanceCriteria is array of objects with description + optional predicate",
+        "dependencies is array of story IDs",
+        "Schema exports TypeScript types",
+        "npm run typecheck passes",
+        ">= 6 tests (schema validation, invalid data rejection, type inference)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-013",
+      "phase": 8,
+      "priority": 61,
+      "title": "Overhaul PRD generator",
+      "description": "Rewrite prd-generator.ts to produce the new PRD v2 format with machine-readable acceptance criteria, story dependencies, and story points. Story IDs use module prefix (P1-CORE-001, P2-AUTH-001). Each story has storyPoints (Fibonacci 1-13). Acceptance criteria have description + optional predicate. Stories declare explicit dependencies. Phase metadata at top level. generatedAt timestamp.",
+      "acceptanceCriteria": [
+        "generatePrd() returns JSON conforming to PrdSchema",
+        "Story IDs use module prefix pattern",
+        "Each story has storyPoints (Fibonacci: 1, 2, 3, 5, 8, 13)",
+        "Acceptance criteria include both description and predicate",
+        "Phase 2 stories correctly depend on Phase 1 completion",
+        "Module-conditional stories only appear for enabled modules",
+        "npm run typecheck passes",
+        ">= 8 tests (all module combinations, dependencies, schema validation)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-014",
+      "phase": 8,
+      "priority": 62,
+      "title": "Update setup-orchestrator for new flow",
+      "description": "Rewrite setup-orchestrator.ts to use preset resolution and call the new rules-writer. New flow: 1) resolve preset, 2) always generate slim CLAUDE.md, 3) if rules: generate .claude/rules/, 4) if agents: generate 3 agents, 5) if hooks: generate hook scripts + settings.local.json, 6) if skills: generate 6-7 skills, 7) if commands: generate slash commands, 8) if mcp: generate .mcp.json, 9) if !skipPrd: generate prd.json v2.",
+      "acceptanceCriteria": [
+        "Orchestrator uses resolvePreset() to determine what to generate",
+        "Rules are generated as a new step",
+        "All generated file paths included in filesWritten return",
+        "Minimal preset generates only CLAUDE.md + rules",
+        "Standard preset generates everything except MCP",
+        "Full preset generates everything including MCP",
+        "npm run typecheck passes",
+        ">= 6 tests (each preset, file list assertions)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-015",
+      "phase": 8,
+      "priority": 63,
+      "title": "Update add and upgrade commands",
+      "description": "Update the add and upgrade commands to work with the new claude setup. upgrade command backs up .claude/rules/ alongside agents. add command regenerates rules when modules change. Both commands use preset resolution.",
+      "acceptanceCriteria": [
+        "add command regenerates CLAUDE.md and rules when module added",
+        "upgrade command backs up existing rules as .bak files",
+        "Both commands respect claude.preset from config",
+        "npm run typecheck passes",
+        ">= 4 tests (add with new setup, upgrade with rules backup)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-016",
+      "phase": 8,
+      "priority": 64,
+      "title": "Integration tests for new generated output",
+      "description": "Write comprehensive integration tests validating the complete generated output. 10 scenarios: minimal preset, standard preset, full preset, full module set, no modules, CLAUDE.md line count <= 100, agent count == 3, hook script permissions, PRD format v2 conformance, rule file YAML frontmatter.",
+      "acceptanceCriteria": [
+        ">= 10 integration test cases",
+        "Tests use useTempDir() helper",
+        "Tests validate actual file content (not just existence)",
+        "CLAUDE.md line count enforced in tests",
+        "Agent count enforced in tests",
+        "All tests pass with npm test"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-017",
+      "phase": 8,
+      "priority": 65,
+      "title": "Snapshot tests for generated files",
+      "description": "Add Jest snapshot tests for all generated files to catch unintended changes. Snapshots for: generated CLAUDE.md (standard preset, auth+api modules), architecture.md rule, security.md rule, flutter-builder.md agent, prd.json (standard preset, auth module).",
+      "acceptanceCriteria": [
+        ">= 5 snapshot tests",
+        "Snapshots capture representative generated content",
+        "npm test -- -u can update snapshots",
+        "All snapshots pass"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P8-018",
+      "phase": 8,
+      "priority": 66,
+      "title": "Update existing tests for backward compatibility",
+      "description": "Update existing tests that reference old agent names, old CLAUDE.md format, or old config schema fields. Files to update: claude-md-generator.test.ts, agent-writer.test.ts, hooks-writer.test.ts, skill-writer.test.ts, prd-generator.test.ts, config-schema.test.ts, create-command.test.ts. Ensure no it.skip() or it.todo() left behind.",
+      "acceptanceCriteria": [
+        "All existing tests updated to reflect new output",
+        "No it.skip() or it.todo() left behind",
+        "npm test passes all tests",
+        "Coverage thresholds maintained"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P9-001",
+      "phase": 9,
+      "priority": 67,
+      "title": "Implement plan CLI command",
+      "description": "Create a new maxsim-flutter plan command that collects basic info (project name validated as snake_case, 1-2 sentence app description) and generates a planning workspace: project directory, .claude/skills/plan-app.md, docs/project-brief-template.md, partial maxsim.config.yaml with name + description. Print clear next-steps instructions (cd, claude, /plan-app).",
+      "acceptanceCriteria": [
+        "maxsim-flutter plan command is registered and works",
+        "Prompts for project name (validated: snake_case)",
+        "Prompts for app description (free text, 1-2 sentences)",
+        "Creates project directory",
+        "Generates .claude/skills/plan-app.md",
+        "Generates docs/project-brief-template.md",
+        "Generates partial maxsim.config.yaml with name + description",
+        "Prints clear next-steps instructions",
+        "npm run typecheck passes",
+        ">= 4 tests"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P9-002",
+      "phase": 9,
+      "priority": 68,
+      "title": "Generate project-brief template",
+      "description": "Create src/plan/brief-template-generator.ts that generates docs/project-brief-template.md. Template includes sections: Problem Statement, Target Users (with persona template), Core User Journeys (numbered 1-5), Explicit Non-Goals, Success Metrics, App Description. Project name and description pre-filled from CLI input.",
+      "acceptanceCriteria": [
+        "Template includes all sections (problem, users, journeys, non-goals, metrics)",
+        "Project name and description pre-filled from CLI input",
+        "Markdown renders correctly",
+        "npm run typecheck passes",
+        ">= 2 tests"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P9-003",
+      "phase": 9,
+      "priority": 69,
+      "title": "Generate plan-app skill — Vision & Features phase",
+      "description": "Create src/plan/skill-generator.ts that generates the /plan-app Claude Code skill (model: opus). This story covers Steps 1-3: Step 1 (Understand Vision — 2 questions about problem and user journey), Step 2 (Define Core Features — 2-3 questions about top features, non-goals, team/solo), Step 3 (Technical Decisions — decision tree for auth provider, backend/database, platforms). Questions asked one at a time.",
+      "acceptanceCriteria": [
+        "Skill uses model: opus for complex reasoning",
+        "Project name and description injected into skill body",
+        "Steps 1-3 generate 6-8 focused questions in funnel order",
+        "Decision tree for auth, backend, database, platforms",
+        "Questions are asked one at a time (not all at once)",
+        "npm run typecheck passes",
+        ">= 4 tests (skill content, variable injection, question count)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P9-004",
+      "phase": 9,
+      "priority": 70,
+      "title": "Generate plan-app skill — Module suggestions phase",
+      "description": "Extend src/plan/skill-generator.ts with Steps 4-5: Step 4 (Proactive module suggestions based on app type with decision matrix covering team-collaboration, e-commerce, content-social, utility-tool. Each suggestion has REQUIRED/RECOMMENDED/NICE-TO-HAVE priority with rationale). Step 5 (Confirm selections — summarize all decisions, ask for approval).",
+      "acceptanceCriteria": [
+        "Module suggestions are context-aware (based on app type)",
+        "Each suggestion includes a rationale (WHY this module)",
+        "Modules categorized as REQUIRED / RECOMMENDED / NICE-TO-HAVE",
+        "Decision matrix covers 4+ app types",
+        "Confirmation step summarizes all choices",
+        "npm run typecheck passes",
+        ">= 4 tests (suggestion matrix, rationale presence, app type coverage)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P9-005",
+      "phase": 9,
+      "priority": 71,
+      "title": "Generate plan-app skill — Artifact generation phase",
+      "description": "Extend src/plan/skill-generator.ts with Steps 6-9: Step 6 (Generate project-brief.md from conversation), Step 7 (Generate architecture.md with provider tree ASCII diagram, navigation flow, database schema), Step 8 (Generate maxsim.config.yaml with all decisions), Step 9 (Generate prd.json v2 with stories from user journeys across 4 phases). Clear next-steps at the end.",
+      "acceptanceCriteria": [
+        "Skill generates project-brief.md from conversation data",
+        "Skill generates architecture.md with provider tree and navigation flow",
+        "Skill generates complete maxsim.config.yaml",
+        "Skill generates prd.json using v2 format (from Phase 8)",
+        "Architecture includes ASCII diagrams for provider tree and navigation",
+        "PRD stories are derived from user journeys (not just module-based)",
+        "Clear next-steps instructions at the end",
+        "npm run typecheck passes",
+        ">= 6 tests (each artifact generation, content validation)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P9-006",
+      "phase": 9,
+      "priority": 72,
+      "title": "Create app-type classifier for module suggestions",
+      "description": "Create src/plan/app-type-classifier.ts with keyword-based classifier mapping app descriptions to AppType (team-collaboration, e-commerce, content-social, utility-tool, fitness-health, education, general). Returns AppTypeResult with type, confidence (0-1), and suggestedModules array (moduleId, priority, rationale). Default 'general' suggests auth + api + theme.",
+      "acceptanceCriteria": [
+        "Classifier returns AppType + confidence + suggested modules",
+        "Covers 6+ app types",
+        "Each app type maps to specific module suggestions with rationale",
+        "Default general type has sensible suggestions",
+        "npm run typecheck passes",
+        ">= 6 tests (each app type, keyword matching, default case)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P9-007",
+      "phase": 9,
+      "priority": 73,
+      "title": "Create architecture document generator",
+      "description": "Create src/plan/architecture-generator.ts that generates architecture.md with: tech stack section with rationale, module architecture overview, ASCII provider tree diagram (based on selected modules), ASCII navigation flow diagram (based on user journeys), database schema outline (if database module selected).",
+      "acceptanceCriteria": [
+        "Generates provider tree as ASCII art based on enabled modules",
+        "Generates navigation flow as ASCII art",
+        "Tech stack section adapts to module selections",
+        "Database schema section only appears when database module enabled",
+        "npm run typecheck passes",
+        ">= 4 tests (full modules, minimal, provider tree, nav flow)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P9-008",
+      "phase": 9,
+      "priority": 74,
+      "title": "Create journey-to-stories converter",
+      "description": "Create src/plan/journey-to-stories.ts — a template/prompt embedded in the plan-app skill that instructs Claude to decompose each user journey into PRD stories. Each journey produces 2-4 stories following domain → data → presentation → tests layers. Stories have >= 3 acceptance criteria with predicates, correct dependency chains, Fibonacci story points.",
+      "acceptanceCriteria": [
+        "Journey decomposition template produces domain/data/presentation stories",
+        "Each generated story has >= 3 acceptance criteria with predicates",
+        "Stories have correct dependencies (domain first, then data, then presentation)",
+        "Story points follow Fibonacci (1, 2, 3, 5, 8)",
+        "Test stories generated for each feature",
+        "npm run typecheck passes",
+        ">= 6 tests (decomposition pattern, dependency chain, criteria format)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P9-009",
+      "phase": 9,
+      "priority": 75,
+      "title": "Wire plan command into CLI",
+      "description": "Register the plan command in src/cli/index.ts and create src/plan/index.ts as barrel export. Ensure the command works end-to-end with all generators (brief template, skill generator, config writer). maxsim-flutter plan appears in help output.",
+      "acceptanceCriteria": [
+        "maxsim-flutter plan appears in help output",
+        "Command creates project directory",
+        "All 3 generated files exist after running",
+        "npm run typecheck passes",
+        ">= 3 tests"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P9-010",
+      "phase": 9,
+      "priority": 76,
+      "title": "Integration tests for plan command",
+      "description": "Write tests/integration/plan-command.test.ts with 10 scenarios: plan command creates correct directory structure, plan-app.md has model: opus, skill includes all 9 steps, skill has module suggestion matrix, project-brief template has all sections, app-type classifier returns correct types, architecture generator produces valid ASCII diagrams, journey-to-stories produces valid story structure, partial maxsim.config.yaml is valid YAML, generated artifacts work with create --config.",
+      "acceptanceCriteria": [
+        ">= 10 integration test cases",
+        "Tests validate generated skill content",
+        "Tests validate architecture ASCII diagrams",
+        "Tests validate journey decomposition",
+        "All tests pass with npm test"
+      ],
+      "passes": false
+    },
+    {
+      "id": "P9-011",
+      "phase": 9,
+      "priority": 77,
+      "title": "Update documentation and README",
+      "description": "Document the new plan command in README.md (add plan command section with example workflow showing the 3-artifact output) and CONTRIBUTING.md (describe src/plan/ module structure).",
+      "acceptanceCriteria": [
+        "README includes maxsim-flutter plan with example workflow",
+        "README shows the 3-artifact output",
+        "CONTRIBUTING.md describes src/plan/ module structure",
+        "npm run typecheck passes"
+      ],
+      "passes": false
     }
   ]
 }

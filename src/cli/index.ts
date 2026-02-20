@@ -6,6 +6,7 @@ import { createAddCommand } from './commands/add.js';
 import { createMigrateCommand } from './commands/migrate.js';
 import { createListCommand } from './commands/list.js';
 import { createUpgradeCommand } from './commands/upgrade.js';
+import { createPlanCommand } from './commands/plan.js';
 import { checkForUpdate } from './version-check.js';
 
 const program = new Command();
@@ -21,6 +22,7 @@ program.addCommand(createAddCommand());
 program.addCommand(createMigrateCommand());
 program.addCommand(createListCommand());
 program.addCommand(createUpgradeCommand());
+program.addCommand(createPlanCommand());
 
 program.parse();
 

@@ -8,7 +8,7 @@ import { createProjectContext } from '../../core/context.js';
 import { validateEnvironment } from '../../core/validator.js';
 import { ScaffoldEngine } from '../../scaffold/engine.js';
 import { createSpinner } from '../ui/spinner.js';
-import { promptForProjectCreation } from '../ui/prompts.js';
+import { promptForProjectCreation, promptForModuleConfig } from '../ui/prompts.js';
 import type { MaxsimConfig } from '../../types/config.js';
 
 const { writeFile, ensureDir } = fsExtra;
@@ -127,7 +127,11 @@ async function runCreate(
       projectName: appName,
     });
 
-    const modules = buildModulesConfig(answers.modules, options);
+    // Build module config: prompt for per-module settings for configurable modules
+    const modules: Record<string, unknown> = {};
+    for (const mod of answers.modules) {
+      modules[mod === 'deep-linking' ? 'deep-linking' : mod] = await promptForModuleConfig(mod);
+    }
 
     config = parseConfig({
       project: {

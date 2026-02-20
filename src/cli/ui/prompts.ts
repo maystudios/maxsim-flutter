@@ -93,3 +93,46 @@ export async function promptForProjectCreation(
     modules: (answers.modules as string[]) ?? [],
   };
 }
+
+/**
+ * Prompt for module-specific configuration after a module is selected.
+ * Returns a config object with `enabled: true` plus any module-specific fields.
+ */
+export async function promptForModuleConfig(moduleId: string): Promise<Record<string, unknown>> {
+  switch (moduleId) {
+    case 'auth': {
+      const provider = await p.select({
+        message: 'Auth provider',
+        options: [
+          { value: 'firebase', label: 'Firebase Auth' },
+          { value: 'supabase', label: 'Supabase Auth' },
+          { value: 'custom', label: 'Custom implementation' },
+        ],
+      });
+      return { enabled: true, provider: provider as string };
+    }
+    case 'push': {
+      const provider = await p.select({
+        message: 'Push notification provider',
+        options: [
+          { value: 'firebase', label: 'Firebase Cloud Messaging' },
+          { value: 'onesignal', label: 'OneSignal' },
+        ],
+      });
+      return { enabled: true, provider: provider as string };
+    }
+    case 'database': {
+      const engine = await p.select({
+        message: 'Database engine',
+        options: [
+          { value: 'drift', label: 'Drift (SQL)' },
+          { value: 'hive', label: 'Hive (NoSQL)' },
+          { value: 'isar', label: 'Isar (NoSQL)' },
+        ],
+      });
+      return { enabled: true, engine: engine as string };
+    }
+    default:
+      return { enabled: true };
+  }
+}

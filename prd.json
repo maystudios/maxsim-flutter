@@ -1332,7 +1332,7 @@
         "All generated scripts are chmod 755",
         "npm run quality passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P11-003",

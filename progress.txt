@@ -759,3 +759,9 @@ Verification:
 - Files: src/claude-setup/agent-writer.ts, tests/unit/agent-writer-v2.test.ts, tests/unit/agent-writer-edge-cases.test.ts, tests/unit/agent-writer.test.ts, tests/integration/claude-setup-output.test.ts, tests/unit/__snapshots__/generated-snapshots.test.ts.snap
 - Tests: 55 new test cases (27 TDD + 28 edge cases)
 - Date: 2026-02-20
+
+## [P11-002] - Add protect-secrets hook and notification hook to generated setup
+- Status: COMPLETE
+- Files: src/claude-setup/hooks-writer.ts, tests/unit/hooks-writer-v2.test.ts, tests/unit/hooks-writer-edge-cases.test.ts
+- Tests: 52 new test cases (23 TDD + 29 edge cases)
+- Date: 2026-02-20

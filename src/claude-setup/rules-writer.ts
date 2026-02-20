@@ -171,6 +171,91 @@ Guidelines for local database and storage access.
   );
 }
 
+function generateThemeRule(): string {
+  return (
+    frontmatter(['lib/core/theme/**']) +
+    `# Theme & Styling Rules
+
+Guidelines for Material 3 theming.
+
+## Rules
+- Define all theme data in \`lib/core/theme/\` using Material 3 and \`ColorScheme.fromSeed()\`.
+- Support both light and dark mode via separate \`ThemeData\` instances.
+- Never hardcode colors in widgets — always reference \`Theme.of(context).colorScheme\`.
+- Use \`TextTheme\` from the theme for all typography — no inline \`TextStyle\` with hardcoded sizes.
+- Expose a \`ThemeProvider\` for runtime theme switching (light/dark/system).
+`
+  );
+}
+
+function generatePushRule(): string {
+  return (
+    frontmatter(['lib/features/push/**', 'test/features/push/**']) +
+    `# Push Notification Rules
+
+Guidelines for push notification handling.
+
+## Rules
+- All notification logic lives in \`lib/features/push/\`.
+- Request notification permission explicitly — never assume it is granted.
+- Handle foreground, background, and terminated-state notifications separately.
+- Use a dedicated notification service abstraction — never call platform APIs directly from widgets.
+- Store the device token securely and refresh it on app start.
+`
+  );
+}
+
+function generateAnalyticsRule(): string {
+  return (
+    frontmatter(['lib/features/analytics/**', 'test/features/analytics/**']) +
+    `# Analytics Rules
+
+Guidelines for event tracking and analytics.
+
+## Rules
+- All analytics logic lives in \`lib/features/analytics/\`.
+- Use a route observer to automatically track screen views.
+- Log events through a central analytics service — never call tracking APIs directly from widgets.
+- Define event names as constants to prevent typos and ensure consistency.
+- Never log PII (emails, names, tokens) in analytics events.
+`
+  );
+}
+
+function generateCicdRule(): string {
+  return (
+    frontmatter(['.github/**', 'Makefile', 'Fastfile']) +
+    `# CI/CD Pipeline Rules
+
+Guidelines for continuous integration and deployment.
+
+## Rules
+- All CI/CD configuration lives in \`.github/\` (GitHub Actions workflows).
+- Every PR must pass \`flutter analyze\`, \`flutter test\`, and \`dart format --set-exit-if-changed .\`.
+- Use caching for Flutter SDK and pub dependencies to speed up builds.
+- Separate workflows for PR checks, staging deployment, and production release.
+- Never store secrets in workflow files — use GitHub Actions secrets or environment variables.
+`
+  );
+}
+
+function generateDeepLinkingRule(): string {
+  return (
+    frontmatter(['lib/core/router/**']) +
+    `# Deep Linking Rules
+
+Guidelines for deep link handling with GoRouter.
+
+## Rules
+- Configure deep link routes in the central GoRouter configuration under \`lib/core/router/\`.
+- Register custom URL schemes and associated domains in platform-specific config files.
+- Validate and sanitize all deep link parameters before navigation.
+- Provide fallback routes for unrecognized deep links — never crash on malformed URLs.
+- Test deep links on both Android and iOS with real device or emulator verification.
+`
+  );
+}
+
 function generateI18nRule(): string {
   return (
     frontmatter(['lib/**']) +
@@ -211,5 +296,20 @@ export async function writeRules(context: ProjectContext, outputPath: string): P
   }
   if (context.modules.i18n) {
     await writeFile(join(rulesDir, 'i18n.md'), generateI18nRule(), 'utf-8');
+  }
+  if (context.modules.theme) {
+    await writeFile(join(rulesDir, 'theme.md'), generateThemeRule(), 'utf-8');
+  }
+  if (context.modules.push) {
+    await writeFile(join(rulesDir, 'push.md'), generatePushRule(), 'utf-8');
+  }
+  if (context.modules.analytics) {
+    await writeFile(join(rulesDir, 'analytics.md'), generateAnalyticsRule(), 'utf-8');
+  }
+  if (context.modules.cicd) {
+    await writeFile(join(rulesDir, 'cicd.md'), generateCicdRule(), 'utf-8');
+  }
+  if (context.modules.deepLinking) {
+    await writeFile(join(rulesDir, 'deep-linking.md'), generateDeepLinkingRule(), 'utf-8');
   }
 }

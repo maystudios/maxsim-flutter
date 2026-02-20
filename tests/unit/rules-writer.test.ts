@@ -186,28 +186,246 @@ describe('writeRules', () => {
     expect(entries).not.toContain('i18n.md');
   });
 
-  it('generates all 9 files when all optional modules are enabled', async () => {
+  it('generates theme.md when theme module is enabled', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, theme: { seedColor: '#6750A4', darkMode: true } },
+    });
+    await writeRules(ctx, tmp.path);
+    const entries = await readdir(join(tmp.path, '.claude', 'rules'));
+    expect(entries).toContain('theme.md');
+  });
+
+  it('does not generate theme.md when theme module is disabled', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const entries = await readdir(join(tmp.path, '.claude', 'rules'));
+    expect(entries).not.toContain('theme.md');
+  });
+
+  it('theme.md has YAML frontmatter with paths', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, theme: { seedColor: '#6750A4', darkMode: true } },
+    });
+    await writeRules(ctx, tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'theme.md'),
+      'utf-8',
+    );
+    expect(content).toMatch(/^---\n/);
+    expect(content).toContain('paths:');
+    expect(content).toContain('lib/core/theme/');
+  });
+
+  it('theme.md content mentions Material 3 and ColorScheme', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, theme: { seedColor: '#6750A4', darkMode: true } },
+    });
+    await writeRules(ctx, tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'theme.md'),
+      'utf-8',
+    );
+    expect(content).toContain('Material 3');
+    expect(content).toContain('ColorScheme');
+  });
+
+  it('generates push.md when push module is enabled', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, push: { provider: 'firebase' } },
+    });
+    await writeRules(ctx, tmp.path);
+    const entries = await readdir(join(tmp.path, '.claude', 'rules'));
+    expect(entries).toContain('push.md');
+  });
+
+  it('does not generate push.md when push module is disabled', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const entries = await readdir(join(tmp.path, '.claude', 'rules'));
+    expect(entries).not.toContain('push.md');
+  });
+
+  it('push.md has YAML frontmatter with paths', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, push: { provider: 'firebase' } },
+    });
+    await writeRules(ctx, tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'push.md'),
+      'utf-8',
+    );
+    expect(content).toMatch(/^---\n/);
+    expect(content).toContain('paths:');
+    expect(content).toContain('lib/features/push/');
+  });
+
+  it('push.md content mentions notification handling and permissions', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, push: { provider: 'firebase' } },
+    });
+    await writeRules(ctx, tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'push.md'),
+      'utf-8',
+    );
+    expect(content.toLowerCase()).toContain('notification');
+    expect(content.toLowerCase()).toContain('permission');
+  });
+
+  it('generates analytics.md when analytics module is enabled', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, analytics: { enabled: true } },
+    });
+    await writeRules(ctx, tmp.path);
+    const entries = await readdir(join(tmp.path, '.claude', 'rules'));
+    expect(entries).toContain('analytics.md');
+  });
+
+  it('does not generate analytics.md when analytics module is disabled', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const entries = await readdir(join(tmp.path, '.claude', 'rules'));
+    expect(entries).not.toContain('analytics.md');
+  });
+
+  it('analytics.md has YAML frontmatter with paths', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, analytics: { enabled: true } },
+    });
+    await writeRules(ctx, tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'analytics.md'),
+      'utf-8',
+    );
+    expect(content).toMatch(/^---\n/);
+    expect(content).toContain('paths:');
+    expect(content).toContain('lib/features/analytics/');
+  });
+
+  it('analytics.md content mentions event tracking and route observer', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, analytics: { enabled: true } },
+    });
+    await writeRules(ctx, tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'analytics.md'),
+      'utf-8',
+    );
+    expect(content.toLowerCase()).toContain('event');
+    expect(content.toLowerCase()).toContain('route observer');
+  });
+
+  it('generates cicd.md when cicd module is enabled', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, cicd: { provider: 'github' } },
+    });
+    await writeRules(ctx, tmp.path);
+    const entries = await readdir(join(tmp.path, '.claude', 'rules'));
+    expect(entries).toContain('cicd.md');
+  });
+
+  it('does not generate cicd.md when cicd module is disabled', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const entries = await readdir(join(tmp.path, '.claude', 'rules'));
+    expect(entries).not.toContain('cicd.md');
+  });
+
+  it('cicd.md has YAML frontmatter with paths', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, cicd: { provider: 'github' } },
+    });
+    await writeRules(ctx, tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'cicd.md'),
+      'utf-8',
+    );
+    expect(content).toMatch(/^---\n/);
+    expect(content).toContain('paths:');
+    expect(content).toContain('.github/');
+  });
+
+  it('cicd.md content mentions CI/CD pipeline conventions', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, cicd: { provider: 'github' } },
+    });
+    await writeRules(ctx, tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'cicd.md'),
+      'utf-8',
+    );
+    expect(content).toContain('CI/CD');
+  });
+
+  it('generates deep-linking.md when deepLinking module is enabled', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, deepLinking: { scheme: 'myapp', host: 'example.com' } },
+    });
+    await writeRules(ctx, tmp.path);
+    const entries = await readdir(join(tmp.path, '.claude', 'rules'));
+    expect(entries).toContain('deep-linking.md');
+  });
+
+  it('does not generate deep-linking.md when deepLinking module is disabled', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const entries = await readdir(join(tmp.path, '.claude', 'rules'));
+    expect(entries).not.toContain('deep-linking.md');
+  });
+
+  it('deep-linking.md has YAML frontmatter with paths', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, deepLinking: { scheme: 'myapp', host: 'example.com' } },
+    });
+    await writeRules(ctx, tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'deep-linking.md'),
+      'utf-8',
+    );
+    expect(content).toMatch(/^---\n/);
+    expect(content).toContain('paths:');
+    expect(content).toContain('lib/core/router/');
+  });
+
+  it('deep-linking.md content mentions deep link handling and GoRouter', async () => {
+    const ctx = makeContext({
+      modules: { ...makeContext().modules, deepLinking: { scheme: 'myapp', host: 'example.com' } },
+    });
+    await writeRules(ctx, tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'deep-linking.md'),
+      'utf-8',
+    );
+    expect(content.toLowerCase()).toContain('deep link');
+    expect(content).toContain('GoRouter');
+  });
+
+  it('generates all 14 files when all optional modules are enabled', async () => {
     const ctx = makeContext({
       modules: {
-        ...makeContext().modules,
         auth: { provider: 'firebase' },
         api: { baseUrl: 'https://api.example.com' },
         database: { engine: 'drift' },
         i18n: { defaultLocale: 'en', supportedLocales: ['en'] },
+        theme: { seedColor: '#6750A4', darkMode: true },
+        push: { provider: 'firebase' },
+        analytics: { enabled: true },
+        cicd: { provider: 'github' },
+        deepLinking: { scheme: 'myapp', host: 'example.com' },
       },
     });
     await writeRules(ctx, tmp.path);
     const entries = await readdir(join(tmp.path, '.claude', 'rules'));
     expect(entries.sort()).toEqual([
+      'analytics.md',
       'api.md',
       'architecture.md',
       'auth.md',
+      'cicd.md',
       'database.md',
+      'deep-linking.md',
       'go-router.md',
       'i18n.md',
+      'push.md',
       'riverpod.md',
       'security.md',
       'testing.md',
+      'theme.md',
     ]);
   });
 

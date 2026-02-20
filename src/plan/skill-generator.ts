@@ -73,11 +73,51 @@ Use this decision tree to guide module selection. Ask each sub-question only if 
 
 ---
 
-## After Collecting Answers
+## Step 4: Module Suggestions
 
-Once you have answers to all questions, generate:
+Based on the app description and answers collected, suggest modules using this decision matrix.
 
-1. **Updated \`maxsim.config.yaml\`** with selected modules
+**Classify the app type** from the description, then apply the relevant row:
+
+| App Type | REQUIRED | RECOMMENDED | NICE-TO-HAVE |
+|---|---|---|---|
+| **team-collaboration** | auth, push, database | analytics, deep-linking | i18n, theme |
+| **e-commerce** | auth, database, api | push, analytics, deep-linking | theme, i18n |
+| **content-social** | auth, analytics, database | push, deep-linking | i18n, theme |
+| **utility-tool** | theme | i18n, analytics | — |
+| **fitness-health** | auth, database, push | analytics, theme | — |
+| **education** | auth, database, api | push, i18n | analytics |
+| **general** | auth, api | theme | — |
+
+**For each suggested module, explain the rationale** (why it is needed for this specific app):
+
+Example format:
+- \`auth\` ✅ REQUIRED — *Because ${name} needs user accounts to save personal data*
+- \`push\` ⭐ RECOMMENDED — *Because users benefit from timely notifications*
+- \`i18n\` 💡 NICE-TO-HAVE — *If you plan to target non-English markets in the future*
+
+Present the suggestions clearly, then ask:
+
+**Question 4.1** — Do these module suggestions match your vision, or would you add/remove anything?
+
+---
+
+## Step 5: Confirm Selections & Approve
+
+Summarize all decisions collected in Steps 1-4:
+
+**Summary of choices:**
+- App type: [detected type]
+- Platforms: [selected]
+- Auth: [yes/no, provider if yes]
+- Database: [local/cloud/none]
+- Modules: [final list with priorities]
+
+**Question 5.1** — Does this summary accurately reflect your app? Should we proceed with generating the config and PRD, or would you like to adjust anything?
+
+Once the user confirms and approves, generate:
+
+1. **Complete \`maxsim.config.yaml\`** with all selected modules configured
 2. **\`prd.json\`** with user stories organized by phase
 3. **\`docs/architecture.md\`** with system design overview
 

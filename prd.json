@@ -1181,7 +1181,7 @@
         "Tests validate journey decomposition",
         "All tests pass with npm test"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P9-011",
@@ -1279,7 +1279,7 @@
         "npm test passes all tests",
         "P9-010 can be marked as passes: true"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P10-006",

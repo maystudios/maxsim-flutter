@@ -5,6 +5,7 @@ import { generateClaudeMd } from './claude-md-generator.js';
 import { writeAgents } from './agent-writer.js';
 import { writeSkills } from './skill-writer.js';
 import { writeHooks } from './hooks-writer.js';
+import { writeSettings } from './settings-writer.js';
 import { writeMcpConfig } from './mcp-config-writer.js';
 import { writeCommands } from './commands-writer.js';
 import { writeRules } from './rules-writer.js';
@@ -63,6 +64,8 @@ export async function runClaudeSetup(
       join(rulesDir, 'go-router.md'),
       join(rulesDir, 'testing.md'),
       join(rulesDir, 'security.md'),
+      join(rulesDir, 'git-workflow.md'),
+      join(rulesDir, 'code-quality.md'),
     );
     if (context.modules.auth) filesWritten.push(join(rulesDir, 'auth.md'));
     if (context.modules.api) filesWritten.push(join(rulesDir, 'api.md'));
@@ -76,13 +79,15 @@ export async function runClaudeSetup(
     filesWritten.push(...agentFiles);
   }
 
-  // 5. Write hooks config (.claude/hooks/ + .claude/settings.local.json)
+  // 5. Write hooks config (.claude/hooks/) and settings files
   if (resolved.hooks) {
-    await writeHooks(context, outputPath);
-    const hooksDir = join(outputPath, '.claude', 'hooks');
+    const hooksResult = await writeHooks(context, outputPath);
+    filesWritten.push(...hooksResult.scripts);
+
+    // Write settings.json (team-shared) and settings.local.json (personal)
+    await writeSettings(context, outputPath, hooksResult.config);
     filesWritten.push(
-      join(hooksDir, 'block-dangerous.sh'),
-      join(hooksDir, 'format-dart.sh'),
+      join(outputPath, '.claude', 'settings.json'),
       join(outputPath, '.claude', 'settings.local.json'),
     );
   }
@@ -99,6 +104,7 @@ export async function runClaudeSetup(
       join(skillsDir, 'security-review.md'),
       join(skillsDir, 'performance-check.md'),
       join(skillsDir, 'add-feature.md'),
+      join(skillsDir, 'quality-gate.md'),
     );
   }
 
@@ -106,7 +112,7 @@ export async function runClaudeSetup(
   if (resolved.commands) {
     await writeCommands(context, outputPath);
     const commandsDir = join(outputPath, '.claude', 'commands');
-    filesWritten.push(join(commandsDir, 'add-feature.md'), join(commandsDir, 'analyze.md'));
+    filesWritten.push(join(commandsDir, 'add-feature.md'), join(commandsDir, 'analyze.md'), join(commandsDir, 'start-team.md'));
   }
 
   // 8. Write MCP server config (.mcp.json)

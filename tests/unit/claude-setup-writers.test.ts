@@ -28,6 +28,7 @@ describe('writeSkills', () => {
       'module-conventions.md',
       'performance-check.md',
       'prd.md',
+      'quality-gate.md',
       'security-review.md',
     ]);
   });
@@ -119,51 +120,44 @@ describe('writeSkills', () => {
 describe('writeHooks', () => {
   const tmp = useTempDir('hooks-writer-test-');
 
-  it('creates .claude/settings.local.json', async () => {
-    await writeHooks(makeContext(), tmp.path);
-    const settingsPath = join(tmp.path, '.claude', 'settings.local.json');
-    const content = await readFile(settingsPath, 'utf-8');
-    expect(content).toBeTruthy();
+  it('returns HooksResult with scripts and config', async () => {
+    const result = await writeHooks(makeContext(), tmp.path);
+    expect(result.scripts).toBeInstanceOf(Array);
+    expect(result.config).toBeDefined();
+    expect(result.config.hooks).toBeDefined();
   });
 
-  it('includes TaskCompleted hook with flutter analyze and test', async () => {
-    await writeHooks(makeContext(), tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
-    );
-    expect(content.hooks.TaskCompleted).toBeDefined();
-    expect(content.hooks.TaskCompleted).toHaveLength(1);
-    expect(content.hooks.TaskCompleted[0].hooks[0].type).toBe('command');
-    expect(content.hooks.TaskCompleted[0].hooks[0].command).toBe(
+  it('returned config includes TaskCompleted hook with flutter analyze and test', async () => {
+    const result = await writeHooks(makeContext(), tmp.path);
+    expect(result.config.hooks.TaskCompleted).toBeDefined();
+    expect(result.config.hooks.TaskCompleted).toHaveLength(1);
+    expect(result.config.hooks.TaskCompleted![0].hooks[0].type).toBe('command');
+    expect(result.config.hooks.TaskCompleted![0].hooks[0].command).toBe(
       'flutter analyze && flutter test',
     );
   });
 
-  it('includes TeammateIdle hook when agentTeams is true', async () => {
-    await writeHooks(makeContext({ claude: { enabled: true, agentTeams: true } }), tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
+  it('returned config includes TeammateIdle hook when agentTeams is true', async () => {
+    const result = await writeHooks(
+      makeContext({ claude: { enabled: true, agentTeams: true } }),
+      tmp.path,
     );
-    expect(content.hooks.TeammateIdle).toBeDefined();
-    expect(content.hooks.TeammateIdle).toHaveLength(1);
-    expect(content.hooks.TeammateIdle[0].hooks[0].command).toContain('git');
+    expect(result.config.hooks.TeammateIdle).toBeDefined();
+    expect(result.config.hooks.TeammateIdle).toHaveLength(1);
+    expect(result.config.hooks.TeammateIdle![0].hooks[0].command).toContain('git');
   });
 
-  it('excludes TeammateIdle hook when agentTeams is false', async () => {
-    await writeHooks(makeContext({ claude: { enabled: true, agentTeams: false } }), tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
+  it('returned config excludes TeammateIdle hook when agentTeams is false', async () => {
+    const result = await writeHooks(
+      makeContext({ claude: { enabled: true, agentTeams: false } }),
+      tmp.path,
     );
-    expect(content.hooks.TeammateIdle).toBeUndefined();
+    expect(result.config.hooks.TeammateIdle).toBeUndefined();
   });
 
-  it('writes valid JSON', async () => {
-    await writeHooks(makeContext(), tmp.path);
-    const raw = await readFile(
-      join(tmp.path, '.claude', 'settings.local.json'),
-      'utf-8',
-    );
-    expect(() => JSON.parse(raw)).not.toThrow();
+  it('returned config is a valid hooks structure', async () => {
+    const result = await writeHooks(makeContext(), tmp.path);
+    expect(() => JSON.stringify(result.config)).not.toThrow();
   });
 });
 
@@ -269,11 +263,11 @@ describe('writeMcpConfig', () => {
 describe('writeCommands', () => {
   const tmp = useTempDir('commands-writer-test-');
 
-  it('creates .claude/commands/ directory with 2 files', async () => {
+  it('creates .claude/commands/ directory with 3 files', async () => {
     await writeCommands(makeContext(), tmp.path);
     const commandsDir = join(tmp.path, '.claude', 'commands');
     const entries = await readdir(commandsDir);
-    expect(entries.sort()).toEqual(['add-feature.md', 'analyze.md']);
+    expect(entries.sort()).toEqual(['add-feature.md', 'analyze.md', 'start-team.md']);
   });
 
   it('add-feature.md contains Clean Architecture steps', async () => {

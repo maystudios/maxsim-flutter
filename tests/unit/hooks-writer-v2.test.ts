@@ -1,7 +1,7 @@
 import { writeHooks } from '../../src/claude-setup/hooks-writer.js';
 import { makeTestContext } from '../helpers/context-factory.js';
 import { useTempDir } from '../helpers/temp-dir.js';
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { readFile, readdir, stat, access } from 'node:fs/promises';
 import { join } from 'node:path';
 
 function makeContext(overrides: Partial<Parameters<typeof makeTestContext>[0]> = {}) {
@@ -99,45 +99,75 @@ describe('writeHooks v2 — shell script generation', () => {
     await writeHooks(makeContext(), tmp.path);
     const blockStat = await stat(join(tmp.path, '.claude', 'hooks', 'block-dangerous.sh'));
     const formatStat = await stat(join(tmp.path, '.claude', 'hooks', 'format-dart.sh'));
-    // Check owner execute bit (0o100) and group execute bit (0o010)
     expect(blockStat.mode & 0o111).toBeTruthy();
     expect(formatStat.mode & 0o111).toBeTruthy();
   });
+});
 
-  it('settings.local.json registers PreToolUse hook for Bash', async () => {
-    await writeHooks(makeContext(), tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
-    );
-    expect(content.hooks.PreToolUse).toBeDefined();
-    const bashHook = content.hooks.PreToolUse.find((h: { matcher?: string }) => h.matcher === 'Bash');
-    expect(bashHook).toBeDefined();
-    expect(bashHook.hooks[0].type).toBe('command');
-    expect(bashHook.hooks[0].command).toContain('block-dangerous.sh');
+describe('writeHooks v2 — returns HooksResult', () => {
+  const tmp = useTempDir('hooks-result-test-');
+
+  it('returns HooksResult with scripts array', async () => {
+    const result = await writeHooks(makeContext(), tmp.path);
+    expect(result.scripts).toBeInstanceOf(Array);
+    expect(result.scripts.length).toBeGreaterThan(0);
   });
 
-  it('settings.local.json registers PostToolUse hook for Edit|Write', async () => {
+  it('returns HooksResult with config object containing hooks', async () => {
+    const result = await writeHooks(makeContext(), tmp.path);
+    expect(result.config).toBeDefined();
+    expect(result.config.hooks).toBeDefined();
+  });
+
+  it('no longer creates settings.local.json', async () => {
     await writeHooks(makeContext(), tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
+    const settingsPath = join(tmp.path, '.claude', 'settings.local.json');
+    await expect(access(settingsPath)).rejects.toThrow();
+  });
+
+  it('returned config registers PreToolUse hook for Bash', async () => {
+    const result = await writeHooks(makeContext(), tmp.path);
+    expect(result.config.hooks.PreToolUse).toBeDefined();
+    const bashHook = result.config.hooks.PreToolUse!.find(
+      (h: { matcher?: string }) => h.matcher === 'Bash',
     );
-    expect(content.hooks.PostToolUse).toBeDefined();
-    const editWriteHook = content.hooks.PostToolUse.find(
+    expect(bashHook).toBeDefined();
+    expect(bashHook!.hooks[0].type).toBe('command');
+    expect(bashHook!.hooks[0].command).toContain('block-dangerous.sh');
+  });
+
+  it('returned config registers PostToolUse hook for Edit|Write', async () => {
+    const result = await writeHooks(makeContext(), tmp.path);
+    expect(result.config.hooks.PostToolUse).toBeDefined();
+    const editWriteHook = result.config.hooks.PostToolUse!.find(
       (h: { matcher?: string }) => h.matcher === 'Edit|Write',
     );
     expect(editWriteHook).toBeDefined();
-    expect(editWriteHook.hooks[0].type).toBe('command');
-    expect(editWriteHook.hooks[0].command).toContain('format-dart.sh');
+    expect(editWriteHook!.hooks[0].command).toContain('format-dart.sh');
   });
 
-  it('settings.local.json registers TaskCompleted hook with flutter analyze', async () => {
-    await writeHooks(makeContext(), tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
-    );
-    expect(content.hooks.TaskCompleted).toBeDefined();
-    const taskHook = content.hooks.TaskCompleted[0];
+  it('returned config registers TaskCompleted hook with flutter analyze', async () => {
+    const result = await writeHooks(makeContext(), tmp.path);
+    expect(result.config.hooks.TaskCompleted).toBeDefined();
+    const taskHook = result.config.hooks.TaskCompleted![0];
     expect(taskHook.hooks[0].command).toBe('flutter analyze && flutter test');
+  });
+
+  it('returned config includes TeammateIdle when agentTeams is true', async () => {
+    const result = await writeHooks(
+      makeContext({ claude: { enabled: true, agentTeams: true } }),
+      tmp.path,
+    );
+    expect(result.config.hooks.TeammateIdle).toBeDefined();
+    expect(result.config.hooks.TeammateIdle!).toHaveLength(1);
+  });
+
+  it('returned config excludes TeammateIdle when agentTeams is false', async () => {
+    const result = await writeHooks(
+      makeContext({ claude: { enabled: true, agentTeams: false } }),
+      tmp.path,
+    );
+    expect(result.config.hooks.TeammateIdle).toBeUndefined();
   });
 });
 
@@ -250,72 +280,57 @@ describe('P11-002: notify-waiting.sh script', () => {
     await writeHooks(makeContext(), tmp.path);
     const content = await readFile(join(tmp.path, '.claude', 'hooks', 'notify-waiting.sh'), 'utf-8');
     expect(content).toContain('exit 0');
-    // Should NOT contain exit 2 (never blocks)
     expect(content).not.toContain('exit 2');
   });
 });
 
-describe('P11-002: hook registrations with timeout', () => {
-  const tmp = useTempDir('hooks-registration-test-');
+describe('P11-002: hook config with timeout (via returned config)', () => {
+  const tmp = useTempDir('hooks-config-test-');
 
-  it('registers protect-secrets as PreToolUse hook on Read|Edit|Write', async () => {
-    await writeHooks(makeContext(), tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
-    );
-    const secretsHook = content.hooks.PreToolUse.find(
+  it('returned config registers protect-secrets as PreToolUse hook on Read|Edit|Write', async () => {
+    const result = await writeHooks(makeContext(), tmp.path);
+    const secretsHook = result.config.hooks.PreToolUse!.find(
       (h: { matcher?: string }) => h.matcher === 'Read|Edit|Write',
     );
     expect(secretsHook).toBeDefined();
-    expect(secretsHook.hooks[0].type).toBe('command');
-    expect(secretsHook.hooks[0].command).toContain('protect-secrets.sh');
+    expect(secretsHook!.hooks[0].type).toBe('command');
+    expect(secretsHook!.hooks[0].command).toContain('protect-secrets.sh');
   });
 
   it('protect-secrets hook entry has timeout of 5', async () => {
-    await writeHooks(makeContext(), tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
-    );
-    const secretsHook = content.hooks.PreToolUse.find(
+    const result = await writeHooks(makeContext(), tmp.path);
+    const secretsHook = result.config.hooks.PreToolUse!.find(
       (h: { matcher?: string }) => h.matcher === 'Read|Edit|Write',
     );
-    expect(secretsHook.hooks[0].timeout).toBe(5);
+    expect(secretsHook!.hooks[0].timeout).toBe(5);
   });
 
-  it('registers notify-waiting as Notification hook on idle_prompt', async () => {
-    await writeHooks(makeContext(), tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
-    );
-    expect(content.hooks.Notification).toBeDefined();
-    const notifyHook = content.hooks.Notification.find(
+  it('returned config registers notify-waiting as Notification hook on idle_prompt', async () => {
+    const result = await writeHooks(makeContext(), tmp.path);
+    expect(result.config.hooks.Notification).toBeDefined();
+    const notifyHook = result.config.hooks.Notification!.find(
       (h: { matcher?: string }) => h.matcher === 'idle_prompt',
     );
     expect(notifyHook).toBeDefined();
-    expect(notifyHook.hooks[0].type).toBe('command');
-    expect(notifyHook.hooks[0].command).toContain('notify-waiting.sh');
+    expect(notifyHook!.hooks[0].command).toContain('notify-waiting.sh');
   });
 
   it('notify-waiting hook entry has timeout of 10', async () => {
-    await writeHooks(makeContext(), tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
-    );
-    const notifyHook = content.hooks.Notification.find(
+    const result = await writeHooks(makeContext(), tmp.path);
+    const notifyHook = result.config.hooks.Notification!.find(
       (h: { matcher?: string }) => h.matcher === 'idle_prompt',
     );
-    expect(notifyHook.hooks[0].timeout).toBe(10);
+    expect(notifyHook!.hooks[0].timeout).toBe(10);
   });
 
   it('PreToolUse has both block-dangerous (Bash) and protect-secrets (Read|Edit|Write) entries', async () => {
-    await writeHooks(makeContext(), tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
+    const result = await writeHooks(makeContext(), tmp.path);
+    const matchers = result.config.hooks.PreToolUse!.map(
+      (h: { matcher?: string }) => h.matcher,
     );
-    const matchers = content.hooks.PreToolUse.map((h: { matcher?: string }) => h.matcher);
     expect(matchers).toContain('Bash');
     expect(matchers).toContain('Read|Edit|Write');
-    expect(content.hooks.PreToolUse).toHaveLength(2);
+    expect(result.config.hooks.PreToolUse!).toHaveLength(2);
   });
 
   it('hooks directory contains exactly 4 scripts after writeHooks', async () => {
@@ -328,11 +343,5 @@ describe('P11-002: hook registrations with timeout', () => {
       'notify-waiting.sh',
       'protect-secrets.sh',
     ]);
-  });
-
-  it('settings.local.json is valid JSON after adding new hooks', async () => {
-    await writeHooks(makeContext(), tmp.path);
-    const raw = await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8');
-    expect(() => JSON.parse(raw)).not.toThrow();
   });
 });

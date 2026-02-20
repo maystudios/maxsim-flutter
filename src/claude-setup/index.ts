@@ -2,6 +2,7 @@ export { generateClaudeMd } from './claude-md-generator.js';
 export { writeAgents, buildAgentDefinitions } from './agent-writer.js';
 export { writeSkills } from './skill-writer.js';
 export { writeHooks } from './hooks-writer.js';
+export { writeSettings } from './settings-writer.js';
 export { writeMcpConfig } from './mcp-config-writer.js';
 export { writeCommands } from './commands-writer.js';
 export { generatePrd } from './prd-generator.js';

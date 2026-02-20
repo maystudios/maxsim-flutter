@@ -599,23 +599,28 @@ describe('Integration: create command generates working Flutter project', () => 
       expect(flutterPatterns).toContain('Riverpod');
     });
 
-    it('generates .claude/settings.local.json with hooks', async () => {
+    it('generates .claude/settings.json with hooks and .claude/settings.local.json with permissions', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
       const context = makeWritableContext(tmp.path, {
         claude: { enabled: true, agentTeams: false },
       });
       await engine.run(context);
 
-      const hooksPath = join(tmp.path, '.claude', 'settings.local.json');
-      expect(await pathExists(hooksPath)).toBe(true);
+      // settings.json (team-shared) contains hooks config
+      const settingsPath = join(tmp.path, '.claude', 'settings.json');
+      expect(await pathExists(settingsPath)).toBe(true);
+      const settingsContent = await readFile(settingsPath, 'utf-8');
+      const settings = JSON.parse(settingsContent) as Record<string, unknown>;
+      expect(settings).toHaveProperty('hooks');
+      expect(settingsContent).toContain('flutter analyze');
+      expect(settingsContent).toContain('flutter test');
 
-      const hooksContent = await readFile(hooksPath, 'utf-8');
-      const hooks = JSON.parse(hooksContent) as Record<string, unknown>;
-      expect(hooks).toHaveProperty('hooks');
-
-      // TaskCompleted hook should run flutter analyze + test
-      expect(hooksContent).toContain('flutter analyze');
-      expect(hooksContent).toContain('flutter test');
+      // settings.local.json (personal) contains allow permissions
+      const localPath = join(tmp.path, '.claude', 'settings.local.json');
+      expect(await pathExists(localPath)).toBe(true);
+      const localContent = await readFile(localPath, 'utf-8');
+      const local = JSON.parse(localContent) as Record<string, unknown>;
+      expect(local).toHaveProperty('permissions');
     });
 
     it('generates .claude/commands/ with command files', async () => {
@@ -928,10 +933,10 @@ describe('Integration: create command generates working Flutter project', () => 
       expect(await pathExists(join(tmp.path, '.claude/skills/module-conventions.md'))).toBe(true);
       expect(await pathExists(join(tmp.path, '.claude/skills/prd.md'))).toBe(true);
 
-      // Hooks
-      const hooks = await readFile(join(tmp.path, '.claude/settings.local.json'), 'utf-8');
-      expect(hooks).toContain('flutter analyze');
-      expect(hooks).toContain('flutter test');
+      // Hooks (now in settings.json, not settings.local.json)
+      const settings = await readFile(join(tmp.path, '.claude/settings.json'), 'utf-8');
+      expect(settings).toContain('flutter analyze');
+      expect(settings).toContain('flutter test');
 
       // Commands
       expect(await pathExists(join(tmp.path, '.claude/commands/add-feature.md'))).toBe(true);

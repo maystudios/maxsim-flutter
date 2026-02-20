@@ -12,7 +12,7 @@ interface HookEntry {
   }>;
 }
 
-interface HooksConfig {
+export interface HooksConfig {
   hooks: {
     TaskCompleted?: HookEntry[];
     TeammateIdle?: HookEntry[];
@@ -20,6 +20,11 @@ interface HooksConfig {
     PostToolUse?: HookEntry[];
     Notification?: HookEntry[];
   };
+}
+
+export interface HooksResult {
+  scripts: string[];
+  config: HooksConfig;
 }
 
 const BLOCK_DANGEROUS_SH = `#!/bin/bash
@@ -108,7 +113,7 @@ fi
 exit 0
 `;
 
-export async function writeHooks(context: ProjectContext, outputPath: string): Promise<void> {
+export async function writeHooks(context: ProjectContext, outputPath: string): Promise<HooksResult> {
   const claudeDir = path.join(outputPath, '.claude');
   const hooksDir = path.join(claudeDir, 'hooks');
 
@@ -131,6 +136,8 @@ export async function writeHooks(context: ProjectContext, outputPath: string): P
   await chmod(formatDartPath, 0o755);
   await chmod(protectSecretsPath, 0o755);
   await chmod(notifyWaitingPath, 0o755);
+
+  const scripts = [blockDangerousPath, formatDartPath, protectSecretsPath, notifyWaitingPath];
 
   // Build hooks config
   const hooks: HooksConfig['hooks'] = {
@@ -205,6 +212,5 @@ export async function writeHooks(context: ProjectContext, outputPath: string): P
 
   const config: HooksConfig = { hooks };
 
-  const settingsPath = path.join(claudeDir, 'settings.local.json');
-  await fs.writeFile(settingsPath, JSON.stringify(config, null, 2) + '\n');
+  return { scripts, config };
 }

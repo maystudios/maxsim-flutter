@@ -11,41 +11,29 @@ describe('writeHooks: TeammateIdle only when agentTeams is enabled', () => {
 
   it('omits TeammateIdle hook when agentTeams is false', async () => {
     const ctx = makeTestContext({ claude: { enabled: true, agentTeams: false } });
-    await writeHooks(ctx, tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
-    );
-    expect(content.hooks.TeammateIdle).toBeUndefined();
+    const result = await writeHooks(ctx, tmp.path);
+    expect(result.config.hooks.TeammateIdle).toBeUndefined();
   });
 
   it('includes TeammateIdle hook when agentTeams is true', async () => {
     const ctx = makeTestContext({ claude: { enabled: true, agentTeams: true } });
-    await writeHooks(ctx, tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
-    );
-    expect(content.hooks.TeammateIdle).toBeDefined();
-    expect(content.hooks.TeammateIdle).toHaveLength(1);
+    const result = await writeHooks(ctx, tmp.path);
+    expect(result.config.hooks.TeammateIdle).toBeDefined();
+    expect(result.config.hooks.TeammateIdle).toHaveLength(1);
   });
 
   it('TeammateIdle hook runs git diff and git status command', async () => {
     const ctx = makeTestContext({ claude: { enabled: true, agentTeams: true } });
-    await writeHooks(ctx, tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
-    );
-    const teamHook = content.hooks.TeammateIdle[0];
+    const result = await writeHooks(ctx, tmp.path);
+    const teamHook = result.config.hooks.TeammateIdle![0];
     expect(teamHook.hooks[0].command).toContain('git');
     expect(teamHook.hooks[0].command).toContain('git status');
   });
 
   it('omits TeammateIdle when claude config is disabled', async () => {
     const ctx = makeTestContext({ claude: { enabled: false, agentTeams: false } });
-    await writeHooks(ctx, tmp.path);
-    const content = JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
-    );
-    expect(content.hooks.TeammateIdle).toBeUndefined();
+    const result = await writeHooks(ctx, tmp.path);
+    expect(result.config.hooks.TeammateIdle).toBeUndefined();
   });
 });
 
@@ -141,79 +129,75 @@ describe('notify-waiting.sh: cross-platform and non-blocking behavior', () => {
 describe('writeHooks: timeout field only on relevant hooks', () => {
   const tmp = useTempDir('hooks-timeout-edge-');
 
-  async function getSettings() {
-    await writeHooks(makeTestContext({ claude: { enabled: true, agentTeams: true } }), tmp.path);
-    return JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
-    );
+  async function getConfig() {
+    const result = await writeHooks(makeTestContext({ claude: { enabled: true, agentTeams: true } }), tmp.path);
+    return result.config.hooks;
   }
 
   it('block-dangerous.sh hook has no timeout field', async () => {
-    const content = await getSettings();
-    const bashHook = content.hooks.PreToolUse.find((h: { matcher?: string }) => h.matcher === 'Bash');
-    expect(bashHook.hooks[0].timeout).toBeUndefined();
+    const hooks = await getConfig();
+    const bashHook = hooks.PreToolUse!.find((h: { matcher?: string }) => h.matcher === 'Bash');
+    expect(bashHook!.hooks[0].timeout).toBeUndefined();
   });
 
   it('format-dart.sh PostToolUse hook has no timeout field', async () => {
-    const content = await getSettings();
-    const editWriteHook = content.hooks.PostToolUse.find(
+    const hooks = await getConfig();
+    const editWriteHook = hooks.PostToolUse!.find(
       (h: { matcher?: string }) => h.matcher === 'Edit|Write',
     );
-    expect(editWriteHook.hooks[0].timeout).toBeUndefined();
+    expect(editWriteHook!.hooks[0].timeout).toBeUndefined();
   });
 
   it('TaskCompleted hook has no timeout field', async () => {
-    const content = await getSettings();
-    const taskHook = content.hooks.TaskCompleted[0];
+    const hooks = await getConfig();
+    const taskHook = hooks.TaskCompleted![0];
     expect(taskHook.hooks[0].timeout).toBeUndefined();
   });
 
   it('protect-secrets hook has timeout of 5', async () => {
-    const content = await getSettings();
-    const secretsHook = content.hooks.PreToolUse.find(
+    const hooks = await getConfig();
+    const secretsHook = hooks.PreToolUse!.find(
       (h: { matcher?: string }) => h.matcher === 'Read|Edit|Write',
     );
-    expect(secretsHook.hooks[0].timeout).toBe(5);
+    expect(secretsHook!.hooks[0].timeout).toBe(5);
   });
 
   it('notify-waiting Notification hook has timeout of 10', async () => {
-    const content = await getSettings();
-    const notifyHook = content.hooks.Notification.find(
+    const hooks = await getConfig();
+    const notifyHook = hooks.Notification!.find(
       (h: { matcher?: string }) => h.matcher === 'idle_prompt',
     );
-    expect(notifyHook.hooks[0].timeout).toBe(10);
+    expect(notifyHook!.hooks[0].timeout).toBe(10);
   });
 });
 
-// ─── settings.local.json structure completeness ───────────────────────────
+// ─── returned config structure completeness ───────────────────────────────
 
-describe('writeHooks: settings.local.json structure', () => {
-  const tmp = useTempDir('hooks-settings-structure-');
+describe('writeHooks: returned config structure', () => {
+  const tmp = useTempDir('hooks-config-structure-');
 
-  async function getSettings(agentTeams = true) {
-    await writeHooks(makeTestContext({ claude: { enabled: true, agentTeams } }), tmp.path);
-    return JSON.parse(
-      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
-    );
+  async function getConfig(agentTeams = true) {
+    const result = await writeHooks(makeTestContext({ claude: { enabled: true, agentTeams } }), tmp.path);
+    return result.config;
   }
 
-  it('settings.local.json has top-level "hooks" key', async () => {
-    const content = await getSettings();
-    expect(content).toHaveProperty('hooks');
+  it('returned config has top-level "hooks" key', async () => {
+    const config = await getConfig();
+    expect(config).toHaveProperty('hooks');
   });
 
-  it('settings.local.json contains all 5 event types when agentTeams is true', async () => {
-    const content = await getSettings(true);
-    expect(content.hooks).toHaveProperty('PreToolUse');
-    expect(content.hooks).toHaveProperty('PostToolUse');
-    expect(content.hooks).toHaveProperty('TaskCompleted');
-    expect(content.hooks).toHaveProperty('Notification');
-    expect(content.hooks).toHaveProperty('TeammateIdle');
+  it('returned config contains all 5 event types when agentTeams is true', async () => {
+    const config = await getConfig(true);
+    expect(config.hooks).toHaveProperty('PreToolUse');
+    expect(config.hooks).toHaveProperty('PostToolUse');
+    expect(config.hooks).toHaveProperty('TaskCompleted');
+    expect(config.hooks).toHaveProperty('Notification');
+    expect(config.hooks).toHaveProperty('TeammateIdle');
   });
 
-  it('settings.local.json contains exactly 4 event types when agentTeams is false', async () => {
-    const content = await getSettings(false);
-    const keys = Object.keys(content.hooks);
+  it('returned config contains exactly 4 event types when agentTeams is false', async () => {
+    const config = await getConfig(false);
+    const keys = Object.keys(config.hooks);
     expect(keys).toContain('PreToolUse');
     expect(keys).toContain('PostToolUse');
     expect(keys).toContain('TaskCompleted');
@@ -223,13 +207,13 @@ describe('writeHooks: settings.local.json structure', () => {
   });
 
   it('all hook entries have type: "command"', async () => {
-    const content = await getSettings();
+    const config = await getConfig();
     const allHookEntries = [
-      ...content.hooks.PreToolUse,
-      ...content.hooks.PostToolUse,
-      ...content.hooks.TaskCompleted,
-      ...content.hooks.Notification,
-      ...content.hooks.TeammateIdle,
+      ...config.hooks.PreToolUse!,
+      ...config.hooks.PostToolUse!,
+      ...config.hooks.TaskCompleted!,
+      ...config.hooks.Notification!,
+      ...config.hooks.TeammateIdle!,
     ];
     for (const entry of allHookEntries) {
       for (const hook of entry.hooks) {
@@ -238,10 +222,11 @@ describe('writeHooks: settings.local.json structure', () => {
     }
   });
 
-  it('settings.local.json ends with newline', async () => {
-    await writeHooks(makeTestContext({ claude: { enabled: true, agentTeams: false } }), tmp.path);
-    const raw = await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8');
-    expect(raw.endsWith('\n')).toBe(true);
+  it('returned config is serializable to JSON', async () => {
+    const config = await getConfig();
+    expect(() => JSON.stringify(config)).not.toThrow();
+    const parsed = JSON.parse(JSON.stringify(config));
+    expect(parsed.hooks).toBeDefined();
   });
 });
 
@@ -264,11 +249,12 @@ describe('writeHooks: idempotency', () => {
     expect(entries).toHaveLength(4);
   });
 
-  it('second call overwrites settings.local.json with valid JSON', async () => {
+  it('second call returns valid HooksResult', async () => {
     const ctx = makeTestContext({ claude: { enabled: true, agentTeams: true } });
     await writeHooks(ctx, tmp.path);
-    await writeHooks(ctx, tmp.path);
-    const raw = await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8');
-    expect(() => JSON.parse(raw)).not.toThrow();
+    const result = await writeHooks(ctx, tmp.path);
+    expect(result.scripts).toBeInstanceOf(Array);
+    expect(result.config.hooks).toBeDefined();
+    expect(() => JSON.stringify(result.config)).not.toThrow();
   });
 });

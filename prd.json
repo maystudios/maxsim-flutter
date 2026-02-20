@@ -692,7 +692,7 @@
         "Fails CI if flutter analyze reports errors",
         "Annotated as separate workflow not blocking main CI"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P7-004",

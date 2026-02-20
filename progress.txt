@@ -628,3 +628,14 @@ Verification:
 - 19 new tests (unit + integration)
 - All quality gates pass: typecheck, lint, 702 tests passing across 35 suites
 - Status: PASSES
+
+## 2026-02-20T00:30 - P7-003: Add CI step that validates generated Dart code compiles
+- Created .github/workflows/flutter-validate.yml with Flutter validation workflow
+- Uses subosito/flutter-action@v2 with stable channel
+- Matrix strategy testing 4 combinations: core-only, core-auth-firebase, core-api, core-auth-api-theme
+- Includes build_runner step for code generation (required by @riverpod annotations)
+- Path-filtered triggers on templates/**, src/scaffold/**, src/modules/** changes
+- Separate from main CI — failures visible but non-blocking
+- 8 new YAML structure validation tests
+- All quality gates pass: typecheck, lint, 714 tests passing across 36 suites
+- Status: PASSES

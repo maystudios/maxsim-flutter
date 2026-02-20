@@ -17,20 +17,18 @@ function makeContext(overrides: Partial<Parameters<typeof makeTestContext>[0]> =
 }
 
 describe('buildAgentDefinitions', () => {
-  it('returns exactly 5 agent definitions', () => {
+  it('returns exactly 3 agent definitions', () => {
     const agents = buildAgentDefinitions(makeContext());
-    expect(agents).toHaveLength(5);
+    expect(agents).toHaveLength(3);
   });
 
   it('returns agents with correct filenames', () => {
     const agents = buildAgentDefinitions(makeContext());
     const filenames = agents.map((a) => a.filename);
     expect(filenames).toEqual([
-      'flutter-architect.md',
-      'flutter-feature-builder.md',
+      'flutter-builder.md',
       'flutter-tester.md',
       'flutter-reviewer.md',
-      'flutter-docs.md',
     ]);
   });
 
@@ -38,63 +36,22 @@ describe('buildAgentDefinitions', () => {
     const agents = buildAgentDefinitions(makeContext());
     const names = agents.map((a) => a.name);
     expect(names).toEqual([
-      'flutter-architect',
-      'flutter-feature-builder',
+      'flutter-builder',
       'flutter-tester',
       'flutter-reviewer',
-      'flutter-docs',
     ]);
   });
 
-  describe('flutter-architect', () => {
+  describe('flutter-builder', () => {
     it('uses sonnet model', () => {
       const agents = buildAgentDefinitions(makeContext());
-      const architect = agents.find((a) => a.name === 'flutter-architect')!;
-      expect(architect.model).toBe('sonnet');
-    });
-
-    it('has read-only tools', () => {
-      const agents = buildAgentDefinitions(makeContext());
-      const architect = agents.find((a) => a.name === 'flutter-architect')!;
-      expect(architect.tools).toEqual(['Read', 'Grep', 'Glob', 'WebSearch']);
-      expect(architect.tools).not.toContain('Write');
-      expect(architect.tools).not.toContain('Edit');
-      expect(architect.tools).not.toContain('Bash');
-    });
-
-    it('includes project name in body', () => {
-      const agents = buildAgentDefinitions(makeContext({ projectName: 'awesome_app' }));
-      const architect = agents.find((a) => a.name === 'flutter-architect')!;
-      expect(architect.body).toContain('awesome_app');
-    });
-
-    it('includes architecture rules', () => {
-      const agents = buildAgentDefinitions(makeContext());
-      const architect = agents.find((a) => a.name === 'flutter-architect')!;
-      expect(architect.body).toContain('Domain');
-      expect(architect.body).toContain('Data');
-      expect(architect.body).toContain('Presentation');
-      expect(architect.body).toContain('domain/');
-    });
-
-    it('includes reviews-before-implementation role', () => {
-      const agents = buildAgentDefinitions(makeContext());
-      const architect = agents.find((a) => a.name === 'flutter-architect')!;
-      expect(architect.body).toContain('read-only');
-      expect(architect.body).toContain('before builders start');
-    });
-  });
-
-  describe('flutter-feature-builder', () => {
-    it('uses sonnet model', () => {
-      const agents = buildAgentDefinitions(makeContext());
-      const builder = agents.find((a) => a.name === 'flutter-feature-builder')!;
+      const builder = agents.find((a) => a.name === 'flutter-builder')!;
       expect(builder.model).toBe('sonnet');
     });
 
     it('has all tools including Write, Edit, and Bash', () => {
       const agents = buildAgentDefinitions(makeContext());
-      const builder = agents.find((a) => a.name === 'flutter-feature-builder')!;
+      const builder = agents.find((a) => a.name === 'flutter-builder')!;
       expect(builder.tools).toContain('Read');
       expect(builder.tools).toContain('Write');
       expect(builder.tools).toContain('Edit');
@@ -103,17 +60,31 @@ describe('buildAgentDefinitions', () => {
       expect(builder.tools).toContain('Glob');
     });
 
+    it('includes project name in body', () => {
+      const agents = buildAgentDefinitions(makeContext({ projectName: 'awesome_app' }));
+      const builder = agents.find((a) => a.name === 'flutter-builder')!;
+      expect(builder.body).toContain('awesome_app');
+    });
+
+    it('includes architecture rules', () => {
+      const agents = buildAgentDefinitions(makeContext());
+      const builder = agents.find((a) => a.name === 'flutter-builder')!;
+      expect(builder.body).toContain('Domain');
+      expect(builder.body).toContain('Data');
+      expect(builder.body).toContain('Presentation');
+      expect(builder.body).toContain('domain/');
+    });
+
     it('includes implementation workflow', () => {
       const agents = buildAgentDefinitions(makeContext());
-      const builder = agents.find((a) => a.name === 'flutter-feature-builder')!;
-      expect(builder.body).toContain('implementation');
+      const builder = agents.find((a) => a.name === 'flutter-builder')!;
       expect(builder.body).toContain('flutter analyze');
       expect(builder.body).toContain('flutter test');
     });
 
     it('includes code conventions', () => {
       const agents = buildAgentDefinitions(makeContext());
-      const builder = agents.find((a) => a.name === 'flutter-feature-builder')!;
+      const builder = agents.find((a) => a.name === 'flutter-builder')!;
       expect(builder.body).toContain('snake_case');
       expect(builder.body).toContain('PascalCase');
       expect(builder.body).toContain('ref.watch()');
@@ -153,10 +124,10 @@ describe('buildAgentDefinitions', () => {
   });
 
   describe('flutter-reviewer', () => {
-    it('uses sonnet model', () => {
+    it('uses haiku model', () => {
       const agents = buildAgentDefinitions(makeContext());
       const reviewer = agents.find((a) => a.name === 'flutter-reviewer')!;
-      expect(reviewer.model).toBe('sonnet');
+      expect(reviewer.model).toBe('haiku');
     });
 
     it('has read-only tools', () => {
@@ -181,35 +152,6 @@ describe('buildAgentDefinitions', () => {
       const reviewer = agents.find((a) => a.name === 'flutter-reviewer')!;
       expect(reviewer.body).toContain('read-only');
       expect(reviewer.body).toContain('do NOT write');
-    });
-  });
-
-  describe('flutter-docs', () => {
-    it('uses haiku model', () => {
-      const agents = buildAgentDefinitions(makeContext());
-      const docs = agents.find((a) => a.name === 'flutter-docs')!;
-      expect(docs.model).toBe('haiku');
-    });
-
-    it('has edit tools but no Bash', () => {
-      const agents = buildAgentDefinitions(makeContext());
-      const docs = agents.find((a) => a.name === 'flutter-docs')!;
-      expect(docs.tools).toContain('Read');
-      expect(docs.tools).toContain('Write');
-      expect(docs.tools).toContain('Edit');
-      expect(docs.tools).not.toContain('Bash');
-    });
-
-    it('mentions documenting after review', () => {
-      const agents = buildAgentDefinitions(makeContext());
-      const docs = agents.find((a) => a.name === 'flutter-docs')!;
-      expect(docs.body).toContain('reviewed and approved');
-    });
-
-    it('includes Dart doc comment style', () => {
-      const agents = buildAgentDefinitions(makeContext());
-      const docs = agents.find((a) => a.name === 'flutter-docs')!;
-      expect(docs.body).toContain('///');
     });
   });
 
@@ -265,12 +207,12 @@ describe('writeAgents', () => {
     await writeAgents(makeContext(), tmp.path);
     const agentsDir = join(tmp.path, '.claude', 'agents');
     const entries = await readdir(agentsDir);
-    expect(entries).toHaveLength(5);
+    expect(entries).toHaveLength(3);
   });
 
-  it('writes all 5 agent files', async () => {
+  it('writes all 3 agent files', async () => {
     const files = await writeAgents(makeContext(), tmp.path);
-    expect(files).toHaveLength(5);
+    expect(files).toHaveLength(3);
     for (const file of files) {
       expect(file).toContain('.claude/agents/');
       expect(file).toMatch(/\.md$/);
@@ -280,11 +222,11 @@ describe('writeAgents', () => {
   it('writes valid markdown with YAML frontmatter', async () => {
     await writeAgents(makeContext(), tmp.path);
     const content = await readFile(
-      join(tmp.path, '.claude', 'agents', 'flutter-architect.md'),
+      join(tmp.path, '.claude', 'agents', 'flutter-builder.md'),
       'utf-8',
     );
     expect(content).toMatch(/^---\n/);
-    expect(content).toContain('name: flutter-architect');
+    expect(content).toContain('name: flutter-builder');
     expect(content).toContain('model: sonnet');
     expect(content).toContain('tools:');
     expect(content).toMatch(/---\n\n/);
@@ -293,7 +235,7 @@ describe('writeAgents', () => {
   it('includes project name in generated agent files', async () => {
     await writeAgents(makeContext({ projectName: 'cool_app' }), tmp.path);
     const content = await readFile(
-      join(tmp.path, '.claude', 'agents', 'flutter-feature-builder.md'),
+      join(tmp.path, '.claude', 'agents', 'flutter-builder.md'),
       'utf-8',
     );
     expect(content).toContain('cool_app');
@@ -301,17 +243,15 @@ describe('writeAgents', () => {
 
   it('returns full file paths', async () => {
     const files = await writeAgents(makeContext(), tmp.path);
-    expect(files[0]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-architect.md'));
-    expect(files[1]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-feature-builder.md'));
-    expect(files[2]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-tester.md'));
-    expect(files[3]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-reviewer.md'));
-    expect(files[4]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-docs.md'));
+    expect(files[0]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-builder.md'));
+    expect(files[1]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-tester.md'));
+    expect(files[2]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-reviewer.md'));
   });
 
-  it('generates docs agent with haiku model', async () => {
+  it('generates reviewer agent with haiku model', async () => {
     await writeAgents(makeContext(), tmp.path);
     const content = await readFile(
-      join(tmp.path, '.claude', 'agents', 'flutter-docs.md'),
+      join(tmp.path, '.claude', 'agents', 'flutter-reviewer.md'),
       'utf-8',
     );
     expect(content).toContain('model: haiku');

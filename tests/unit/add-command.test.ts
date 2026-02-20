@@ -31,6 +31,12 @@ describe('createAddCommand', () => {
     const option = cmd.options.find((o) => o.long === '--project-dir');
     expect(option).toBeDefined();
   });
+
+  it('has --no-claude option', () => {
+    const cmd = createAddCommand();
+    const option = cmd.options.find((o) => o.long === '--no-claude');
+    expect(option).toBeDefined();
+  });
 });
 
 describe('findProjectRoot', () => {

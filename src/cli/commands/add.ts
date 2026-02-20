@@ -37,6 +37,7 @@ export function createAddCommand(): Command {
     .argument('[module]', 'Module to add (see `maxsim-flutter list` for available modules)')
     .option('--project-dir <path>', 'Path to the project directory (default: current directory)')
     .option('--dry-run', 'Preview changes without writing files')
+    .option('--no-claude', 'Skip Claude setup regeneration')
     .action(async (moduleArg: string | undefined, options: Record<string, unknown>) => {
       try {
         await runAdd(moduleArg, options);
@@ -228,7 +229,9 @@ async function runAdd(
 
     p.log.info('pubspec.yaml would be updated with new dependencies');
     p.log.info('maxsim.config.yaml would be updated');
-    p.log.info('CLAUDE.md would be regenerated');
+    if (options.claude !== false) {
+      p.log.info('CLAUDE.md would be regenerated');
+    }
 
     p.outro('Dry run complete — no changes made.');
     return;
@@ -311,8 +314,8 @@ async function runAdd(
   const updatedYaml = yamlDump(updatedConfig, { indent: 2, lineWidth: 120 });
   await writeFile(configPath, updatedYaml, 'utf-8');
 
-  // 14. Regenerate Claude setup if enabled
-  if (updatedContext.claude.enabled) {
+  // 14. Regenerate Claude setup if enabled (unless --no-claude was passed)
+  if (updatedContext.claude.enabled && options.claude !== false) {
     await runClaudeSetup(updatedContext, projectRoot);
   }
 

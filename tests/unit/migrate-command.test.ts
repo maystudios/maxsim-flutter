@@ -12,6 +12,7 @@ function makeReport(overrides: Partial<AnalysisReport> = {}): AnalysisReport {
     stateManagement: 'unknown',
     routing: 'navigator',
     detectedModules: [],
+    detectedFeatures: [],
     cleanArchitectureGaps: [],
     recommendations: [],
     migrationDifficulty: 'simple',

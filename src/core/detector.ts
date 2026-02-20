@@ -13,6 +13,7 @@ export interface AnalysisReport {
   stateManagement: StateManagement;
   routing: RoutingPattern;
   detectedModules: string[];
+  detectedFeatures: string[];
   cleanArchitectureGaps: string[];
   recommendations: string[];
   migrationDifficulty: MigrationDifficulty;
@@ -35,6 +36,7 @@ export class ProjectDetector {
     const routing = this.detectRouting(allDeps);
     const architecture = await this.detectArchitecture(projectPath);
     const detectedModules = await this.detectModules(projectPath, allDeps);
+    const detectedFeatures = await this.detectFeatures(projectPath);
     const cleanArchitectureGaps = await this.findCleanArchitectureGaps(projectPath, architecture);
     const recommendations = this.buildRecommendations(
       stateManagement,
@@ -56,6 +58,7 @@ export class ProjectDetector {
       stateManagement,
       routing,
       detectedModules,
+      detectedFeatures,
       cleanArchitectureGaps,
       recommendations,
       migrationDifficulty,
@@ -202,6 +205,45 @@ export class ProjectDetector {
     return modules;
   }
 
+  private async detectFeatures(projectPath: string): Promise<string[]> {
+    const featuresPath = path.join(projectPath, 'lib', 'features');
+    if (!(await fs.pathExists(featuresPath))) return [];
+    const entries = await fs.readdir(featuresPath, { withFileTypes: true }).catch(() => []);
+    return entries.filter((e) => e.isDirectory()).map((e) => e.name);
+  }
+
+  private async getDartFiles(dirPath: string): Promise<string[]> {
+    const entries = await fs.readdir(dirPath, { withFileTypes: true }).catch(() => []);
+    const result: string[] = [];
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry.name);
+      if (entry.isDirectory()) {
+        result.push(...(await this.getDartFiles(fullPath)));
+      } else if (entry.name.endsWith('.dart')) {
+        result.push(fullPath);
+      }
+    }
+    return result;
+  }
+
+  private async detectLayerViolations(
+    featurePath: string,
+    layer: string,
+    violationLayer: string,
+  ): Promise<boolean> {
+    const layerPath = path.join(featurePath, layer);
+    if (!(await fs.pathExists(layerPath))) return false;
+    const files = await this.getDartFiles(layerPath);
+    for (const file of files) {
+      const content = await fs.readFile(file, 'utf-8').catch(() => '');
+      const importLines = content.split('\n').filter((l) => l.trim().startsWith('import '));
+      if (importLines.some((l) => l.includes(`/${violationLayer}/`) || l.includes(`'${violationLayer}/`))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private async findCleanArchitectureGaps(
     projectPath: string,
     architecture: ArchitecturePattern,
@@ -229,6 +271,22 @@ export class ProjectDetector {
       if (!hasDomain) gaps.push(`Feature '${feature}': missing domain layer`);
       if (!hasData) gaps.push(`Feature '${feature}': missing data layer`);
       if (!hasPresentation) gaps.push(`Feature '${feature}': missing presentation layer`);
+
+      if (hasDomain && hasData) {
+        if (await this.detectLayerViolations(featurePath, 'domain', 'data')) {
+          gaps.push(`Feature '${feature}': domain layer imports from data layer (violation)`);
+        }
+      }
+      if (hasDomain && hasPresentation) {
+        if (await this.detectLayerViolations(featurePath, 'domain', 'presentation')) {
+          gaps.push(`Feature '${feature}': domain layer imports from presentation layer (violation)`);
+        }
+      }
+      if (hasData && hasPresentation) {
+        if (await this.detectLayerViolations(featurePath, 'data', 'presentation')) {
+          gaps.push(`Feature '${feature}': data layer imports from presentation layer (violation)`);
+        }
+      }
     }
 
     return gaps;

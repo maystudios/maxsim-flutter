@@ -353,4 +353,115 @@ describe('ProjectDetector', () => {
       expect(report.rawDependencies).toContain('dio');
     });
   });
+
+  describe('detectedFeatures', () => {
+    it('includes feature directory names from lib/features/', async () => {
+      await createProject(tempDir, {
+        createDirs: ['lib/features/auth', 'lib/features/home', 'lib/features/settings'],
+      });
+      const report = await detector.analyzeProject(tempDir);
+      expect(report.detectedFeatures).toContain('auth');
+      expect(report.detectedFeatures).toContain('home');
+      expect(report.detectedFeatures).toContain('settings');
+    });
+
+    it('returns empty array when lib/features/ does not exist', async () => {
+      await createProject(tempDir);
+      const report = await detector.analyzeProject(tempDir);
+      expect(report.detectedFeatures).toEqual([]);
+    });
+
+    it('only includes directories, not loose files in lib/features/', async () => {
+      await createProject(tempDir, {
+        createDirs: ['lib/features/auth'],
+        createFiles: [{ path: 'lib/features/index.dart', content: '// index' }],
+      });
+      const report = await detector.analyzeProject(tempDir);
+      expect(report.detectedFeatures).toContain('auth');
+      expect(report.detectedFeatures).not.toContain('index.dart');
+    });
+  });
+
+  describe('layer violations in cleanArchitectureGaps', () => {
+    it('reports domain-imports-data violation when domain dart file imports from data', async () => {
+      await createProject(tempDir, {
+        createDirs: [
+          'lib/features/home/domain',
+          'lib/features/home/data',
+          'lib/features/home/presentation',
+        ],
+        createFiles: [
+          {
+            path: 'lib/features/home/domain/some_usecase.dart',
+            content: "import '../data/repositories/home_repository.dart';",
+          },
+        ],
+      });
+      const report = await detector.analyzeProject(tempDir);
+      expect(
+        report.cleanArchitectureGaps.some(
+          (g) => g.includes('home') && g.includes('domain') && g.includes('data'),
+        ),
+      ).toBe(true);
+    });
+
+    it('does not report domain-imports-data violation when domain layer is clean', async () => {
+      await createProject(tempDir, {
+        createDirs: [
+          'lib/features/home/domain',
+          'lib/features/home/data',
+          'lib/features/home/presentation',
+        ],
+        createFiles: [
+          {
+            path: 'lib/features/home/domain/some_entity.dart',
+            content: '// Pure domain entity with no cross-layer imports',
+          },
+        ],
+      });
+      const report = await detector.analyzeProject(tempDir);
+      const violationGaps = report.cleanArchitectureGaps.filter(
+        (g) => g.includes('domain') && g.includes('data'),
+      );
+      expect(violationGaps).toHaveLength(0);
+    });
+
+    it('reports domain-imports-presentation violation', async () => {
+      await createProject(tempDir, {
+        createDirs: [
+          'lib/features/home/domain',
+          'lib/features/home/data',
+          'lib/features/home/presentation',
+        ],
+        createFiles: [
+          {
+            path: 'lib/features/home/domain/bad_usecase.dart',
+            content: "import '../presentation/pages/home_page.dart';",
+          },
+        ],
+      });
+      const report = await detector.analyzeProject(tempDir);
+      expect(
+        report.cleanArchitectureGaps.some(
+          (g) => g.includes('home') && g.includes('domain') && g.includes('presentation'),
+        ),
+      ).toBe(true);
+    });
+
+    it('does not report violation when layer has no dart files', async () => {
+      await createProject(tempDir, {
+        createDirs: [
+          'lib/features/home/domain',
+          'lib/features/home/data',
+          'lib/features/home/presentation',
+        ],
+        // No .dart files created — empty directories
+      });
+      const report = await detector.analyzeProject(tempDir);
+      const violationGaps = report.cleanArchitectureGaps.filter(
+        (g) => g.includes('violation') || (g.includes('domain') && g.includes('data')),
+      );
+      expect(violationGaps).toHaveLength(0);
+    });
+  });
 });

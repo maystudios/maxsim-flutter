@@ -38,6 +38,15 @@ export interface ProjectContext {
   claude: {
     enabled: boolean;
     preset?: 'minimal' | 'standard' | 'full';
+    overrides?: {
+      claudeMd?: boolean;
+      rules?: boolean;
+      agents?: boolean;
+      hooks?: boolean;
+      skills?: boolean;
+      commands?: boolean;
+      mcp?: boolean;
+    };
     agentTeams: boolean;
   };
 
@@ -154,6 +163,7 @@ export function createProjectContext(config: MaxsimConfig, outputDir: string): P
     claude: {
       enabled: config.claude.enabled,
       preset: config.claude.preset,
+      overrides: config.claude.overrides,
       agentTeams: config.claude.agentTeams,
     },
 

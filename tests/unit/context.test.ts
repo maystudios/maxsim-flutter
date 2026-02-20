@@ -307,5 +307,39 @@ describe('createProjectContext', () => {
       expect(ctx.claude.enabled).toBe(true);
       expect(ctx.claude.agentTeams).toBe(false);
     });
+
+    it('maps claude.preset to context when set to minimal', () => {
+      const config = buildConfig({}, { claude: { preset: 'minimal' } });
+      const ctx = createProjectContext(config, '/out');
+      expect(ctx.claude.preset).toBe('minimal');
+    });
+
+    it('maps claude.preset to context when set to full', () => {
+      const config = buildConfig({}, { claude: { preset: 'full' } });
+      const ctx = createProjectContext(config, '/out');
+      expect(ctx.claude.preset).toBe('full');
+    });
+
+    it('leaves claude.preset undefined when not set', () => {
+      const config = buildConfig();
+      const ctx = createProjectContext(config, '/out');
+      expect(ctx.claude.preset).toBeUndefined();
+    });
+
+    it('maps claude.overrides to context', () => {
+      const config = buildConfig({}, {
+        claude: { overrides: { agents: true, hooks: false, skills: true } },
+      });
+      const ctx = createProjectContext(config, '/out');
+      expect(ctx.claude.overrides?.agents).toBe(true);
+      expect(ctx.claude.overrides?.hooks).toBe(false);
+      expect(ctx.claude.overrides?.skills).toBe(true);
+    });
+
+    it('leaves claude.overrides undefined when not set', () => {
+      const config = buildConfig();
+      const ctx = createProjectContext(config, '/out');
+      expect(ctx.claude.overrides).toBeUndefined();
+    });
   });
 });

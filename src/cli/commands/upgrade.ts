@@ -9,20 +9,19 @@ import { runClaudeSetup } from '../../claude-setup/setup-orchestrator.js';
 import { findProjectRoot } from './add.js';
 
 /**
- * Back up existing agent markdown files in a .claude/agents/ directory.
+ * Back up existing markdown files in a .claude/ subdirectory (agents or rules).
  * Each *.md file is copied to *.md.bak (overwriting any previous backup).
  * Only .md files are backed up — subdirectories and non-.md files are ignored.
- * If the agents directory does not exist, returns an empty array (no-op).
+ * If the directory does not exist, returns an empty array (no-op).
  *
- * @param agentsDir - Absolute path to the .claude/agents/ directory
+ * @param dir - Absolute path to the directory to back up
  * @returns Absolute paths of the .bak files created
  */
-export async function backupAgentFiles(agentsDir: string): Promise<string[]> {
+async function backupMdFiles(dir: string): Promise<string[]> {
   let entries: string[];
   try {
-    entries = await readdir(agentsDir);
+    entries = await readdir(dir);
   } catch {
-    // Directory doesn't exist — nothing to backup
     return [];
   }
 
@@ -31,7 +30,7 @@ export async function backupAgentFiles(agentsDir: string): Promise<string[]> {
   for (const entry of entries) {
     if (!entry.endsWith('.md')) continue;
 
-    const filePath = join(agentsDir, entry);
+    const filePath = join(dir, entry);
     const fileStat = await stat(filePath);
     if (!fileStat.isFile()) continue;
 
@@ -41,6 +40,32 @@ export async function backupAgentFiles(agentsDir: string): Promise<string[]> {
   }
 
   return bakPaths;
+}
+
+/**
+ * Back up existing agent markdown files in a .claude/agents/ directory.
+ * Each *.md file is copied to *.md.bak (overwriting any previous backup).
+ * Only .md files are backed up — subdirectories and non-.md files are ignored.
+ * If the agents directory does not exist, returns an empty array (no-op).
+ *
+ * @param agentsDir - Absolute path to the .claude/agents/ directory
+ * @returns Absolute paths of the .bak files created
+ */
+export async function backupAgentFiles(agentsDir: string): Promise<string[]> {
+  return backupMdFiles(agentsDir);
+}
+
+/**
+ * Back up existing rule markdown files in a .claude/rules/ directory.
+ * Each *.md file is copied to *.md.bak (overwriting any previous backup).
+ * Only .md files are backed up — subdirectories and non-.md files are ignored.
+ * If the rules directory does not exist, returns an empty array (no-op).
+ *
+ * @param rulesDir - Absolute path to the .claude/rules/ directory
+ * @returns Absolute paths of the .bak files created
+ */
+export async function backupRulesFiles(rulesDir: string): Promise<string[]> {
+  return backupMdFiles(rulesDir);
 }
 
 /**
@@ -141,10 +166,13 @@ async function runUpgrade(
     }
   }
 
-  // 5. Back up existing agent files BEFORE regenerating
+  // 5. Back up existing agent and rule files BEFORE regenerating
+  const rulesDir = join(projectRoot, '.claude', 'rules');
+  const backedUpRules = await backupRulesFiles(rulesDir);
   const backedUp = await backupAgentFiles(agentsDir);
-  if (backedUp.length > 0) {
-    p.log.info(`Backed up ${backedUp.length} agent file(s) to .bak`);
+  const totalBacked = backedUp.length + backedUpRules.length;
+  if (totalBacked > 0) {
+    p.log.info(`Backed up ${totalBacked} file(s) to .bak`);
   }
 
   // 6. Re-run Claude setup (skipPrd unless --regenerate-prd)

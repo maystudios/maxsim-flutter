@@ -1459,7 +1459,7 @@
         "All existing tests still pass",
         "npm run quality passes"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

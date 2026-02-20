@@ -801,7 +801,16 @@ Verification:
 - Files: src/claude-setup/hooks-writer.ts, tests/unit/hooks-quality-gate.test.ts
 - Tests: 11 new test cases
 - Date: 2026-02-20
+
+## [P11-009] - Integration tests for all Phase 11 generated output
 - Status: COMPLETE
-- Files: src/claude-setup/hooks-writer.ts, tests/unit/hooks-writer-v2.test.ts, tests/unit/hooks-writer-edge-cases.test.ts
-- Tests: 52 new test cases (23 TDD + 29 edge cases)
+- Files: tests/integration/phase11-output.test.ts, tests/integration/claude-setup-phase11.test.ts
+- Tests: 80 new integration tests (44 + 36) covering all 3 presets
+- Covers: agent frontmatter, hook scripts, settings deny/allow, path-scoped rules, proactive skills, start-team command, CLAUDE.md @-imports, quality-gate-task hook
 - Date: 2026-02-20
+
+## Phase 11 Summary — Agentic Coding Best Practices
+- Stories completed: 9/9 (P11-001 through P11-009)
+- Total tests: 989 → 1356 (367 new tests)
+- Total suites: 64 → 77 (13 new suites)
+- All quality gates pass: typecheck, lint, 1356 tests, 14 snapshots

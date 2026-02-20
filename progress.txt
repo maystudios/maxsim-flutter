@@ -639,3 +639,11 @@ Verification:
 - 8 new YAML structure validation tests
 - All quality gates pass: typecheck, lint, 714 tests passing across 36 suites
 - Status: PASSES
+
+## 2026-02-20T00:40 - P7-004: Write contributor guide and architecture documentation
+- Created CONTRIBUTING.md with 8 sections: setup, dev workflow, TDD guide, add-a-module walkthrough, add-a-command pattern, template guidelines, PR process, quality gates
+- Created docs/architecture.md with subsystem relationships and ASCII diagram
+- Updated README.md with Contributing section linking to CONTRIBUTING.md
+- 6 new content validation tests
+- All quality gates pass: typecheck, lint, 720 tests passing across 37 suites
+- Status: PASSES

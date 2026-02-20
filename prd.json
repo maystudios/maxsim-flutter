@@ -706,7 +706,7 @@
         "docs/architecture.md describes subsystem relationships with diagram",
         "README has Contributing section linking to CONTRIBUTING.md"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P7-005",

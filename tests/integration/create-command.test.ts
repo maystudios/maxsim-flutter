@@ -524,8 +524,8 @@ describe('Integration: create command generates working Flutter project', () => 
       // All stories have passes: false
       expect(prd.stories.every((s) => s.passes === false)).toBe(true);
 
-      // Story IDs are sequential
-      expect(prd.stories[0].id).toBe('S-001');
+      // Story IDs use phase-prefixed format
+      expect(prd.stories[0].id).toBe('P1-CORE-001');
     });
 
     it('skips Claude setup when claude.enabled is false', async () => {

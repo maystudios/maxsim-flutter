@@ -30,7 +30,7 @@ function parsePrd(json: string) {
       priority: string;
       title: string;
       description: string;
-      acceptanceCriteria: string[];
+      acceptanceCriteria: Array<{ description: string; predicate?: string }>;
       passes: boolean;
     }>;
   };
@@ -42,7 +42,7 @@ describe('generatePrd', () => {
       const result = generatePrd(makePrdContext());
       const prd = parsePrd(result);
 
-      expect(prd.version).toBe('1.0.0');
+      expect(prd.version).toBe('2.0.0');
       expect(prd.project).toBe('test_app');
       expect(Array.isArray(prd.stories)).toBe(true);
     });
@@ -52,10 +52,10 @@ describe('generatePrd', () => {
       expect(result.endsWith('\n')).toBe(true);
     });
 
-    it('assigns sequential IDs starting from S-001', () => {
+    it('assigns prefixed IDs starting from P1-CORE-001', () => {
       const prd = parsePrd(generatePrd(makePrdContext()));
-      expect(prd.stories[0].id).toBe('S-001');
-      expect(prd.stories[1].id).toBe('S-002');
+      expect(prd.stories[0].id).toBe('P1-CORE-001');
+      expect(prd.stories[1].id).toBe('P1-CORE-002');
     });
 
     it('all stories have passes: false', () => {
@@ -124,7 +124,7 @@ describe('generatePrd', () => {
       const prd = parsePrd(generatePrd(makePrdContext({ database: { engine: 'drift' } })));
       const dbStory = prd.stories.find((s) => s.title.includes('local database'));
       expect(dbStory!.title).toContain('Drift (SQLite)');
-      const driftCriteria = dbStory!.acceptanceCriteria.find((c) => c.includes('AppDatabase'));
+      const driftCriteria = dbStory!.acceptanceCriteria.find((c) => c.description.includes('AppDatabase'));
       expect(driftCriteria).toBeDefined();
     });
 
@@ -132,7 +132,7 @@ describe('generatePrd', () => {
       const prd = parsePrd(generatePrd(makePrdContext({ database: { engine: 'hive' } })));
       const dbStory = prd.stories.find((s) => s.title.includes('local database'));
       expect(dbStory!.title).toContain('Hive');
-      const hiveCriteria = dbStory!.acceptanceCriteria.find((c) => c.includes('Hive'));
+      const hiveCriteria = dbStory!.acceptanceCriteria.find((c) => c.description.includes('Hive'));
       expect(hiveCriteria).toBeDefined();
     });
 
@@ -164,7 +164,7 @@ describe('generatePrd', () => {
       expect(themeStory).toBeDefined();
       expect(themeStory!.description).toContain('seed color #6750A4');
       expect(themeStory!.description).toContain('Support both light and dark themes');
-      const darkCriteria = themeStory!.acceptanceCriteria.find((c) => c.includes('AppTheme.dark()'));
+      const darkCriteria = themeStory!.acceptanceCriteria.find((c) => c.description.includes('AppTheme.dark()'));
       expect(darkCriteria).toBeDefined();
     });
 
@@ -175,7 +175,7 @@ describe('generatePrd', () => {
       const themeStory = prd.stories.find((s) => s.title.includes('Material 3 theme'));
       expect(themeStory!.description).toContain('Light theme only');
       expect(themeStory!.description).toContain('default purple seed color');
-      const lightCriteria = themeStory!.acceptanceCriteria.find((c) => c.includes('Light theme applied'));
+      const lightCriteria = themeStory!.acceptanceCriteria.find((c) => c.description.includes('Light theme applied'));
       expect(lightCriteria).toBeDefined();
     });
 
@@ -225,7 +225,7 @@ describe('generatePrd', () => {
       })));
       const cicdStory = prd.stories.find((s) => s.title.includes('CI/CD'));
       expect(cicdStory!.title).toContain('Github');
-      const criterion = cicdStory!.acceptanceCriteria.find((c) => c.includes('.github/workflows'));
+      const criterion = cicdStory!.acceptanceCriteria.find((c) => c.description.includes('.github/workflows'));
       expect(criterion).toBeDefined();
     });
 
@@ -235,7 +235,7 @@ describe('generatePrd', () => {
       })));
       const cicdStory = prd.stories.find((s) => s.title.includes('CI/CD'));
       expect(cicdStory!.title).toContain('Gitlab');
-      const criterion = cicdStory!.acceptanceCriteria.find((c) => c.includes('.gitlab-ci.yml'));
+      const criterion = cicdStory!.acceptanceCriteria.find((c) => c.description.includes('.gitlab-ci.yml'));
       expect(criterion).toBeDefined();
     });
 
@@ -245,7 +245,7 @@ describe('generatePrd', () => {
       })));
       const cicdStory = prd.stories.find((s) => s.title.includes('CI/CD'));
       expect(cicdStory!.title).toContain('Bitbucket');
-      const criterion = cicdStory!.acceptanceCriteria.find((c) => c.includes('bitbucket-pipelines.yml'));
+      const criterion = cicdStory!.acceptanceCriteria.find((c) => c.description.includes('bitbucket-pipelines.yml'));
       expect(criterion).toBeDefined();
     });
   });
@@ -258,9 +258,9 @@ describe('generatePrd', () => {
       const dlStory = prd.stories.find((s) => s.title.includes('deep linking'));
       expect(dlStory).toBeDefined();
       expect(dlStory!.description).toContain('myapp://example.com');
-      const schemeCriterion = dlStory!.acceptanceCriteria.find((c) => c.includes('myapp://'));
+      const schemeCriterion = dlStory!.acceptanceCriteria.find((c) => c.description.includes('myapp://'));
       expect(schemeCriterion).toBeDefined();
-      const hostCriterion = dlStory!.acceptanceCriteria.find((c) => c.includes('example.com'));
+      const hostCriterion = dlStory!.acceptanceCriteria.find((c) => c.description.includes('example.com'));
       expect(hostCriterion).toBeDefined();
     });
 
@@ -270,9 +270,9 @@ describe('generatePrd', () => {
       })));
       const dlStory = prd.stories.find((s) => s.title.includes('deep linking'));
       expect(dlStory!.description).toContain('app://example.com');
-      const schemeCriterion = dlStory!.acceptanceCriteria.find((c) => c.includes('Deep link scheme is configured'));
+      const schemeCriterion = dlStory!.acceptanceCriteria.find((c) => c.description.includes('Deep link scheme is configured'));
       expect(schemeCriterion).toBeDefined();
-      const hostCriterion = dlStory!.acceptanceCriteria.find((c) => c.includes('Host is configured in platform'));
+      const hostCriterion = dlStory!.acceptanceCriteria.find((c) => c.description.includes('Host is configured in platform'));
       expect(hostCriterion).toBeDefined();
     });
 
@@ -283,7 +283,7 @@ describe('generatePrd', () => {
       const dlStory = prd.stories.find((s) => s.title.includes('deep linking'));
       // Without host, the link example falls back
       expect(dlStory!.description).toContain('app://example.com');
-      const schemeCriterion = dlStory!.acceptanceCriteria.find((c) => c.includes('myapp://'));
+      const schemeCriterion = dlStory!.acceptanceCriteria.find((c) => c.description.includes('myapp://'));
       expect(schemeCriterion).toBeDefined();
     });
   });
@@ -332,14 +332,14 @@ describe('generatePrd', () => {
       expect(prd.stories).toHaveLength(15);
     });
 
-    it('IDs remain sequential regardless of module count', () => {
+    it('IDs use phase-prefixed format regardless of module count', () => {
       const prd = parsePrd(generatePrd(makePrdContext({
         auth: { provider: 'firebase' },
         theme: { darkMode: true },
       })));
 
-      for (let i = 0; i < prd.stories.length; i++) {
-        expect(prd.stories[i].id).toBe(`S-${String(i + 1).padStart(3, '0')}`);
+      for (const story of prd.stories) {
+        expect(story.id).toMatch(/^P\d+-[A-Z]+-\d{3}$/);
       }
     });
   });

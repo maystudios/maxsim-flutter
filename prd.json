@@ -1210,7 +1210,7 @@
         "npm run lint passes",
         "npm test passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P10-002",
@@ -1231,7 +1231,7 @@
         "npm test passes",
         ">= 5 new tests (one per missing rule file)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P10-003",
@@ -1250,7 +1250,7 @@
         "npm run lint passes",
         "npm test passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P10-004",
@@ -1265,7 +1265,7 @@
         "npm run typecheck passes",
         ">= 2 tests (with and without --no-claude flag)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P10-005",
@@ -1295,7 +1295,7 @@
         "No it.skip() or it.todo() in any test file",
         "npm run quality:full passes completely"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

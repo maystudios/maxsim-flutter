@@ -1,0 +1,437 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Generated file snapshots CLAUDE.md matches snapshot (standard preset, auth+api) 1`] = `
+"# CLAUDE.md - my_app
+
+## Project Overview
+
+**my_app** — Flutter app with Clean Architecture, Riverpod, go_router.
+
+A test Flutter app
+
+**Active modules:** auth, api
+**Platforms:** android, ios
+
+## Rules
+
+@.claude/rules/architecture.md
+@.claude/rules/riverpod.md
+@.claude/rules/go-router.md
+@.claude/rules/testing.md
+@.claude/rules/security.md
+@.claude/rules/auth.md
+@.claude/rules/api.md
+
+## Build Commands
+
+\`\`\`bash
+flutter pub get
+flutter run
+dart run build_runner build
+flutter test
+flutter analyze
+\`\`\`
+
+## Quality Gates
+
+- \`flutter analyze\` — zero warnings
+- \`flutter test\` — all pass
+- \`dart format --set-exit-if-changed .\` — formatted
+
+## Development Workflow
+
+- Commit: \`feat: [StoryID] - description\`
+- Files: \`snake_case.dart\`
+- Tests: \`<source>_test.dart\`
+
+## Key Paths
+
+- \`lib/core/router/app_router.dart\`
+- \`lib/core/providers/app_providers.dart\`
+- \`pubspec.yaml\`
+- \`prd.json\`"
+`;
+
+exports[`Generated file snapshots architecture.md rule matches snapshot 1`] = `
+"---
+paths:
+  - "lib/**"
+  - "test/**"
+---
+
+# Clean Architecture Rules
+
+This project follows Clean Architecture with three layers:
+
+- **domain**: Entities, repository interfaces, use cases. No Flutter or package dependencies.
+- **data**: Repository implementations, data sources, DTOs. Implements domain interfaces.
+- **presentation**: UI widgets, controllers, Riverpod providers. Depends on domain use cases only.
+
+## Rules
+- Never import from \`presentation\` into \`domain\` or \`data\`.
+- Never import from \`data\` into \`domain\`.
+- Use cases live in \`domain/use_cases/\` and contain business logic only.
+- Repository interfaces are defined in \`domain/repositories/\`.
+- All external dependencies (network, database) are injected via interfaces.
+"
+`;
+
+exports[`Generated file snapshots flutter-builder agent matches snapshot 1`] = `
+"---
+name: flutter-builder
+description: Implements Flutter features following Clean Architecture. Handles both architecture review and implementation.
+model: sonnet
+tools: ["Read","Write","Edit","Grep","Glob","Bash"]
+---
+
+You are a Flutter builder for **my_app**. You design and implement features following Clean Architecture and Riverpod patterns.
+
+## Model Selection Rationale
+
+This agent uses **Sonnet** because Sonnet balances speed and capability for implementation tasks — it handles complex code generation and architectural reasoning without the latency of Opus.
+
+## Sub-Agent Usage
+
+Use the **Task tool** with haiku for simple, repetitive file searches (e.g., finding all files matching a pattern). Reserve your own context for complex reasoning and implementation.
+
+Example: spawn a haiku sub-agent to scan directories, then act on the results yourself.
+
+## Your Role
+
+You are an **implementation** teammate. You:
+1. Review the story and design the implementation approach (Clean Architecture compliance)
+2. Implement features layer by layer (Domain → Data → Presentation)
+3. Run quality checks before marking tasks complete
+4. Reference rules in \`.claude/rules/\` for project-specific conventions
+
+## Architecture Rules
+
+This project uses Clean Architecture with three layers per feature:
+
+- **Domain** (entities, repository interfaces, use cases) — no external dependencies
+- **Data** (repository implementations, data sources, models) — depends only on Domain
+- **Presentation** (pages, widgets, Riverpod providers) — depends on Domain, never directly on Data
+
+Import rules:
+- \`domain/\` must NOT import from \`data/\` or \`presentation/\`
+- \`data/\` must NOT import from \`presentation/\`
+- \`presentation/\` must NOT import from \`data/\`
+
+## Implementation Order
+
+Always implement in this order within a feature:
+
+1. **Domain layer** first: entities (freezed), repository interfaces, use cases
+2. **Data layer** second: models, data sources, repository implementations
+3. **Presentation layer** last: providers (Riverpod), pages, widgets
+
+## Code Conventions
+
+- Files: \`snake_case.dart\`
+- Classes: \`PascalCase\`
+- Variables/functions: \`camelCase\`
+- Providers: suffix with \`Provider\` (e.g., \`authRepositoryProvider\`)
+- Use \`ref.watch()\` in build methods, \`ref.read()\` in callbacks
+- Prefer \`AsyncNotifier\` over \`StateNotifier\` for new async state
+
+## Module Context
+
+Active modules: auth, api. Be aware of module boundaries and inter-module dependencies.
+
+## Quality Checks
+
+Before marking any task complete:
+
+\`\`\`bash
+flutter analyze          # Zero warnings/errors
+flutter test             # All tests pass
+dart format --set-exit-if-changed .  # Code is formatted
+\`\`\`
+
+For code generation changes:
+\`\`\`bash
+dart run build_runner build --delete-conflicting-outputs
+\`\`\`
+
+## Key Files
+
+- \`lib/core/router/app_router.dart\` — Route definitions
+- \`lib/core/providers/app_providers.dart\` — Global provider barrel
+- \`pubspec.yaml\` — Dependencies
+- \`.claude/rules/\` — Project-specific coding rules and conventions
+"
+`;
+
+exports[`Generated file snapshots prd.json matches snapshot (standard preset, auth module) 1`] = `
+"{
+  "version": "2.0.0",
+  "project": "my_app",
+  "generatedAt": "2024-01-01T00:00:00.000Z",
+  "phases": [
+    {
+      "phase": 1,
+      "title": "Core Setup",
+      "description": "Core app structure, routing, and state management"
+    },
+    {
+      "phase": 2,
+      "title": "Module Features",
+      "description": "Module-specific features conditional on enabled configuration"
+    },
+    {
+      "phase": 3,
+      "title": "Integration & Quality",
+      "description": "Integration testing and final quality audit"
+    }
+  ],
+  "stories": [
+    {
+      "phase": 1,
+      "priority": "P0",
+      "title": "Setup Clean Architecture project structure",
+      "description": "Verify and finalize the scaffolded project structure for my_app. Ensure all directories follow Clean Architecture conventions with domain, data, and presentation layers per feature. Configure analysis_options.yaml with appropriate lint rules.",
+      "storyPoints": 3,
+      "dependencies": [],
+      "acceptanceCriteria": [
+        {
+          "description": "\`lib/features/\` directory exists with at minimum a \`home\` feature"
+        },
+        {
+          "description": "Each feature contains \`domain/\`, \`data/\`, and \`presentation/\` subdirectories"
+        },
+        {
+          "description": "\`lib/core/\` contains router, theme, and providers directories"
+        },
+        {
+          "description": "\`flutter analyze\` reports zero errors"
+        },
+        {
+          "description": "\`dart format --set-exit-if-changed .\` passes"
+        }
+      ],
+      "passes": false,
+      "id": "P1-CORE-001"
+    },
+    {
+      "phase": 1,
+      "priority": "P0",
+      "title": "Configure go_router with type-safe routes",
+      "description": "Set up go_router in \`lib/core/router/app_router.dart\` using TypedGoRoute annotations. Define initial route to HomeRoute. Register the router as a Riverpod provider. Run build_runner to generate route code.",
+      "storyPoints": 5,
+      "dependencies": [],
+      "acceptanceCriteria": [
+        {
+          "description": "\`lib/core/router/app_router.dart\` exists with GoRouter configuration"
+        },
+        {
+          "description": "Router is exposed as a Riverpod provider (\`routerProvider\`)"
+        },
+        {
+          "description": "\`HomeRoute\` is defined with \`@TypedGoRoute(path: '/')\`"
+        },
+        {
+          "description": "\`lib/core/router/app_router.g.dart\` is generated by build_runner"
+        },
+        {
+          "description": "\`flutter analyze\` reports zero errors"
+        }
+      ],
+      "passes": false,
+      "id": "P1-CORE-002"
+    },
+    {
+      "phase": 1,
+      "priority": "P0",
+      "title": "Configure Riverpod ProviderScope and global providers",
+      "description": "Ensure \`main.dart\` wraps the app in \`ProviderScope\`. Set up \`lib/core/providers/app_providers.dart\` as a barrel export for all core providers. Verify the app boots without errors.",
+      "storyPoints": 3,
+      "dependencies": [],
+      "acceptanceCriteria": [
+        {
+          "description": "\`main.dart\` wraps \`runApp\` with \`ProviderScope\`"
+        },
+        {
+          "description": "\`lib/core/providers/app_providers.dart\` exports core providers"
+        },
+        {
+          "description": "App compiles and runs without errors"
+        },
+        {
+          "description": "\`flutter analyze\` reports zero errors"
+        }
+      ],
+      "passes": false,
+      "id": "P1-CORE-003"
+    },
+    {
+      "phase": 1,
+      "priority": "P1",
+      "title": "Implement my_app home screen",
+      "description": "Build the initial home screen at \`lib/features/home/presentation/pages/home_page.dart\`. The page should use ConsumerWidget and display the project name. Wire it up to the \`/\` route in app_router.",
+      "storyPoints": 2,
+      "dependencies": [],
+      "acceptanceCriteria": [
+        {
+          "description": "\`home_page.dart\` exists and extends \`ConsumerWidget\`"
+        },
+        {
+          "description": "Home page displays the app name or a welcome message"
+        },
+        {
+          "description": "Route \`/\` navigates to the home page"
+        },
+        {
+          "description": "Widget test in \`test/features/home/\` passes"
+        },
+        {
+          "description": "\`flutter test\` passes all tests"
+        }
+      ],
+      "passes": false,
+      "id": "P1-CORE-004"
+    },
+    {
+      "phase": 2,
+      "priority": "P0",
+      "module": "auth",
+      "title": "Implement authentication with Firebase Auth",
+      "description": "Build the auth feature in \`lib/features/auth/\` following Clean Architecture. Domain layer: \`AuthRepository\` interface and \`User\` entity. Data layer: \`FirebaseAuthDataSource\` and \`AuthRepositoryImpl\`. Presentation layer: \`authRepositoryProvider\`, login page, register page. Add auth guard to go_router redirect.",
+      "storyPoints": 8,
+      "dependencies": [
+        "P1-CORE-001",
+        "P1-CORE-002",
+        "P1-CORE-003"
+      ],
+      "acceptanceCriteria": [
+        {
+          "description": "\`lib/features/auth/domain/repositories/auth_repository.dart\` defines \`AuthRepository\` interface"
+        },
+        {
+          "description": "\`lib/features/auth/domain/entities/user.dart\` defines \`User\` entity with freezed"
+        },
+        {
+          "description": "Auth repository implementation connects to Firebase Auth"
+        },
+        {
+          "description": "\`/login\` and \`/register\` routes exist and render auth pages"
+        },
+        {
+          "description": "Auth guard in go_router redirects unauthenticated users to \`/login\`"
+        },
+        {
+          "description": "Unit tests for auth use cases pass"
+        },
+        {
+          "description": "\`flutter analyze\` reports zero errors"
+        }
+      ],
+      "passes": false,
+      "id": "P2-AUTH-001"
+    },
+    {
+      "phase": 3,
+      "priority": "P1",
+      "title": "Write integration tests for core user flows",
+      "description": "Write integration tests covering the main user journeys in my_app. Test flows involving: auth. Use \`integration_test\` package with \`flutter_test\`.",
+      "storyPoints": 5,
+      "dependencies": [
+        "P1-CORE-001",
+        "P1-CORE-002",
+        "P1-CORE-003",
+        "P1-CORE-004",
+        "P2-AUTH-001"
+      ],
+      "acceptanceCriteria": [
+        {
+          "description": "\`integration_test/\` directory exists with at least one integration test file"
+        },
+        {
+          "description": "Tests cover the happy path for core user journeys"
+        },
+        {
+          "description": "Tests use \`WidgetTester\` for UI interactions"
+        },
+        {
+          "description": "\`flutter test integration_test/\` passes all tests"
+        },
+        {
+          "description": "Test coverage report shows >70% coverage for presentation layer"
+        }
+      ],
+      "passes": false,
+      "id": "P3-QA-001"
+    },
+    {
+      "phase": 3,
+      "priority": "P2",
+      "title": "Final quality audit and documentation",
+      "description": "Perform a final quality pass on all code in my_app. Fix any remaining analyzer warnings. Ensure all public APIs have dartdoc comments. Verify README.md documents how to run the app and run tests.",
+      "storyPoints": 2,
+      "dependencies": [
+        "P3-QA-001"
+      ],
+      "acceptanceCriteria": [
+        {
+          "description": "\`flutter analyze\` reports zero errors AND zero warnings"
+        },
+        {
+          "description": "\`flutter test\` passes all tests"
+        },
+        {
+          "description": "\`dart format --set-exit-if-changed .\` passes"
+        },
+        {
+          "description": "README.md includes setup instructions and how to run the app"
+        },
+        {
+          "description": "All public provider declarations have dartdoc comments"
+        }
+      ],
+      "passes": false,
+      "id": "P3-QA-002"
+    }
+  ]
+}"
+`;
+
+exports[`Generated file snapshots security.md rule matches snapshot 1`] = `
+"---
+paths:
+  - "**"
+---
+
+# Security Guidelines
+
+Follow these security best practices in all code.
+
+## Secrets & Credentials
+- Never hardcode secrets, API keys, or credentials in source code.
+- Use \`flutter_secure_storage\` for all sensitive user data and auth tokens.
+- Add \`.env\` files and any secrets files to \`.gitignore\`.
+- Rotate credentials immediately if they are ever committed accidentally.
+
+## Input Validation
+- Validate and sanitize all user inputs before use.
+- Use strong typing and Dart's type system to prevent unsafe data flows.
+- Avoid \`dynamic\` types for data received from external sources.
+- Reject malformed inputs at the boundary — never pass raw external data into business logic.
+
+## Dependency Security
+- Only use trusted packages from pub.dev with high scores and active maintenance.
+- Pin dependency versions in \`pubspec.yaml\` to avoid unintended upgrades.
+- Regularly audit packages with \`flutter pub outdated\` and \`dart pub deps\`.
+- Review changelogs before upgrading dependencies with breaking changes.
+
+## API Security
+- Use HTTPS for all network requests; never allow plain HTTP in production.
+- Implement certificate pinning for high-security endpoints.
+- Store auth tokens in \`flutter_secure_storage\`, never in SharedPreferences.
+- Never include sensitive data in URL query parameters — use request bodies instead.
+
+## Data Handling & Privacy
+- Never log PII (personally identifiable information) such as names, emails, or tokens.
+- Use structured logging and redact sensitive fields before writing to any logging output.
+- Apply encryption at rest for any sensitive data stored locally.
+- Request only the minimum permissions needed; apply the principle of least privilege.
+"
+`;

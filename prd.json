@@ -1403,7 +1403,7 @@
         "Commit + push protocol after each story",
         "npm run quality passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P11-007",
@@ -1420,7 +1420,7 @@
         "No redundant information Claude can infer from code",
         "npm run quality passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P11-008",
@@ -1438,7 +1438,7 @@
         "Inline 'flutter analyze && flutter test' replaced with script reference",
         "npm run quality passes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P11-009",

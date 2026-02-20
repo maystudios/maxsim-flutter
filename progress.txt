@@ -783,6 +783,24 @@ Verification:
 - Files: src/claude-setup/skill-writer.ts, tests/unit/skill-writer-v2.test.ts, tests/unit/skill-writer-edge-cases.test.ts
 - Tests: 45 new test cases (11 TDD + 34 edge cases)
 - Date: 2026-02-20
+
+## [P11-006] - Add start-team command for generated Flutter projects
+- Status: COMPLETE
+- Files: src/claude-setup/commands-writer.ts, tests/unit/commands-writer-v2.test.ts
+- Tests: new test cases for start-team command generation
+- Date: 2026-02-20
+
+## [P11-007] - Shorten generated CLAUDE.md and use @-imports for rules
+- Status: COMPLETE
+- Files: src/claude-setup/claude-md-generator.ts, tests/unit/claude-md-v2.test.ts
+- Tests: new test cases for CLAUDE.md shortening and @-imports
+- Date: 2026-02-20
+
+## [P11-008] - Add TaskCompleted quality-gate hook with proper JSON decision format
+- Status: COMPLETE
+- Files: src/claude-setup/hooks-writer.ts, tests/unit/hooks-quality-gate.test.ts
+- Tests: 11 new test cases
+- Date: 2026-02-20
 - Status: COMPLETE
 - Files: src/claude-setup/hooks-writer.ts, tests/unit/hooks-writer-v2.test.ts, tests/unit/hooks-writer-edge-cases.test.ts
 - Tests: 52 new test cases (23 TDD + 29 edge cases)

@@ -612,8 +612,8 @@ describe('Integration: create command generates working Flutter project', () => 
       const settingsContent = await readFile(settingsPath, 'utf-8');
       const settings = JSON.parse(settingsContent) as Record<string, unknown>;
       expect(settings).toHaveProperty('hooks');
-      expect(settingsContent).toContain('flutter analyze');
-      expect(settingsContent).toContain('flutter test');
+      expect(settingsContent).toContain('quality-gate-task.sh');
+      expect(settingsContent).toContain('block-dangerous.sh');
 
       // settings.local.json (personal) contains allow permissions
       const localPath = join(tmp.path, '.claude', 'settings.local.json');
@@ -935,8 +935,8 @@ describe('Integration: create command generates working Flutter project', () => 
 
       // Hooks (now in settings.json, not settings.local.json)
       const settings = await readFile(join(tmp.path, '.claude/settings.json'), 'utf-8');
-      expect(settings).toContain('flutter analyze');
-      expect(settings).toContain('flutter test');
+      expect(settings).toContain('quality-gate-task.sh');
+      expect(settings).toContain('block-dangerous.sh');
 
       // Commands
       expect(await pathExists(join(tmp.path, '.claude/commands/add-feature.md'))).toBe(true);

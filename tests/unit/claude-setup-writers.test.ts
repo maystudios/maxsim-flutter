@@ -127,13 +127,13 @@ describe('writeHooks', () => {
     expect(result.config.hooks).toBeDefined();
   });
 
-  it('returned config includes TaskCompleted hook with flutter analyze and test', async () => {
+  it('returned config includes TaskCompleted hook with quality-gate-task.sh', async () => {
     const result = await writeHooks(makeContext(), tmp.path);
     expect(result.config.hooks.TaskCompleted).toBeDefined();
     expect(result.config.hooks.TaskCompleted).toHaveLength(1);
     expect(result.config.hooks.TaskCompleted![0].hooks[0].type).toBe('command');
-    expect(result.config.hooks.TaskCompleted![0].hooks[0].command).toBe(
-      'flutter analyze && flutter test',
+    expect(result.config.hooks.TaskCompleted![0].hooks[0].command).toContain(
+      'quality-gate-task.sh',
     );
   });
 

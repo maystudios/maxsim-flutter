@@ -148,10 +148,10 @@ describe('writeHooks: timeout field only on relevant hooks', () => {
     expect(editWriteHook!.hooks[0].timeout).toBeUndefined();
   });
 
-  it('TaskCompleted hook has no timeout field', async () => {
+  it('TaskCompleted hook has timeout of 60', async () => {
     const hooks = await getConfig();
     const taskHook = hooks.TaskCompleted![0];
-    expect(taskHook.hooks[0].timeout).toBeUndefined();
+    expect(taskHook.hooks[0].timeout).toBe(60);
   });
 
   it('protect-secrets hook has timeout of 5', async () => {
@@ -241,12 +241,12 @@ describe('writeHooks: idempotency', () => {
     await expect(writeHooks(ctx, tmp.path)).resolves.not.toThrow();
   });
 
-  it('second call still produces 4 scripts in hooks directory', async () => {
+  it('second call still produces 5 scripts in hooks directory', async () => {
     const ctx = makeTestContext({ claude: { enabled: true, agentTeams: true } });
     await writeHooks(ctx, tmp.path);
     await writeHooks(ctx, tmp.path);
     const entries = await readdir(join(tmp.path, '.claude', 'hooks'));
-    expect(entries).toHaveLength(4);
+    expect(entries).toHaveLength(5);
   });
 
   it('second call returns valid HooksResult', async () => {

@@ -146,11 +146,11 @@ describe('writeHooks v2 — returns HooksResult', () => {
     expect(editWriteHook!.hooks[0].command).toContain('format-dart.sh');
   });
 
-  it('returned config registers TaskCompleted hook with flutter analyze', async () => {
+  it('returned config registers TaskCompleted hook with quality-gate-task.sh', async () => {
     const result = await writeHooks(makeContext(), tmp.path);
     expect(result.config.hooks.TaskCompleted).toBeDefined();
     const taskHook = result.config.hooks.TaskCompleted![0];
-    expect(taskHook.hooks[0].command).toBe('flutter analyze && flutter test');
+    expect(taskHook.hooks[0].command).toContain('quality-gate-task.sh');
   });
 
   it('returned config includes TeammateIdle when agentTeams is true', async () => {
@@ -333,15 +333,16 @@ describe('P11-002: hook config with timeout (via returned config)', () => {
     expect(result.config.hooks.PreToolUse!).toHaveLength(2);
   });
 
-  it('hooks directory contains exactly 4 scripts after writeHooks', async () => {
+  it('hooks directory contains exactly 5 scripts after writeHooks', async () => {
     await writeHooks(makeContext(), tmp.path);
     const entries = await readdir(join(tmp.path, '.claude', 'hooks'));
-    expect(entries).toHaveLength(4);
+    expect(entries).toHaveLength(5);
     expect(entries.sort()).toEqual([
       'block-dangerous.sh',
       'format-dart.sh',
       'notify-waiting.sh',
       'protect-secrets.sh',
+      'quality-gate-task.sh',
     ]);
   });
 });

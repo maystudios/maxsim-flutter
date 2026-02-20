@@ -30,7 +30,7 @@ const sampleHooksConfig = {
     ],
     TaskCompleted: [
       {
-        hooks: [{ type: 'command' as const, command: 'flutter analyze && flutter test' }],
+        hooks: [{ type: 'command' as const, command: '.claude/hooks/quality-gate-task.sh', timeout: 60 }],
       },
     ],
   },
@@ -161,7 +161,7 @@ describe('settings.json: full hooks config preserved', () => {
   it('settings.json hooks includes TaskCompleted from hooksConfig', async () => {
     const content = await getSettings();
     expect(content.hooks.TaskCompleted).toBeDefined();
-    expect(content.hooks.TaskCompleted[0].hooks[0].command).toContain('flutter analyze');
+    expect(content.hooks.TaskCompleted[0].hooks[0].command).toContain('quality-gate-task.sh');
   });
 
   it('settings.json hooks preserves timeout values from hooksConfig', async () => {

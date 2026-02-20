@@ -113,6 +113,31 @@ fi
 exit 0
 `;
 
+const QUALITY_GATE_TASK_SH = `#!/bin/bash
+# TaskCompleted hook: remind about quality checks for implementation tasks
+# Claude passes task result as JSON on stdin
+
+INPUT=$(cat)
+
+# Extract task subject from JSON
+SUBJECT=$(echo "$INPUT" | jq -r '.task_subject // .subject // empty')
+
+# Only trigger for implementation tasks (story IDs like P\\d+- or S-\\d+)
+if ! echo "$SUBJECT" | grep -qE 'P[0-9]+-|S-[0-9]+'; then
+  exit 0
+fi
+
+# Output quality gate reminder
+echo "Quality gate reminder for: $SUBJECT"
+echo "Before marking complete, verify:"
+echo "  1. flutter analyze — zero warnings"
+echo "  2. flutter test — all tests pass"
+echo "  3. dart format --set-exit-if-changed . — formatted"
+echo "  4. Coverage meets thresholds"
+
+exit 0
+`;
+
 export async function writeHooks(context: ProjectContext, outputPath: string): Promise<HooksResult> {
   const claudeDir = path.join(outputPath, '.claude');
   const hooksDir = path.join(claudeDir, 'hooks');
@@ -125,19 +150,22 @@ export async function writeHooks(context: ProjectContext, outputPath: string): P
   const formatDartPath = path.join(hooksDir, 'format-dart.sh');
   const protectSecretsPath = path.join(hooksDir, 'protect-secrets.sh');
   const notifyWaitingPath = path.join(hooksDir, 'notify-waiting.sh');
+  const qualityGateTaskPath = path.join(hooksDir, 'quality-gate-task.sh');
 
   await fs.writeFile(blockDangerousPath, BLOCK_DANGEROUS_SH);
   await fs.writeFile(formatDartPath, FORMAT_DART_SH);
   await fs.writeFile(protectSecretsPath, PROTECT_SECRETS_SH);
   await fs.writeFile(notifyWaitingPath, NOTIFY_WAITING_SH);
+  await fs.writeFile(qualityGateTaskPath, QUALITY_GATE_TASK_SH);
 
   // Make scripts executable (mode 0o755)
   await chmod(blockDangerousPath, 0o755);
   await chmod(formatDartPath, 0o755);
   await chmod(protectSecretsPath, 0o755);
   await chmod(notifyWaitingPath, 0o755);
+  await chmod(qualityGateTaskPath, 0o755);
 
-  const scripts = [blockDangerousPath, formatDartPath, protectSecretsPath, notifyWaitingPath];
+  const scripts = [blockDangerousPath, formatDartPath, protectSecretsPath, notifyWaitingPath, qualityGateTaskPath];
 
   // Build hooks config
   const hooks: HooksConfig['hooks'] = {
@@ -178,7 +206,8 @@ export async function writeHooks(context: ProjectContext, outputPath: string): P
         hooks: [
           {
             type: 'command',
-            command: 'flutter analyze && flutter test',
+            command: '.claude/hooks/quality-gate-task.sh',
+            timeout: 60,
           },
         ],
       },

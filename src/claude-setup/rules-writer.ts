@@ -30,7 +30,7 @@ This project follows Clean Architecture with three layers:
 
 function generateRiverpodRule(): string {
   return (
-    frontmatter(['lib/**']) +
+    frontmatter(['lib/**/providers/**', 'lib/**/presentation/**']) +
     `# Riverpod Patterns
 
 Use Riverpod for all state management and dependency injection.
@@ -47,7 +47,7 @@ Use Riverpod for all state management and dependency injection.
 
 function generateGoRouterRule(): string {
   return (
-    frontmatter(['lib/**']) +
+    frontmatter(['lib/**/router/**', 'lib/**/routes/**']) +
     `# go_router Navigation Rules
 
 Use go_router for declarative navigation.
@@ -273,6 +273,61 @@ Guidelines for localization.
   );
 }
 
+function generateGitWorkflowRule(): string {
+  return (
+    frontmatter(['**']) +
+    `# Git Workflow Rules
+
+Guidelines for version control and commit conventions.
+
+## Commit Messages (Conventional Commits)
+- \`feat: description\` — new features
+- \`fix: description\` — bug fixes
+- \`chore: description\` — tooling, config, CI, deps
+- \`refactor: description\` — code restructuring, no behavior change
+- \`test: description\` — adding or fixing tests
+- \`docs: description\` — documentation only
+
+## Branch Naming
+- Feature branches: \`feature/<short-description>\`
+- Bug fix branches: \`fix/<short-description>\`
+- Chore branches: \`chore/<short-description>\`
+
+## Rules
+- One logical change per commit — don't bundle unrelated changes.
+- Never force-push to \`main\` or \`develop\`.
+- Always push to remote after committing — no local-only commits.
+- Never skip pre-commit hooks (\`--no-verify\` is forbidden).
+`
+  );
+}
+
+function generateCodeQualityRule(): string {
+  return (
+    frontmatter(['lib/**', 'test/**']) +
+    `# Code Quality Rules
+
+Guidelines for maintaining code quality standards.
+
+## Static Analysis
+- Run \`flutter analyze\` before every commit — zero warnings allowed.
+- Run \`dart format .\` to ensure consistent formatting.
+- Fix all analyzer warnings at the source — never suppress with \`// ignore:\`.
+
+## Testing
+- Run \`flutter test\` before every commit — all tests must pass.
+- Aim for 80%+ statement and branch coverage.
+- Write tests for every new public function — at least happy path + edge case.
+
+## Code Review Checklist
+- No \`print()\` statements in production code — use a logging framework.
+- No unused imports or dead code.
+- No \`dynamic\` types unless absolutely necessary.
+- All public APIs have clear parameter names and return types.
+`
+  );
+}
+
 export async function writeRules(context: ProjectContext, outputPath: string): Promise<void> {
   const rulesDir = join(outputPath, '.claude', 'rules');
   await mkdir(rulesDir, { recursive: true });
@@ -283,6 +338,8 @@ export async function writeRules(context: ProjectContext, outputPath: string): P
   await writeFile(join(rulesDir, 'go-router.md'), generateGoRouterRule(), 'utf-8');
   await writeFile(join(rulesDir, 'testing.md'), generateTestingRule(), 'utf-8');
   await writeFile(join(rulesDir, 'security.md'), generateSecurityRule(), 'utf-8');
+  await writeFile(join(rulesDir, 'git-workflow.md'), generateGitWorkflowRule(), 'utf-8');
+  await writeFile(join(rulesDir, 'code-quality.md'), generateCodeQualityRule(), 'utf-8');
 
   // Conditional module rules
   if (context.modules.auth) {

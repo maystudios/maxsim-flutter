@@ -50,11 +50,13 @@ describe('writeRules', () => {
     expect(entries).toContain('testing.md');
   });
 
-  it('generates exactly 5 files when no optional modules are enabled', async () => {
+  it('generates exactly 7 core files when no optional modules are enabled', async () => {
     await writeRules(makeContext(), tmp.path);
     const entries = await readdir(join(tmp.path, '.claude', 'rules'));
     expect(entries.sort()).toEqual([
       'architecture.md',
+      'code-quality.md',
+      'git-workflow.md',
       'go-router.md',
       'riverpod.md',
       'security.md',
@@ -395,7 +397,7 @@ describe('writeRules', () => {
     expect(content).toContain('GoRouter');
   });
 
-  it('generates all 14 files when all optional modules are enabled', async () => {
+  it('generates all 16 files when all optional modules are enabled', async () => {
     const ctx = makeContext({
       modules: {
         auth: { provider: 'firebase' },
@@ -417,8 +419,10 @@ describe('writeRules', () => {
       'architecture.md',
       'auth.md',
       'cicd.md',
+      'code-quality.md',
       'database.md',
       'deep-linking.md',
+      'git-workflow.md',
       'go-router.md',
       'i18n.md',
       'push.md',

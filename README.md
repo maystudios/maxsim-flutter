@@ -366,71 +366,15 @@ scaffold:
 
 ## Contributing
 
-### Development setup
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
-```bash
-git clone https://github.com/nicosalm/maxsim-flutter.git
-cd maxsim-flutter
-npm install
-```
+- Development setup and build instructions
+- How to add a new module (step-by-step walkthrough)
+- Template guidelines and conventions
+- TDD workflow and quality gates
+- Pull request process
 
-### Build
-
-```bash
-npm run build       # Compile TypeScript to dist/
-npm run dev         # Watch mode compilation
-```
-
-### Testing
-
-```bash
-npm test            # Run all tests
-npm run test:watch  # Watch mode
-```
-
-### Quality checks
-
-All of the following must pass before submitting a pull request:
-
-```bash
-npm run typecheck   # TypeScript type checking (zero errors)
-npm run lint        # ESLint (zero errors)
-npm test            # All tests pass
-```
-
-Auto-fix lint issues:
-
-```bash
-npm run lint:fix
-```
-
-### Project structure
-
-```
-src/
-  cli/          # CLI entry point, commands (create, add, migrate), interactive prompts
-  core/         # Config schema (Zod), project context, environment validator
-  scaffold/     # Template rendering engine (Handlebars), file writer, post-processors
-  modules/      # Module registry, resolver, composer, and definitions
-  ralph/        # PRD generation and story sizing
-  claude-setup/ # Generates .claude/ directory for output Flutter projects
-  types/        # Shared TypeScript interfaces
-templates/
-  core/         # Base Clean Architecture Flutter templates
-  modules/      # Per-module Handlebars templates
-claude-plugin/  # Claude Code plugin definition (commands, agents, skills)
-tests/
-  unit/         # Unit tests
-  integration/  # Integration tests
-```
-
-### Commit convention
-
-```
-feat: [Story-ID] - Short description
-fix: short description
-chore: short description
-```
+For a deep dive into how the subsystems fit together, see [docs/architecture.md](docs/architecture.md).
 
 ---
 

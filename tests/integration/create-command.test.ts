@@ -564,10 +564,10 @@ describe('Integration: create command generates working Flutter project', () => 
       expect(content).toContain('prd.json');
     });
 
-    it('generates .mcp.json', async () => {
+    it('generates .mcp.json when preset is full', async () => {
       const engine = new ScaffoldEngine({ templatesDir: TEMPLATES_DIR });
       const context = makeWritableContext(tmp.path, {
-        claude: { enabled: true, agentTeams: false },
+        claude: { enabled: true, preset: 'full', agentTeams: false },
       });
       await engine.run(context);
 
@@ -907,7 +907,7 @@ describe('Integration: create command generates working Flutter project', () => 
           cicd: { provider: 'github' },
           deepLinking: { scheme: 'myapp', host: 'example.com' },
         },
-        claude: { enabled: true, agentTeams: true },
+        claude: { enabled: true, preset: 'full', agentTeams: true },
       });
       await engine.run(context);
 

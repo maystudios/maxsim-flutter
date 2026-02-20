@@ -7,6 +7,8 @@ import { writeSkills } from './skill-writer.js';
 import { writeHooks } from './hooks-writer.js';
 import { writeMcpConfig } from './mcp-config-writer.js';
 import { writeCommands } from './commands-writer.js';
+import { writeRules } from './rules-writer.js';
+import { resolvePreset } from './preset-resolver.js';
 import { generatePrd } from './prd-generator.js';
 
 export interface ClaudeSetupResult {
@@ -26,8 +28,8 @@ export interface ClaudeSetupOptions {
 
 /**
  * Runs the full Claude setup for a scaffolded Flutter project.
- * Generates CLAUDE.md, agent definitions, skills, hooks, MCP config,
- * slash commands, and prd.json.
+ * Generates CLAUDE.md, rules, agent definitions, skills, hooks, MCP config,
+ * slash commands, and prd.json — gated by the resolved preset.
  */
 export async function runClaudeSetup(
   context: ProjectContext,
@@ -36,44 +38,84 @@ export async function runClaudeSetup(
 ): Promise<ClaudeSetupResult> {
   const filesWritten: string[] = [];
 
+  // 1. Resolve preset (with optional overrides from rawConfig)
+  const overrides = context.rawConfig.claude?.overrides;
+  const resolved = resolvePreset(context.claude.preset, overrides);
+
   // Ensure .claude directory exists
   await mkdir(join(outputPath, '.claude'), { recursive: true });
 
-  // 1. Generate and write CLAUDE.md
-  const claudeMdContent = generateClaudeMd(context);
-  const claudeMdPath = join(outputPath, 'CLAUDE.md');
-  await writeFile(claudeMdPath, claudeMdContent, 'utf-8');
-  filesWritten.push(claudeMdPath);
+  // 2. Generate slim CLAUDE.md
+  if (resolved.claudeMd) {
+    const claudeMdContent = generateClaudeMd(context);
+    const claudeMdPath = join(outputPath, 'CLAUDE.md');
+    await writeFile(claudeMdPath, claudeMdContent, 'utf-8');
+    filesWritten.push(claudeMdPath);
+  }
 
-  // 2. Write agent definition files (.claude/agents/)
-  const agentFiles = await writeAgents(context, outputPath);
-  filesWritten.push(...agentFiles);
+  // 3. Write rules (.claude/rules/)
+  if (resolved.rules) {
+    await writeRules(context, outputPath);
+    const rulesDir = join(outputPath, '.claude', 'rules');
+    filesWritten.push(
+      join(rulesDir, 'architecture.md'),
+      join(rulesDir, 'riverpod.md'),
+      join(rulesDir, 'go-router.md'),
+      join(rulesDir, 'testing.md'),
+      join(rulesDir, 'security.md'),
+    );
+    if (context.modules.auth) filesWritten.push(join(rulesDir, 'auth.md'));
+    if (context.modules.api) filesWritten.push(join(rulesDir, 'api.md'));
+    if (context.modules.database) filesWritten.push(join(rulesDir, 'database.md'));
+    if (context.modules.i18n) filesWritten.push(join(rulesDir, 'i18n.md'));
+  }
 
-  // 3. Write skill files (.claude/skills/)
-  await writeSkills(context, outputPath);
-  filesWritten.push(
-    join(outputPath, '.claude', 'skills', 'flutter-patterns.md'),
-    join(outputPath, '.claude', 'skills', 'go-router-patterns.md'),
-    join(outputPath, '.claude', 'skills', 'module-conventions.md'),
-    join(outputPath, '.claude', 'skills', 'prd.md'),
-  );
+  // 4. Write agent definition files (.claude/agents/)
+  if (resolved.agents) {
+    const agentFiles = await writeAgents(context, outputPath);
+    filesWritten.push(...agentFiles);
+  }
 
-  // 4. Write hooks config (.claude/settings.local.json)
-  await writeHooks(context, outputPath);
-  filesWritten.push(join(outputPath, '.claude', 'settings.local.json'));
+  // 5. Write hooks config (.claude/hooks/ + .claude/settings.local.json)
+  if (resolved.hooks) {
+    await writeHooks(context, outputPath);
+    const hooksDir = join(outputPath, '.claude', 'hooks');
+    filesWritten.push(
+      join(hooksDir, 'block-dangerous.sh'),
+      join(hooksDir, 'format-dart.sh'),
+      join(outputPath, '.claude', 'settings.local.json'),
+    );
+  }
 
-  // 5. Write MCP server config (.mcp.json)
-  await writeMcpConfig(context, outputPath);
-  filesWritten.push(join(outputPath, '.mcp.json'));
+  // 6. Write skill files (.claude/skills/)
+  if (resolved.skills) {
+    await writeSkills(context, outputPath);
+    const skillsDir = join(outputPath, '.claude', 'skills');
+    filesWritten.push(
+      join(skillsDir, 'flutter-patterns.md'),
+      join(skillsDir, 'go-router-patterns.md'),
+      join(skillsDir, 'module-conventions.md'),
+      join(skillsDir, 'prd.md'),
+      join(skillsDir, 'security-review.md'),
+      join(skillsDir, 'performance-check.md'),
+      join(skillsDir, 'add-feature.md'),
+    );
+  }
 
-  // 6. Write slash commands (.claude/commands/)
-  await writeCommands(context, outputPath);
-  filesWritten.push(
-    join(outputPath, '.claude', 'commands', 'add-feature.md'),
-    join(outputPath, '.claude', 'commands', 'analyze.md'),
-  );
+  // 7. Write slash commands (.claude/commands/)
+  if (resolved.commands) {
+    await writeCommands(context, outputPath);
+    const commandsDir = join(outputPath, '.claude', 'commands');
+    filesWritten.push(join(commandsDir, 'add-feature.md'), join(commandsDir, 'analyze.md'));
+  }
 
-  // 7. Generate and write prd.json (skipped when skipPrd is true)
+  // 8. Write MCP server config (.mcp.json)
+  if (resolved.mcp) {
+    await writeMcpConfig(context, outputPath);
+    filesWritten.push(join(outputPath, '.mcp.json'));
+  }
+
+  // 9. Generate and write prd.json (skipped when skipPrd is true)
   if (!options?.skipPrd) {
     const prdContent = generatePrd(context);
     const prdPath = join(outputPath, 'prd.json');

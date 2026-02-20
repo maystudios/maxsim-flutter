@@ -609,3 +609,12 @@ Verification:
 - Status: PASSES
 
 ## Phase 6 COMPLETE - All 6 stories implemented and passing
+
+## 2026-02-20T00:15 - P7-001: Support external/community module packages
+- Added externalModules: string[] to Zod config schema
+- Created src/modules/external-validator.ts with validateExternalManifest()
+- Added ModuleRegistry.loadExternal(packageName) with injectable loader for testability
+- Error thrown for invalid external module manifests
+- 22 new tests across 3 test files
+- All quality gates pass: typecheck, lint, 673 tests passing across 30+ suites
+- Status: PASSES

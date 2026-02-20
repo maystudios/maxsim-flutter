@@ -663,7 +663,7 @@
         "Error thrown if external module has invalid manifest",
         "Unit tests for external module loading"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "P7-002",

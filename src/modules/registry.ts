@@ -2,6 +2,11 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { readdir, stat } from 'node:fs/promises';
 import type { ModuleManifest } from '../types/module.js';
+import { validateExternalManifest } from './external-validator.js';
+import type { ExternalLoader } from './external-validator.js';
+
+const defaultLoader: ExternalLoader = async (pkg) =>
+  import(pkg) as Promise<{ manifest?: unknown }>;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -109,6 +114,29 @@ export class ModuleRegistry {
    */
   getAllOptionalIds(): string[] {
     return this.getOptional().map((m) => m.id);
+  }
+
+  /**
+   * Load a module manifest from an external npm package.
+   * The package must export `{ manifest }` from its main entry point.
+   *
+   * Uses an injectable `loader` for testability. In production,
+   * the default loader uses native ESM dynamic import().
+   *
+   * @param packageName - npm package name (e.g., 'maxsim-module-stripe')
+   * @param loader - Optional custom loader; defaults to dynamic import()
+   * @throws Error if package not found, exports no manifest, or manifest is invalid
+   */
+  async loadExternal(packageName: string, loader?: ExternalLoader): Promise<void> {
+    const effectiveLoader = loader ?? defaultLoader;
+    let exports: { manifest?: unknown };
+    try {
+      exports = await effectiveLoader(packageName);
+    } catch (err) {
+      throw err instanceof Error ? err : new Error(String(err));
+    }
+    const manifest = validateExternalManifest(exports.manifest, packageName);
+    this.register(manifest);
   }
 
   /**

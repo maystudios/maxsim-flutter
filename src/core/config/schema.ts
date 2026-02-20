@@ -132,4 +132,6 @@ export const MaxsimConfigSchema = z.object({
       dryRun: z.boolean().default(false),
     })
     .default({}),
+
+  externalModules: z.array(z.string()).default([]),
 });

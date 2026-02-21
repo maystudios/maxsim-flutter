@@ -149,31 +149,31 @@ describe('Phase 12: skills count and SDD skill frontmatter', () => {
     expect(skills).toHaveLength(13);
   });
 
-  it('sdd-workflow.md has user-invocable: true', async () => {
+  it('sdd-workflow has user-invocable: true', async () => {
     await setupStandard(tmp.path);
     const content = await readFile(
-      join(tmp.path, '.claude', 'skills', 'sdd-workflow.md'),
+      join(tmp.path, '.claude', 'skills', 'sdd-workflow', 'SKILL.md'),
       'utf-8',
     );
     expect(content).toContain('user-invocable: true');
   });
 
-  it('spec-template.md does NOT have user-invocable', async () => {
+  it('spec-template has user-invocable: false', async () => {
     await setupStandard(tmp.path);
     const content = await readFile(
-      join(tmp.path, '.claude', 'skills', 'spec-template.md'),
+      join(tmp.path, '.claude', 'skills', 'spec-template', 'SKILL.md'),
       'utf-8',
     );
-    expect(content).not.toContain('user-invocable');
+    expect(content).toContain('user-invocable: false');
   });
 
-  it('plan-template.md does NOT have user-invocable', async () => {
+  it('plan-template has user-invocable: false', async () => {
     await setupStandard(tmp.path);
     const content = await readFile(
-      join(tmp.path, '.claude', 'skills', 'plan-template.md'),
+      join(tmp.path, '.claude', 'skills', 'plan-template', 'SKILL.md'),
       'utf-8',
     );
-    expect(content).not.toContain('user-invocable');
+    expect(content).toContain('user-invocable: false');
   });
 });
 

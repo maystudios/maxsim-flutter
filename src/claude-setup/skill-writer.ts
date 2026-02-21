@@ -2,29 +2,41 @@ import fs from 'fs-extra';
 import path from 'node:path';
 import type { ProjectContext } from '../core/context.js';
 
+async function writeSkillFile(skillsDir: string, name: string, content: string): Promise<void> {
+  const dir = path.join(skillsDir, name);
+  await fs.ensureDir(dir);
+  await fs.writeFile(path.join(dir, 'SKILL.md'), content);
+}
+
 export async function writeSkills(context: ProjectContext, outputPath: string): Promise<void> {
   const skillsDir = path.join(outputPath, '.claude', 'skills');
   await fs.ensureDir(skillsDir);
 
   await Promise.all([
-    fs.writeFile(path.join(skillsDir, 'flutter-patterns.md'), generateFlutterPatterns()),
-    fs.writeFile(path.join(skillsDir, 'go-router-patterns.md'), generateGoRouterPatterns(context)),
-    fs.writeFile(path.join(skillsDir, 'module-conventions.md'), generateModuleConventions()),
-    fs.writeFile(path.join(skillsDir, 'prd.md'), generatePrdGuide()),
-    fs.writeFile(path.join(skillsDir, 'security-review.md'), generateSecurityReview()),
-    fs.writeFile(path.join(skillsDir, 'performance-check.md'), generatePerformanceCheck()),
-    fs.writeFile(path.join(skillsDir, 'add-feature.md'), generateAddFeatureSkill(context)),
-    fs.writeFile(path.join(skillsDir, 'quality-gate.md'), generateQualityGate()),
-    fs.writeFile(path.join(skillsDir, 'error-recovery.md'), generateErrorRecoverySkill()),
-    fs.writeFile(path.join(skillsDir, 'debug-workflow.md'), generateDebugWorkflowSkill()),
-    fs.writeFile(path.join(skillsDir, 'sdd-workflow.md'), generateSddWorkflowSkill()),
-    fs.writeFile(path.join(skillsDir, 'spec-template.md'), generateSpecTemplateSkill(context)),
-    fs.writeFile(path.join(skillsDir, 'plan-template.md'), generatePlanTemplateSkill()),
+    writeSkillFile(skillsDir, 'flutter-patterns', generateFlutterPatterns()),
+    writeSkillFile(skillsDir, 'go-router-patterns', generateGoRouterPatterns(context)),
+    writeSkillFile(skillsDir, 'module-conventions', generateModuleConventions()),
+    writeSkillFile(skillsDir, 'prd', generatePrdGuide()),
+    writeSkillFile(skillsDir, 'security-review', generateSecurityReview()),
+    writeSkillFile(skillsDir, 'performance-check', generatePerformanceCheck()),
+    writeSkillFile(skillsDir, 'add-feature', generateAddFeatureSkill(context)),
+    writeSkillFile(skillsDir, 'quality-gate', generateQualityGate()),
+    writeSkillFile(skillsDir, 'error-recovery', generateErrorRecoverySkill()),
+    writeSkillFile(skillsDir, 'debug-workflow', generateDebugWorkflowSkill()),
+    writeSkillFile(skillsDir, 'sdd-workflow', generateSddWorkflowSkill()),
+    writeSkillFile(skillsDir, 'spec-template', generateSpecTemplateSkill(context)),
+    writeSkillFile(skillsDir, 'plan-template', generatePlanTemplateSkill()),
   ]);
 }
 
 function generateFlutterPatterns(): string {
   return [
+    '---',
+    'name: flutter-patterns',
+    'description: Flutter and Riverpod patterns — providers, state management, composition.',
+    'user-invocable: false',
+    '---',
+    '',
     '# Flutter / Riverpod Patterns',
     '',
     '## Provider Naming Conventions',
@@ -159,6 +171,12 @@ function generateGoRouterPatterns(context: ProjectContext): string {
     : '';
 
   return [
+    '---',
+    'name: go-router-patterns',
+    'description: go_router patterns — route definitions, navigation, guards, and ShellRoute.',
+    'user-invocable: false',
+    '---',
+    '',
     '# go_router Patterns',
     '',
     '## Route Definition',
@@ -249,6 +267,12 @@ function generateGoRouterPatterns(context: ProjectContext): string {
 
 function generateModuleConventions(): string {
   return [
+    '---',
+    'name: module-conventions',
+    'description: Clean Architecture module conventions — directory structure, layers, dependencies.',
+    'user-invocable: false',
+    '---',
+    '',
     '# Module Conventions (Clean Architecture)',
     '',
     '## Directory Structure Per Feature',
@@ -301,6 +325,12 @@ function generateModuleConventions(): string {
 
 function generatePrdGuide(): string {
   return [
+    '---',
+    'name: prd',
+    'description: Guide for working with prd.json — story structure, workflow, completion criteria.',
+    'user-invocable: false',
+    '---',
+    '',
     '# Working with prd.json',
     '',
     '## Story Structure (PRD v2)',
@@ -363,6 +393,7 @@ function generatePrdGuide(): string {
 function generateSecurityReview(): string {
   return [
     '---',
+    'name: security-review',
     'model: sonnet',
     'user-invocable: true',
     'description: >-',
@@ -416,6 +447,7 @@ function generateSecurityReview(): string {
 function generatePerformanceCheck(): string {
   return [
     '---',
+    'name: performance-check',
     'model: haiku',
     'user-invocable: true',
     'description: >-',
@@ -468,6 +500,7 @@ function generatePerformanceCheck(): string {
 function generateQualityGate(): string {
   return [
     '---',
+    'name: quality-gate',
     'model: sonnet',
     'user-invocable: true',
     'description: >-',
@@ -541,7 +574,10 @@ function generateAddFeatureSkill(context: ProjectContext): string {
 
   return [
     '---',
+    'name: add-feature',
+    'description: Step-by-step guide to add a new Clean Architecture feature to the Flutter project.',
     'model: sonnet',
+    'user-invocable: false',
     '---',
     '',
     '# Add a New Clean Architecture Feature',
@@ -608,6 +644,7 @@ function generateAddFeatureSkill(context: ProjectContext): string {
 function generateErrorRecoverySkill(): string {
   return [
     '---',
+    'name: error-recovery',
     'model: sonnet',
     'user-invocable: true',
     'description: >-',
@@ -650,6 +687,7 @@ function generateErrorRecoverySkill(): string {
 function generateSddWorkflowSkill(): string {
   return [
     '---',
+    'name: sdd-workflow',
     'model: sonnet',
     'user-invocable: true',
     'description: >-',
@@ -731,6 +769,12 @@ function generateSpecTemplateSkill(context: ProjectContext): string {
     : '';
 
   return [
+    '---',
+    'name: spec-template',
+    'description: Feature specification template — entities, repositories, acceptance criteria.',
+    'user-invocable: false',
+    '---',
+    '',
     '# Feature Specification Template',
     '',
     '## Feature Name',
@@ -765,6 +809,12 @@ function generateSpecTemplateSkill(context: ProjectContext): string {
 
 function generatePlanTemplateSkill(): string {
   return [
+    '---',
+    'name: plan-template',
+    'description: Implementation plan template — phased approach with file ownership and complexity.',
+    'user-invocable: false',
+    '---',
+    '',
     '# Implementation Plan Template',
     '',
     '## Feature',
@@ -809,6 +859,7 @@ function generatePlanTemplateSkill(): string {
 function generateDebugWorkflowSkill(): string {
   return [
     '---',
+    'name: debug-workflow',
     'model: sonnet',
     'user-invocable: true',
     'description: >-',

@@ -16,54 +16,54 @@ function makeContext(overrides: Partial<Parameters<typeof makeTestContext>[0]> =
 describe('proactive skills: frontmatter field values', () => {
   const tmp = useTempDir('skill-frontmatter-values-');
 
-  it('security-review.md has user-invocable: true', async () => {
+  it('security-review has user-invocable: true', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'security-review.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'security-review', 'SKILL.md'), 'utf-8');
     expect(content).toContain('user-invocable: true');
   });
 
-  it('performance-check.md has user-invocable: true', async () => {
+  it('performance-check has user-invocable: true', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'performance-check.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'performance-check', 'SKILL.md'), 'utf-8');
     expect(content).toContain('user-invocable: true');
   });
 
-  it('quality-gate.md has user-invocable: true', async () => {
+  it('quality-gate has user-invocable: true', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'quality-gate.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'quality-gate', 'SKILL.md'), 'utf-8');
     expect(content).toContain('user-invocable: true');
   });
 
-  it('security-review.md uses sonnet model', async () => {
+  it('security-review uses sonnet model', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'security-review.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'security-review', 'SKILL.md'), 'utf-8');
     expect(content).toContain('model: sonnet');
   });
 
-  it('performance-check.md uses haiku model', async () => {
+  it('performance-check uses haiku model', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'performance-check.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'performance-check', 'SKILL.md'), 'utf-8');
     expect(content).toContain('model: haiku');
   });
 
-  it('quality-gate.md uses sonnet model', async () => {
+  it('quality-gate uses sonnet model', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'quality-gate.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'quality-gate', 'SKILL.md'), 'utf-8');
     expect(content).toContain('model: sonnet');
   });
 
   it('all 3 proactive skill files open with --- on the first line', async () => {
     await writeSkills(makeContext(), tmp.path);
-    for (const file of ['security-review.md', 'performance-check.md', 'quality-gate.md']) {
-      const content = await readFile(join(tmp.path, '.claude', 'skills', file), 'utf-8');
+    for (const file of ['security-review', 'performance-check', 'quality-gate']) {
+      const content = await readFile(join(tmp.path, '.claude', 'skills', file, 'SKILL.md'), 'utf-8');
       expect(content.startsWith('---\n')).toBe(true);
     }
   });
 
   it('all 3 proactive skill files have a description: field in frontmatter', async () => {
     await writeSkills(makeContext(), tmp.path);
-    for (const file of ['security-review.md', 'performance-check.md', 'quality-gate.md']) {
-      const content = await readFile(join(tmp.path, '.claude', 'skills', file), 'utf-8');
+    for (const file of ['security-review', 'performance-check', 'quality-gate']) {
+      const content = await readFile(join(tmp.path, '.claude', 'skills', file, 'SKILL.md'), 'utf-8');
       expect(content).toContain('description:');
     }
   });
@@ -74,39 +74,39 @@ describe('proactive skills: frontmatter field values', () => {
 describe('proactive skills: specific trigger phrases', () => {
   const tmp = useTempDir('skill-trigger-phrases-');
 
-  it('security-review.md triggers on "security review"', async () => {
+  it('security-review triggers on "security review"', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'security-review.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'security-review', 'SKILL.md'), 'utf-8');
     expect(content.toLowerCase()).toContain('security review');
   });
 
-  it('security-review.md triggers on "vulnerabilities"', async () => {
+  it('security-review triggers on "vulnerabilities"', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'security-review.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'security-review', 'SKILL.md'), 'utf-8');
     expect(content.toLowerCase()).toContain('vulnerabilit');
   });
 
-  it('performance-check.md triggers on "performance check"', async () => {
+  it('performance-check triggers on "performance check"', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'performance-check.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'performance-check', 'SKILL.md'), 'utf-8');
     expect(content.toLowerCase()).toContain('performance check');
   });
 
-  it('performance-check.md triggers on "optimize"', async () => {
+  it('performance-check triggers on "optimize"', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'performance-check.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'performance-check', 'SKILL.md'), 'utf-8');
     expect(content.toLowerCase()).toContain('optim');
   });
 
-  it('quality-gate.md triggers on "quality gate"', async () => {
+  it('quality-gate triggers on "quality gate"', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'quality-gate.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'quality-gate', 'SKILL.md'), 'utf-8');
     expect(content.toLowerCase()).toContain('quality gate');
   });
 
-  it('quality-gate.md triggers on "run quality checks"', async () => {
+  it('quality-gate triggers on "run quality checks"', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'quality-gate.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'quality-gate', 'SKILL.md'), 'utf-8');
     expect(content.toLowerCase()).toContain('quality check');
   });
 });
@@ -118,7 +118,7 @@ describe('quality-gate.md: step content completeness', () => {
 
   async function getContent(): Promise<string> {
     await writeSkills(makeContext(), tmp.path);
-    return readFile(join(tmp.path, '.claude', 'skills', 'quality-gate.md'), 'utf-8');
+    return readFile(join(tmp.path, '.claude', 'skills', 'quality-gate', 'SKILL.md'), 'utf-8');
   }
 
   it('includes dart format step', async () => {
@@ -156,31 +156,31 @@ describe('quality-gate.md: step content completeness', () => {
 
 // ─── Non-proactive skills: no user-invocable frontmatter ─────────────────
 
-describe('non-proactive skills: no user-invocable frontmatter', () => {
+describe('reference-only skills: user-invocable: false frontmatter', () => {
   const tmp = useTempDir('skill-no-frontmatter-');
 
-  it('flutter-patterns.md has no user-invocable field', async () => {
+  it('flutter-patterns has user-invocable: false', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'flutter-patterns.md'), 'utf-8');
-    expect(content).not.toContain('user-invocable');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'flutter-patterns', 'SKILL.md'), 'utf-8');
+    expect(content).toContain('user-invocable: false');
   });
 
-  it('module-conventions.md has no user-invocable field', async () => {
+  it('module-conventions has user-invocable: false', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'module-conventions.md'), 'utf-8');
-    expect(content).not.toContain('user-invocable');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'module-conventions', 'SKILL.md'), 'utf-8');
+    expect(content).toContain('user-invocable: false');
   });
 
-  it('prd.md has no user-invocable field', async () => {
+  it('prd has user-invocable: false', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'prd.md'), 'utf-8');
-    expect(content).not.toContain('user-invocable');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'prd', 'SKILL.md'), 'utf-8');
+    expect(content).toContain('user-invocable: false');
   });
 
-  it('add-feature.md has no user-invocable field (model only)', async () => {
+  it('add-feature has user-invocable: false and model: sonnet', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'add-feature.md'), 'utf-8');
-    expect(content).not.toContain('user-invocable');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'add-feature', 'SKILL.md'), 'utf-8');
+    expect(content).toContain('user-invocable: false');
     expect(content).toContain('model: sonnet');
   });
 });
@@ -193,13 +193,13 @@ describe('go-router-patterns.md: context-conditional content', () => {
   it('includes auth guard section when auth module is enabled', async () => {
     const ctx = makeContext({ modules: { ...makeContext().modules, auth: { provider: 'firebase' } } });
     await writeSkills(ctx, tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'go-router-patterns.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'go-router-patterns', 'SKILL.md'), 'utf-8');
     expect(content).toContain('Auth Guard');
   });
 
   it('omits auth guard section when auth module is disabled', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'go-router-patterns.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'go-router-patterns', 'SKILL.md'), 'utf-8');
     expect(content).not.toContain('Auth Guard');
   });
 
@@ -208,13 +208,13 @@ describe('go-router-patterns.md: context-conditional content', () => {
       modules: { ...makeContext().modules, deepLinking: { scheme: 'myapp', host: 'example.com' } },
     });
     await writeSkills(ctx, tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'go-router-patterns.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'go-router-patterns', 'SKILL.md'), 'utf-8');
     expect(content).toContain('Deep Linking');
   });
 
   it('omits deep linking section when deepLinking module is disabled', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'go-router-patterns.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'go-router-patterns', 'SKILL.md'), 'utf-8');
     expect(content).not.toContain('Deep Linking Integration');
   });
 });
@@ -225,13 +225,13 @@ describe('add-feature.md: context-conditional auth guard step', () => {
   it('includes route guard step when auth module is enabled', async () => {
     const ctx = makeContext({ modules: { ...makeContext().modules, auth: { provider: 'firebase' } } });
     await writeSkills(ctx, tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'add-feature.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'add-feature', 'SKILL.md'), 'utf-8');
     expect(content).toContain('Route Guard');
   });
 
   it('omits route guard step when auth module is disabled', async () => {
     await writeSkills(makeContext(), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'add-feature.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'add-feature', 'SKILL.md'), 'utf-8');
     expect(content).not.toContain('Route Guard');
   });
 });

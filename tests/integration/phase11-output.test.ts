@@ -231,28 +231,28 @@ describe('Phase 11: proactive skills (P11-005)', () => {
     await runClaudeSetup(makeTestContext({ claude: { enabled: true, agentTeams: false, preset: 'standard' } }), tmp.path);
     const skills = await readdir(join(tmp.path, '.claude', 'skills'));
     expect(skills.length).toBe(13);
-    expect(skills).toContain('quality-gate.md');
-    expect(skills).toContain('security-review.md');
-    expect(skills).toContain('performance-check.md');
+    expect(skills).toContain('quality-gate');
+    expect(skills).toContain('security-review');
+    expect(skills).toContain('performance-check');
   });
 
   it('security-review skill has user-invocable: true frontmatter', async () => {
     await runClaudeSetup(makeTestContext({ claude: { enabled: true, agentTeams: false, preset: 'standard' } }), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'security-review.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'security-review', 'SKILL.md'), 'utf-8');
     expect(content).toContain('user-invocable: true');
     expect(content).toContain('description:');
   });
 
   it('performance-check skill has user-invocable: true frontmatter', async () => {
     await runClaudeSetup(makeTestContext({ claude: { enabled: true, agentTeams: false, preset: 'standard' } }), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'performance-check.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'performance-check', 'SKILL.md'), 'utf-8');
     expect(content).toContain('user-invocable: true');
     expect(content).toContain('description:');
   });
 
   it('quality-gate skill has user-invocable: true and model: sonnet', async () => {
     await runClaudeSetup(makeTestContext({ claude: { enabled: true, agentTeams: false, preset: 'standard' } }), tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'quality-gate.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'quality-gate', 'SKILL.md'), 'utf-8');
     expect(content).toContain('user-invocable: true');
     expect(content).toContain('model: sonnet');
   });

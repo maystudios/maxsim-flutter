@@ -99,19 +99,19 @@ export async function runClaudeSetup(
     await writeSkills(context, outputPath);
     const skillsDir = join(outputPath, '.claude', 'skills');
     filesWritten.push(
-      join(skillsDir, 'flutter-patterns.md'),
-      join(skillsDir, 'go-router-patterns.md'),
-      join(skillsDir, 'module-conventions.md'),
-      join(skillsDir, 'prd.md'),
-      join(skillsDir, 'security-review.md'),
-      join(skillsDir, 'performance-check.md'),
-      join(skillsDir, 'add-feature.md'),
-      join(skillsDir, 'quality-gate.md'),
-      join(skillsDir, 'error-recovery.md'),
-      join(skillsDir, 'debug-workflow.md'),
-      join(skillsDir, 'sdd-workflow.md'),
-      join(skillsDir, 'spec-template.md'),
-      join(skillsDir, 'plan-template.md'),
+      join(skillsDir, 'flutter-patterns', 'SKILL.md'),
+      join(skillsDir, 'go-router-patterns', 'SKILL.md'),
+      join(skillsDir, 'module-conventions', 'SKILL.md'),
+      join(skillsDir, 'prd', 'SKILL.md'),
+      join(skillsDir, 'security-review', 'SKILL.md'),
+      join(skillsDir, 'performance-check', 'SKILL.md'),
+      join(skillsDir, 'add-feature', 'SKILL.md'),
+      join(skillsDir, 'quality-gate', 'SKILL.md'),
+      join(skillsDir, 'error-recovery', 'SKILL.md'),
+      join(skillsDir, 'debug-workflow', 'SKILL.md'),
+      join(skillsDir, 'sdd-workflow', 'SKILL.md'),
+      join(skillsDir, 'spec-template', 'SKILL.md'),
+      join(skillsDir, 'plan-template', 'SKILL.md'),
     );
   }
 

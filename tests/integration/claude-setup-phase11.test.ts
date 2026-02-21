@@ -246,25 +246,25 @@ describe('P11-009: proactive skills have user-invocable frontmatter', () => {
     expect(skills).toHaveLength(13);
   });
 
-  it('security-review.md has user-invocable: true and trigger description', async () => {
+  it('security-review has user-invocable: true and trigger description', async () => {
     await setupStandard(tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'security-review.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'security-review', 'SKILL.md'), 'utf-8');
     expect(content).toContain('user-invocable: true');
     expect(content).toContain('description:');
     expect(content).toContain('security');
   });
 
-  it('performance-check.md has user-invocable: true and trigger description', async () => {
+  it('performance-check has user-invocable: true and trigger description', async () => {
     await setupStandard(tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'performance-check.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'performance-check', 'SKILL.md'), 'utf-8');
     expect(content).toContain('user-invocable: true');
     expect(content).toContain('description:');
     expect(content).toContain('performance');
   });
 
-  it('quality-gate.md skill exists with user-invocable: true', async () => {
+  it('quality-gate skill exists with user-invocable: true', async () => {
     await setupStandard(tmp.path);
-    const content = await readFile(join(tmp.path, '.claude', 'skills', 'quality-gate.md'), 'utf-8');
+    const content = await readFile(join(tmp.path, '.claude', 'skills', 'quality-gate', 'SKILL.md'), 'utf-8');
     expect(content).toContain('user-invocable: true');
     expect(content).toContain('flutter analyze');
     expect(content).toContain('flutter test');

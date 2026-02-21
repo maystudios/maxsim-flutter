@@ -27,7 +27,7 @@ describe('runClaudeSetup (v2 — preset-gated output)', () => {
     expect(await exists(join(tmp.path, '.claude', 'rules', 'architecture.md'))).toBe(true);
     expect(await exists(join(tmp.path, '.claude', 'agents', 'flutter-builder.md'))).toBe(false);
     expect(await exists(join(tmp.path, '.claude', 'settings.local.json'))).toBe(false);
-    expect(await exists(join(tmp.path, '.claude', 'skills', 'flutter-patterns.md'))).toBe(false);
+    expect(await exists(join(tmp.path, '.claude', 'skills', 'flutter-patterns', 'SKILL.md'))).toBe(false);
     expect(await exists(join(tmp.path, '.claude', 'commands', 'add-feature.md'))).toBe(false);
     expect(await exists(join(tmp.path, '.mcp.json'))).toBe(false);
   });
@@ -44,7 +44,7 @@ describe('runClaudeSetup (v2 — preset-gated output)', () => {
     expect(await exists(join(tmp.path, '.claude', 'agents', 'flutter-builder.md'))).toBe(true);
     expect(await exists(join(tmp.path, '.claude', 'hooks', 'block-dangerous.sh'))).toBe(true);
     expect(await exists(join(tmp.path, '.claude', 'settings.local.json'))).toBe(true);
-    expect(await exists(join(tmp.path, '.claude', 'skills', 'flutter-patterns.md'))).toBe(true);
+    expect(await exists(join(tmp.path, '.claude', 'skills', 'flutter-patterns', 'SKILL.md'))).toBe(true);
     expect(await exists(join(tmp.path, '.claude', 'commands', 'add-feature.md'))).toBe(true);
     expect(await exists(join(tmp.path, '.mcp.json'))).toBe(false);
   });
@@ -60,7 +60,7 @@ describe('runClaudeSetup (v2 — preset-gated output)', () => {
     expect(await exists(join(tmp.path, '.claude', 'rules', 'architecture.md'))).toBe(true);
     expect(await exists(join(tmp.path, '.claude', 'agents', 'flutter-builder.md'))).toBe(true);
     expect(await exists(join(tmp.path, '.claude', 'hooks', 'block-dangerous.sh'))).toBe(true);
-    expect(await exists(join(tmp.path, '.claude', 'skills', 'flutter-patterns.md'))).toBe(true);
+    expect(await exists(join(tmp.path, '.claude', 'skills', 'flutter-patterns', 'SKILL.md'))).toBe(true);
     expect(await exists(join(tmp.path, '.claude', 'commands', 'add-feature.md'))).toBe(true);
     expect(await exists(join(tmp.path, '.mcp.json'))).toBe(true);
   });
@@ -78,7 +78,7 @@ describe('runClaudeSetup (v2 — preset-gated output)', () => {
       join(tmp.path, '.claude', 'agents', 'flutter-builder.md'),
     );
     expect(result.filesWritten).toContain(
-      join(tmp.path, '.claude', 'skills', 'flutter-patterns.md'),
+      join(tmp.path, '.claude', 'skills', 'flutter-patterns', 'SKILL.md'),
     );
     expect(result.filesWritten).toContain(join(tmp.path, '.claude', 'commands', 'add-feature.md'));
     expect(result.filesWritten).toContain(join(tmp.path, 'prd.json'));

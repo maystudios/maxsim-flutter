@@ -17,31 +17,31 @@ function makeContext(overrides: Partial<Parameters<typeof makeTestContext>[0]> =
 describe('writeSkills', () => {
   const tmp = useTempDir('skill-writer-test-');
 
-  it('creates .claude/skills/ directory with all skill files', async () => {
+  it('creates .claude/skills/ directory with all skill subdirectories', async () => {
     await writeSkills(makeContext(), tmp.path);
     const skillsDir = join(tmp.path, '.claude', 'skills');
     const entries = await readdir(skillsDir);
     expect(entries.sort()).toEqual([
-      'add-feature.md',
-      'debug-workflow.md',
-      'error-recovery.md',
-      'flutter-patterns.md',
-      'go-router-patterns.md',
-      'module-conventions.md',
-      'performance-check.md',
-      'plan-template.md',
-      'prd.md',
-      'quality-gate.md',
-      'sdd-workflow.md',
-      'security-review.md',
-      'spec-template.md',
+      'add-feature',
+      'debug-workflow',
+      'error-recovery',
+      'flutter-patterns',
+      'go-router-patterns',
+      'module-conventions',
+      'performance-check',
+      'plan-template',
+      'prd',
+      'quality-gate',
+      'sdd-workflow',
+      'security-review',
+      'spec-template',
     ]);
   });
 
-  it('flutter-patterns.md contains Riverpod patterns', async () => {
+  it('flutter-patterns contains Riverpod patterns', async () => {
     await writeSkills(makeContext(), tmp.path);
     const content = await readFile(
-      join(tmp.path, '.claude', 'skills', 'flutter-patterns.md'),
+      join(tmp.path, '.claude', 'skills', 'flutter-patterns', 'SKILL.md'),
       'utf-8',
     );
     expect(content).toContain('Riverpod');
@@ -51,10 +51,10 @@ describe('writeSkills', () => {
     expect(content).toContain('AsyncNotifier');
   });
 
-  it('go-router-patterns.md contains GoRouter patterns', async () => {
+  it('go-router-patterns contains GoRouter patterns', async () => {
     await writeSkills(makeContext(), tmp.path);
     const content = await readFile(
-      join(tmp.path, '.claude', 'skills', 'go-router-patterns.md'),
+      join(tmp.path, '.claude', 'skills', 'go-router-patterns', 'SKILL.md'),
       'utf-8',
     );
     expect(content).toContain('go_router');
@@ -62,44 +62,44 @@ describe('writeSkills', () => {
     expect(content).toContain('GoRouteData');
   });
 
-  it('go-router-patterns.md includes auth guard when auth is enabled', async () => {
+  it('go-router-patterns includes auth guard when auth is enabled', async () => {
     const ctx = makeContext({
       modules: { ...makeContext().modules, auth: { provider: 'firebase' } },
     });
     await writeSkills(ctx, tmp.path);
     const content = await readFile(
-      join(tmp.path, '.claude', 'skills', 'go-router-patterns.md'),
+      join(tmp.path, '.claude', 'skills', 'go-router-patterns', 'SKILL.md'),
       'utf-8',
     );
     expect(content).toContain('Auth Guards');
     expect(content).toContain('isLoggedInProvider');
   });
 
-  it('go-router-patterns.md excludes auth guard when auth is disabled', async () => {
+  it('go-router-patterns excludes auth guard when auth is disabled', async () => {
     await writeSkills(makeContext(), tmp.path);
     const content = await readFile(
-      join(tmp.path, '.claude', 'skills', 'go-router-patterns.md'),
+      join(tmp.path, '.claude', 'skills', 'go-router-patterns', 'SKILL.md'),
       'utf-8',
     );
     expect(content).not.toContain('Auth Guards');
   });
 
-  it('go-router-patterns.md includes deep linking note when enabled', async () => {
+  it('go-router-patterns includes deep linking note when enabled', async () => {
     const ctx = makeContext({
       modules: { ...makeContext().modules, deepLinking: { scheme: 'myapp', host: 'example.com' } },
     });
     await writeSkills(ctx, tmp.path);
     const content = await readFile(
-      join(tmp.path, '.claude', 'skills', 'go-router-patterns.md'),
+      join(tmp.path, '.claude', 'skills', 'go-router-patterns', 'SKILL.md'),
       'utf-8',
     );
     expect(content).toContain('Deep Linking');
   });
 
-  it('module-conventions.md contains Clean Architecture guide', async () => {
+  it('module-conventions contains Clean Architecture guide', async () => {
     await writeSkills(makeContext(), tmp.path);
     const content = await readFile(
-      join(tmp.path, '.claude', 'skills', 'module-conventions.md'),
+      join(tmp.path, '.claude', 'skills', 'module-conventions', 'SKILL.md'),
       'utf-8',
     );
     expect(content).toContain('Clean Architecture');
@@ -109,10 +109,10 @@ describe('writeSkills', () => {
     expect(content).toContain('Layer Dependency Rules');
   });
 
-  it('prd.md contains story workflow guide', async () => {
+  it('prd contains story workflow guide', async () => {
     await writeSkills(makeContext(), tmp.path);
     const content = await readFile(
-      join(tmp.path, '.claude', 'skills', 'prd.md'),
+      join(tmp.path, '.claude', 'skills', 'prd', 'SKILL.md'),
       'utf-8',
     );
     expect(content).toContain('prd.json');

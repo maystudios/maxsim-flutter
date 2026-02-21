@@ -585,17 +585,17 @@ describe('Integration: create command generates working Flutter project', () => 
       expect(await pathExists(skillsDir)).toBe(true);
 
       const expectedSkills = [
-        'flutter-patterns.md',
-        'go-router-patterns.md',
-        'module-conventions.md',
-        'prd.md',
+        'flutter-patterns',
+        'go-router-patterns',
+        'module-conventions',
+        'prd',
       ];
-      for (const skillFile of expectedSkills) {
-        expect(await pathExists(join(skillsDir, skillFile))).toBe(true);
+      for (const skillDir of expectedSkills) {
+        expect(await pathExists(join(skillsDir, skillDir, 'SKILL.md'))).toBe(true);
       }
 
       // Verify skill content
-      const flutterPatterns = await readFile(join(skillsDir, 'flutter-patterns.md'), 'utf-8');
+      const flutterPatterns = await readFile(join(skillsDir, 'flutter-patterns', 'SKILL.md'), 'utf-8');
       expect(flutterPatterns).toContain('Riverpod');
     });
 
@@ -928,10 +928,10 @@ describe('Integration: create command generates working Flutter project', () => 
       expect(await pathExists(join(tmp.path, '.claude/agents/flutter-reviewer.md'))).toBe(true);
 
       // Skills
-      expect(await pathExists(join(tmp.path, '.claude/skills/flutter-patterns.md'))).toBe(true);
-      expect(await pathExists(join(tmp.path, '.claude/skills/go-router-patterns.md'))).toBe(true);
-      expect(await pathExists(join(tmp.path, '.claude/skills/module-conventions.md'))).toBe(true);
-      expect(await pathExists(join(tmp.path, '.claude/skills/prd.md'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.claude/skills/flutter-patterns/SKILL.md'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.claude/skills/go-router-patterns/SKILL.md'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.claude/skills/module-conventions/SKILL.md'))).toBe(true);
+      expect(await pathExists(join(tmp.path, '.claude/skills/prd/SKILL.md'))).toBe(true);
 
       // Hooks (now in settings.json, not settings.local.json)
       const settings = await readFile(join(tmp.path, '.claude/settings.json'), 'utf-8');

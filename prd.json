@@ -712,7 +712,7 @@
       "id": "P7-005",
       "phase": 7,
       "priority": 48,
-      "title": "Interactive create wizard — project template presets",
+      "title": "Interactive create wizard \u2014 project template presets",
       "description": "Before asking individual questions, offer preset bundles: Minimal (core), Standard (auth+api+theme), Full Featured (all), Custom (pick manually).",
       "acceptanceCriteria": [
         "First prompt in interactive flow is preset selection",
@@ -1055,8 +1055,8 @@
       "id": "P9-003",
       "phase": 9,
       "priority": 69,
-      "title": "Generate plan-app skill — Vision & Features phase",
-      "description": "Create src/plan/skill-generator.ts that generates the /plan-app Claude Code skill (model: opus). This story covers Steps 1-3: Step 1 (Understand Vision — 2 questions about problem and user journey), Step 2 (Define Core Features — 2-3 questions about top features, non-goals, team/solo), Step 3 (Technical Decisions — decision tree for auth provider, backend/database, platforms). Questions asked one at a time.",
+      "title": "Generate plan-app skill \u2014 Vision & Features phase",
+      "description": "Create src/plan/skill-generator.ts that generates the /plan-app Claude Code skill (model: opus). This story covers Steps 1-3: Step 1 (Understand Vision \u2014 2 questions about problem and user journey), Step 2 (Define Core Features \u2014 2-3 questions about top features, non-goals, team/solo), Step 3 (Technical Decisions \u2014 decision tree for auth provider, backend/database, platforms). Questions asked one at a time.",
       "acceptanceCriteria": [
         "Skill uses model: opus for complex reasoning",
         "Project name and description injected into skill body",
@@ -1072,8 +1072,8 @@
       "id": "P9-004",
       "phase": 9,
       "priority": 70,
-      "title": "Generate plan-app skill — Module suggestions phase",
-      "description": "Extend src/plan/skill-generator.ts with Steps 4-5: Step 4 (Proactive module suggestions based on app type with decision matrix covering team-collaboration, e-commerce, content-social, utility-tool. Each suggestion has REQUIRED/RECOMMENDED/NICE-TO-HAVE priority with rationale). Step 5 (Confirm selections — summarize all decisions, ask for approval).",
+      "title": "Generate plan-app skill \u2014 Module suggestions phase",
+      "description": "Extend src/plan/skill-generator.ts with Steps 4-5: Step 4 (Proactive module suggestions based on app type with decision matrix covering team-collaboration, e-commerce, content-social, utility-tool. Each suggestion has REQUIRED/RECOMMENDED/NICE-TO-HAVE priority with rationale). Step 5 (Confirm selections \u2014 summarize all decisions, ask for approval).",
       "acceptanceCriteria": [
         "Module suggestions are context-aware (based on app type)",
         "Each suggestion includes a rationale (WHY this module)",
@@ -1089,7 +1089,7 @@
       "id": "P9-005",
       "phase": 9,
       "priority": 71,
-      "title": "Generate plan-app skill — Artifact generation phase",
+      "title": "Generate plan-app skill \u2014 Artifact generation phase",
       "description": "Extend src/plan/skill-generator.ts with Steps 6-9: Step 6 (Generate project-brief.md from conversation), Step 7 (Generate architecture.md with provider tree ASCII diagram, navigation flow, database schema), Step 8 (Generate maxsim.config.yaml with all decisions), Step 9 (Generate prd.json v2 with stories from user journeys across 4 phases). Clear next-steps at the end.",
       "acceptanceCriteria": [
         "Skill generates project-brief.md from conversation data",
@@ -1141,7 +1141,7 @@
       "phase": 9,
       "priority": 74,
       "title": "Create journey-to-stories converter",
-      "description": "Create src/plan/journey-to-stories.ts — a template/prompt embedded in the plan-app skill that instructs Claude to decompose each user journey into PRD stories. Each journey produces 2-4 stories following domain → data → presentation → tests layers. Stories have >= 3 acceptance criteria with predicates, correct dependency chains, Fibonacci story points.",
+      "description": "Create src/plan/journey-to-stories.ts \u2014 a template/prompt embedded in the plan-app skill that instructs Claude to decompose each user journey into PRD stories. Each journey produces 2-4 stories following domain \u2192 data \u2192 presentation \u2192 tests layers. Stories have >= 3 acceptance criteria with predicates, correct dependency chains, Fibonacci story points.",
       "acceptanceCriteria": [
         "Journey decomposition template produces domain/data/presentation stories",
         "Each generated story has >= 3 acceptance criteria with predicates",
@@ -1302,7 +1302,7 @@
       "phase": 11,
       "priority": 84,
       "title": "Upgrade generated agent definitions with best-practice patterns",
-      "description": "Overhaul agent-writer.ts to generate agents that follow agentic coding best practices (see docs/agentic-claude-code-reference.md). Currently generates 3 agents (flutter-builder, flutter-tester, flutter-reviewer). Improvements: (1) Add AgentDefinition.isolation field support — set 'worktree' for builder and tester to prevent file conflicts in team mode. (2) Add AgentDefinition.memory field — set true for reviewer so it learns project patterns across sessions. (3) Add explicit 'Scope Boundaries' section to each agent body with 'Do NOT...' rules. (4) Fix model selection: builder should use 'opus' (not sonnet) per best practices — non-trivial implementation work benefits from Opus. (5) Add a new 'flutter-architect' agent (read-only: Read, Grep, Glob, WebSearch) for planning architecture before implementation. (6) Update AgentDefinition interface to include optional isolation, memory, maxTurns fields. (7) Update formatAgentMarkdown() to emit new frontmatter fields. Reference docs/agentic-claude-code-reference.md Section 1 for complete frontmatter spec.",
+      "description": "Overhaul agent-writer.ts to generate agents that follow agentic coding best practices (see docs/agentic-claude-code-reference.md). Currently generates 3 agents (flutter-builder, flutter-tester, flutter-reviewer). Improvements: (1) Add AgentDefinition.isolation field support \u2014 set 'worktree' for builder and tester to prevent file conflicts in team mode. (2) Add AgentDefinition.memory field \u2014 set true for reviewer so it learns project patterns across sessions. (3) Add explicit 'Scope Boundaries' section to each agent body with 'Do NOT...' rules. (4) Fix model selection: builder should use 'opus' (not sonnet) per best practices \u2014 non-trivial implementation work benefits from Opus. (5) Add a new 'flutter-architect' agent (read-only: Read, Grep, Glob, WebSearch) for planning architecture before implementation. (6) Update AgentDefinition interface to include optional isolation, memory, maxTurns fields. (7) Update formatAgentMarkdown() to emit new frontmatter fields. Reference docs/agentic-claude-code-reference.md Section 1 for complete frontmatter spec.",
       "acceptanceCriteria": [
         "Tests written first (TDD)",
         "AgentDefinition interface includes isolation?, memory?, maxTurns? fields",
@@ -1321,7 +1321,7 @@
       "phase": 11,
       "priority": 85,
       "title": "Add protect-secrets hook and notification hook to generated setup",
-      "description": "Extend hooks-writer.ts to generate additional hooks following best practices (see docs/agentic-claude-code-reference.md Section 3). Currently generates block-dangerous.sh and format-dart.sh. Add: (1) protect-secrets.sh — PreToolUse hook on Read|Edit|Write that blocks access to .env, .env.*, credentials*, secrets*, *.pem, *.key files. Uses JSON decision output format: {decision:block, reason:...}. (2) notify-waiting.sh — Notification hook that sends desktop notifications (cross-platform: osascript on macOS, notify-send on Linux, PowerShell toast on Windows). (3) Update HooksConfig to register both new hooks. (4) Add timeout field to hook entries (5 seconds for secrets, 10 for notification). Reference docs/agentic-claude-code-reference.md Section 3 for hook event types and JSON schemas.",
+      "description": "Extend hooks-writer.ts to generate additional hooks following best practices (see docs/agentic-claude-code-reference.md Section 3). Currently generates block-dangerous.sh and format-dart.sh. Add: (1) protect-secrets.sh \u2014 PreToolUse hook on Read|Edit|Write that blocks access to .env, .env.*, credentials*, secrets*, *.pem, *.key files. Uses JSON decision output format: {decision:block, reason:...}. (2) notify-waiting.sh \u2014 Notification hook that sends desktop notifications (cross-platform: osascript on macOS, notify-send on Linux, PowerShell toast on Windows). (3) Update HooksConfig to register both new hooks. (4) Add timeout field to hook entries (5 seconds for secrets, 10 for notification). Reference docs/agentic-claude-code-reference.md Section 3 for hook event types and JSON schemas.",
       "acceptanceCriteria": [
         "Tests written first (TDD)",
         "protect-secrets.sh generated in .claude/hooks/ with correct file-blocking logic",
@@ -1339,7 +1339,7 @@
       "phase": 11,
       "priority": 86,
       "title": "Generate settings.json with deny permissions and proper hook registration",
-      "description": "Currently hooks-writer.ts only generates settings.local.json with hooks config. Add generation of .claude/settings.json (team-shared config) containing: (1) hooks section — move hook registration from settings.local.json to settings.json since hooks should be shared. (2) Add deny permissions array blocking .env, .env.*, credentials*, secrets*, *.pem, *.key. (3) Keep settings.local.json for local-only allow permissions (flutter commands, git operations). This follows the best practice of separating shared config (settings.json committed to git) from local config (settings.local.json gitignored). Reference docs/agentic-claude-code-reference.md Section 6 for permission system and evaluation order (Deny > Ask > Allow).",
+      "description": "Currently hooks-writer.ts only generates settings.local.json with hooks config. Add generation of .claude/settings.json (team-shared config) containing: (1) hooks section \u2014 move hook registration from settings.local.json to settings.json since hooks should be shared. (2) Add deny permissions array blocking .env, .env.*, credentials*, secrets*, *.pem, *.key. (3) Keep settings.local.json for local-only allow permissions (flutter commands, git operations). This follows the best practice of separating shared config (settings.json committed to git) from local config (settings.local.json gitignored). Reference docs/agentic-claude-code-reference.md Section 6 for permission system and evaluation order (Deny > Ask > Allow).",
       "acceptanceCriteria": [
         "Tests written first (TDD)",
         ".claude/settings.json generated with hooks and deny permissions",
@@ -1392,14 +1392,14 @@
       "phase": 11,
       "priority": 89,
       "title": "Add start-team command for generated Flutter projects",
-      "description": "Add a new 'start-team' slash command to commands-writer.ts that orchestrates Claude Code Agent Teams for Flutter projects (see docs/agentic-claude-code-reference.md Section 5). The generated /start-team command should: (1) Read prd.json to find incomplete stories in current phase. (2) Pre-flight: git clean, flutter analyze passes, flutter test passes. (3) Create team 'flutter-sprint' with TaskCreate for each story. (4) Spawn 4 agents: architect (opus), builder (opus), tester (sonnet), reviewer (haiku). (5) Orchestrate TDD flow: Architect → Builder (RED+GREEN) → Tester (edge cases) → Reviewer → Quality gates. (6) Commit + push after each story passes. (7) Use correct model assignments per best practices. This is the most complex command and should reference the agent team patterns from the docs.",
+      "description": "Add a new 'start-team' slash command to commands-writer.ts that orchestrates Claude Code Agent Teams for Flutter projects (see docs/agentic-claude-code-reference.md Section 5). The generated /start-team command should: (1) Read prd.json to find incomplete stories in current phase. (2) Pre-flight: git clean, flutter analyze passes, flutter test passes. (3) Create team 'flutter-sprint' with TaskCreate for each story. (4) Spawn 4 agents: architect (opus), builder (opus), tester (sonnet), reviewer (haiku). (5) Orchestrate TDD flow: Architect \u2192 Builder (RED+GREEN) \u2192 Tester (edge cases) \u2192 Reviewer \u2192 Quality gates. (6) Commit + push after each story passes. (7) Use correct model assignments per best practices. This is the most complex command and should reference the agent team patterns from the docs.",
       "acceptanceCriteria": [
         "Tests written first (TDD)",
         "start-team.md command generated in .claude/commands/",
         "Command reads prd.json for sprint planning",
         "Pre-flight checks: git status, flutter analyze, flutter test",
         "Spawns 4 agents with correct models (architect=opus, builder=opus, tester=sonnet, reviewer=haiku)",
-        "TDD flow orchestration documented (Architect → Builder → Tester → Reviewer)",
+        "TDD flow orchestration documented (Architect \u2192 Builder \u2192 Tester \u2192 Reviewer)",
         "Commit + push protocol after each story",
         "npm run quality passes"
       ],
@@ -1458,6 +1458,274 @@
         "CLAUDE.md line count verified under 120",
         "All existing tests still pass",
         "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-001",
+      "phase": 12,
+      "priority": 93,
+      "title": "Enhance generated agent definitions with error recovery and context management",
+      "description": "Upgrade all 4 generated agents in agent-writer.ts: add 4-tier error recovery protocol (Self-Correction \u2192 AI-to-AI \u2192 Human-Augmented \u2192 Full Human), context management section (70% threshold, /clear guidance, subagent delegation), upgrade reviewer from haiku to sonnet, improve description fields with WHEN-to-use triggers, add structured handoff format.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "All 4 agents include Error Recovery section with 4 tiers",
+        "All 4 agents include Context Management section",
+        "flutter-reviewer model changed from haiku to sonnet",
+        "Agent descriptions include WHEN-to-use trigger phrases",
+        "Each agent has structured Handoff Format section",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-002",
+      "phase": 12,
+      "priority": 94,
+      "title": "Add SDD agents (specifier and planner) to generated setup",
+      "description": "Add flutter-specifier (opus, read-only, maxTurns: 30) and flutter-planner (sonnet, read-only, maxTurns: 25) agents conditional on agentTeams=true. buildAgentDefinitions() returns 6 agents when agentTeams=true, 4 when false.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "buildAgentDefinitions returns 6 agents when agentTeams=true",
+        "buildAgentDefinitions returns 4 agents when agentTeams=false",
+        "flutter-specifier uses opus with read-only tools",
+        "flutter-planner uses sonnet with read-only tools",
+        "Both agents have error recovery and context management sections",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-003",
+      "phase": 12,
+      "priority": 95,
+      "title": "Enhance maxsim-flutter own agent definitions",
+      "description": "Upgrade all 7 agents in .claude/agents/ with explicit model frontmatter, 4-tier error recovery, context management sections, WHEN-to-use triggers. Models: architect/builder/tdd-driver=opus, tester/reviewer/quality-gate=sonnet, template-expert=opus.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "All 7 agents have model: in frontmatter",
+        "All 7 agents include Error Recovery section",
+        "All 7 agents include Context Management section",
+        "Agent descriptions include WHEN-to-use triggers",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-004",
+      "phase": 12,
+      "priority": 96,
+      "title": "Enhance generated CLAUDE.md with security, error recovery, and SDD",
+      "description": "Update claude-md-generator.ts: add Security anti-patterns section, add @-imports for error-recovery.md and context-management.md rules, add SDD workflow section when agentTeams=true. Keep CLAUDE.md under 120 lines.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "Generated CLAUDE.md includes @.claude/rules/error-recovery.md",
+        "Generated CLAUDE.md includes @.claude/rules/context-management.md",
+        "Security anti-patterns section present",
+        "SDD workflow section added when agentTeams=true",
+        "CLAUDE.md under 120 lines with all modules + agentTeams",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-005",
+      "phase": 12,
+      "priority": 97,
+      "title": "Add error-recovery and context-management rules to generated setup",
+      "description": "Add 2 new core rules to rules-writer.ts: error-recovery.md (4-tier escalation with Flutter recovery steps) and context-management.md (70% threshold, /clear, subagents, file ownership). Both with paths: ['**'] frontmatter. Update orchestrator filesWritten.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "writeRules generates error-recovery.md",
+        "writeRules generates context-management.md",
+        "error-recovery.md has 4 tiers",
+        "context-management.md mentions 70% threshold",
+        "Both have YAML frontmatter with paths",
+        "setup-orchestrator.ts tracks new files",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-006",
+      "phase": 12,
+      "priority": 98,
+      "title": "Enhance own CLAUDE.md and add own rules",
+      "description": "Add Security anti-patterns and @-imports for error-recovery.md and context-management.md to project CLAUDE.md. Create .claude/rules/error-recovery.md and context-management.md for TypeScript/Node.js context. Keep CLAUDE.md under 120 lines.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "CLAUDE.md references error-recovery.md and context-management.md",
+        "CLAUDE.md includes Security section",
+        "CLAUDE.md under 120 lines",
+        ".claude/rules/error-recovery.md exists",
+        ".claude/rules/context-management.md exists",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-007",
+      "phase": 12,
+      "priority": 99,
+      "title": "Add PreCompact hook to generated setup",
+      "description": "Add precompact-preserve.sh to hooks-writer.ts that outputs structured markdown (modified files, task context, architecture decisions). Add PreCompact and Stop to HooksConfig interface. Register in config.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "writeHooks generates precompact-preserve.sh",
+        "Script has bash shebang and executable permissions",
+        "Script captures modified files via git diff",
+        "HooksConfig interface includes PreCompact and Stop",
+        "Hook registered in returned config",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-008",
+      "phase": 12,
+      "priority": 100,
+      "title": "Make TaskCompleted hook blocking with exit 2",
+      "description": "Upgrade quality-gate-task.sh from advisory (exit 0) to blocking (exit 2). Run flutter analyze and flutter test, exit 2 if either fails. Only trigger for implementation tasks. Increase timeout to 120s.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "quality-gate-task.sh runs flutter analyze",
+        "quality-gate-task.sh runs flutter test",
+        "Script exits 2 when checks fail",
+        "Script exits 0 when checks pass",
+        "TaskCompleted hook timeout is 120",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-009",
+      "phase": 12,
+      "priority": 101,
+      "title": "Add context-poisoning detection hook to generated setup",
+      "description": "Add context-monitor.sh running on Stop events. Advisory (exit 0), warns about context fill, recommends /clear or subagent delegation. Total hooks: 7.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "writeHooks generates context-monitor.sh",
+        "Script has bash shebang and executable permissions",
+        "Script outputs context management guidance",
+        "Hook registered under Stop event",
+        "Total hook scripts is 7",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-010",
+      "phase": 12,
+      "priority": 102,
+      "title": "Update generated settings.json with AUTOCOMPACT override",
+      "description": "Add CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: '70' to env section (always, not just agentTeams). Add additional deny rules for Flutter security patterns. Update settings.local.json allow list.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "settings.json env includes CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: '70'",
+        "Env field present regardless of agentTeams setting",
+        "Additional deny rules for Flutter security",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-011",
+      "phase": 12,
+      "priority": 103,
+      "title": "Add SDD skills to generated setup",
+      "description": "Add sdd-workflow.md (user-invocable, sonnet), spec-template.md (reference, module-conditional sections), plan-template.md (reference) to skill-writer.ts. Update orchestrator filesWritten.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "writeSkills generates sdd-workflow.md, spec-template.md, plan-template.md",
+        "sdd-workflow.md has user-invocable: true",
+        "spec-template.md has module-conditional sections",
+        "Total skills is 11",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-012",
+      "phase": 12,
+      "priority": 104,
+      "title": "Add error-recovery and debug-workflow skills to generated setup",
+      "description": "Add error-recovery.md (user-invocable, sonnet, 4-tier guide) and debug-workflow.md (user-invocable, sonnet, reproduce/isolate/fix/verify, Flutter DevTools) to skill-writer.ts. Total skills: 13.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "writeSkills generates error-recovery.md and debug-workflow.md",
+        "error-recovery.md has user-invocable: true and 4 tiers",
+        "debug-workflow.md has user-invocable: true",
+        "Total skills is 13",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-013",
+      "phase": 12,
+      "priority": 105,
+      "title": "Add SDD commands to generated setup",
+      "description": "Add specify.md (/specify, opus), plan.md (/plan, opus), tasks.md (/tasks, sonnet) to commands-writer.ts, conditional on agentTeams=true. Enhance start-team.md with file ownership and error recovery. Total commands: 6 when agentTeams=true, 3 when false.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "writeCommands generates specify.md, plan.md, tasks.md when agentTeams=true",
+        "Commands not generated when agentTeams=false",
+        "start-team.md includes file ownership table",
+        "start-team.md includes error recovery protocol",
+        "Total commands: 6 when agentTeams=true",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-014",
+      "phase": 12,
+      "priority": 106,
+      "title": "Enhance own start-team command and hooks",
+      "description": "Enhance .claude/commands/start-team.md with file ownership, 3-tier hierarchy, error recovery. Add .claude/hooks/precompact-preserve.sh. Make quality-gate-task.sh blocking (exit 2). Add AUTOCOMPACT to settings.json.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "start-team.md includes file ownership table",
+        "start-team.md includes 3-tier hierarchy",
+        "precompact-preserve.sh exists and is executable",
+        "quality-gate-task.sh runs npm run quality and exits 2 on failure",
+        "settings.json includes AUTOCOMPACT env",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-015",
+      "phase": 12,
+      "priority": 107,
+      "title": "Integration tests for Phase 12",
+      "description": "Create tests/integration/claude-setup-phase12.test.ts. Verify: agents 6 (agentTeams=true) / 4 (false), hooks 7, rules 9 core, skills 13, commands 6/3, settings env AUTOCOMPACT, CLAUDE.md SDD+security, reviewer sonnet. Update phase11 test assertions.",
+      "acceptanceCriteria": [
+        "Tests written first (TDD)",
+        "Phase 12 integration test covers all 3 presets",
+        "Agent count: 6 for standard/full with agentTeams",
+        "Hook count: 7",
+        "Skill count: 13",
+        "Command count: 6 with agentTeams",
+        "Settings env verified",
+        "All existing tests pass with updated assertions",
+        "npm run quality passes"
+      ],
+      "passes": true
+    },
+    {
+      "id": "P12-016",
+      "phase": 12,
+      "priority": 108,
+      "title": "End-to-end validation and documentation",
+      "description": "Run npm run quality:full. Mark all Phase 12 stories passes: true. Update progress.txt. Verify no it.todo or it.skip remain.",
+      "acceptanceCriteria": [
+        "npm run quality:full passes",
+        "All Phase 12 stories marked passes: true",
+        "progress.txt updated with Phase 12 summary",
+        "No it.todo or it.skip in any test file",
+        "Coverage meets thresholds from jest.config.mjs"
       ],
       "passes": true
     }

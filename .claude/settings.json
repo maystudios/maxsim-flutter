@@ -2,6 +2,9 @@
   "enabledPlugins": {
     "ralph-skills@ralph-marketplace": true
   },
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "70"
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -45,6 +48,18 @@
             "type": "command",
             "command": ".claude/hooks/quality-gate-task.sh",
             "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/precompact-preserve.sh",
+            "timeout": 30
           }
         ]
       }

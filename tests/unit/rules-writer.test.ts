@@ -50,12 +50,14 @@ describe('writeRules', () => {
     expect(entries).toContain('testing.md');
   });
 
-  it('generates exactly 7 core files when no optional modules are enabled', async () => {
+  it('generates exactly 9 core files when no optional modules are enabled', async () => {
     await writeRules(makeContext(), tmp.path);
     const entries = await readdir(join(tmp.path, '.claude', 'rules'));
     expect(entries.sort()).toEqual([
       'architecture.md',
       'code-quality.md',
+      'context-management.md',
+      'error-recovery.md',
       'git-workflow.md',
       'go-router.md',
       'riverpod.md',
@@ -397,7 +399,7 @@ describe('writeRules', () => {
     expect(content).toContain('GoRouter');
   });
 
-  it('generates all 16 files when all optional modules are enabled', async () => {
+  it('generates all 18 files when all optional modules are enabled', async () => {
     const ctx = makeContext({
       modules: {
         auth: { provider: 'firebase' },
@@ -420,8 +422,10 @@ describe('writeRules', () => {
       'auth.md',
       'cicd.md',
       'code-quality.md',
+      'context-management.md',
       'database.md',
       'deep-linking.md',
+      'error-recovery.md',
       'git-workflow.md',
       'go-router.md',
       'i18n.md',
@@ -480,5 +484,98 @@ describe('writeRules', () => {
     );
     expect(content).toMatch(/^---\n/);
     expect(content).toContain('paths:');
+  });
+
+  // ─── P12-005: error-recovery.md ──────────────────────────────────────────
+
+  it('always generates error-recovery.md', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const entries = await readdir(join(tmp.path, '.claude', 'rules'));
+    expect(entries).toContain('error-recovery.md');
+  });
+
+  it('error-recovery.md starts with YAML frontmatter', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'error-recovery.md'),
+      'utf-8',
+    );
+    expect(content).toMatch(/^---\n/);
+    expect(content).toContain('paths:');
+  });
+
+  it('error-recovery.md frontmatter paths includes **', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'error-recovery.md'),
+      'utf-8',
+    );
+    expect(content).toContain('"**"');
+  });
+
+  it('error-recovery.md contains 4-tier escalation levels', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'error-recovery.md'),
+      'utf-8',
+    );
+    expect(content).toContain('Self-Correction');
+    expect(content).toContain('AI-to-AI');
+    expect(content).toContain('Human-Augmented');
+    expect(content).toContain('Full Human');
+  });
+
+  it('error-recovery.md contains flutter clean recovery step', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'error-recovery.md'),
+      'utf-8',
+    );
+    expect(content).toContain('flutter clean');
+  });
+
+  // ─── P12-005: context-management.md ──────────────────────────────────────
+
+  it('always generates context-management.md', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const entries = await readdir(join(tmp.path, '.claude', 'rules'));
+    expect(entries).toContain('context-management.md');
+  });
+
+  it('context-management.md starts with YAML frontmatter', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'context-management.md'),
+      'utf-8',
+    );
+    expect(content).toMatch(/^---\n/);
+    expect(content).toContain('paths:');
+  });
+
+  it('context-management.md frontmatter paths includes **', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'context-management.md'),
+      'utf-8',
+    );
+    expect(content).toContain('"**"');
+  });
+
+  it('context-management.md contains 70% threshold', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'context-management.md'),
+      'utf-8',
+    );
+    expect(content).toContain('70%');
+  });
+
+  it('context-management.md contains /clear guidance', async () => {
+    await writeRules(makeContext(), tmp.path);
+    const content = await readFile(
+      join(tmp.path, '.claude', 'rules', 'context-management.md'),
+      'utf-8',
+    );
+    expect(content).toContain('/clear');
   });
 });

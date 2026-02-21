@@ -37,7 +37,7 @@ describe('P11-008: quality-gate-task.sh script', () => {
   it('quality-gate-task.sh reads JSON stdin', async () => {
     await writeHooks(makeContext(), tmp.path);
     const content = await readFile(join(tmp.path, '.claude', 'hooks', 'quality-gate-task.sh'), 'utf-8');
-    expect(content).toContain('INPUT=$(cat)');
+    expect(content).toContain('TASK_JSON=$(cat)');
   });
 
   it('quality-gate-task.sh checks for implementation task pattern', async () => {
@@ -54,11 +54,11 @@ describe('P11-008: quality-gate-task.sh script', () => {
     expect(content).toContain('flutter test');
   });
 
-  it('quality-gate-task.sh always exits 0', async () => {
+  it('quality-gate-task.sh exits 2 on quality failure (blocking hook)', async () => {
     await writeHooks(makeContext(), tmp.path);
     const content = await readFile(join(tmp.path, '.claude', 'hooks', 'quality-gate-task.sh'), 'utf-8');
+    expect(content).toContain('exit 2');
     expect(content).toContain('exit 0');
-    expect(content).not.toContain('exit 2');
   });
 });
 
@@ -73,10 +73,10 @@ describe('P11-008: TaskCompleted hook config', () => {
     expect(taskHook.hooks[0].command).toContain('quality-gate-task.sh');
   });
 
-  it('TaskCompleted hook has timeout of 60', async () => {
+  it('TaskCompleted hook has timeout of 120', async () => {
     const result = await writeHooks(makeContext(), tmp.path);
     const taskHook = result.config.hooks.TaskCompleted![0];
-    expect(taskHook.hooks[0].timeout).toBe(60);
+    expect(taskHook.hooks[0].timeout).toBe(120);
   });
 
   it('TaskCompleted hook no longer uses inline flutter analyze command', async () => {
@@ -88,17 +88,19 @@ describe('P11-008: TaskCompleted hook config', () => {
 
 // ─── P11-008: hooks directory updated count ─────────────────────────────────
 
-describe('P11-008: hooks directory has 5 scripts', () => {
-  const tmp = useTempDir('hooks-count-5-');
+describe('P11-008: hooks directory has 7 scripts', () => {
+  const tmp = useTempDir('hooks-count-7-');
 
-  it('hooks directory contains exactly 5 scripts', async () => {
+  it('hooks directory contains exactly 7 scripts', async () => {
     await writeHooks(makeContext(), tmp.path);
     const entries = await readdir(join(tmp.path, '.claude', 'hooks'));
-    expect(entries).toHaveLength(5);
+    expect(entries).toHaveLength(7);
     expect(entries.sort()).toEqual([
       'block-dangerous.sh',
+      'context-monitor.sh',
       'format-dart.sh',
       'notify-waiting.sh',
+      'precompact-preserve.sh',
       'protect-secrets.sh',
       'quality-gate-task.sh',
     ]);

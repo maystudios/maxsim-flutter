@@ -150,7 +150,7 @@ describe('writeSettings — settings.json (team-shared)', () => {
     expect(content.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS).toBe('1');
   });
 
-  it('settings.json omits env section when agentTeams is false', async () => {
+  it('settings.json includes CLAUDE_AUTOCOMPACT_PCT_OVERRIDE env always', async () => {
     await writeSettings(
       makeContext({ claude: { enabled: true, agentTeams: false } }),
       tmp.path,
@@ -159,7 +159,38 @@ describe('writeSettings — settings.json (team-shared)', () => {
     const content = JSON.parse(
       await readFile(join(tmp.path, '.claude', 'settings.json'), 'utf-8'),
     );
-    expect(content.env).toBeUndefined();
+    expect(content.env).toBeDefined();
+    expect(content.env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE).toBe('70');
+  });
+
+  it('settings.json env has both AUTOCOMPACT and AGENT_TEAMS when agentTeams is true', async () => {
+    await writeSettings(
+      makeContext({ claude: { enabled: true, agentTeams: true } }),
+      tmp.path,
+      sampleHooksConfig,
+    );
+    const content = JSON.parse(
+      await readFile(join(tmp.path, '.claude', 'settings.json'), 'utf-8'),
+    );
+    expect(content.env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE).toBe('70');
+    expect(content.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS).toBe('1');
+  });
+
+  it('deny rules include Firebase config files', async () => {
+    await writeSettings(makeContext(), tmp.path, sampleHooksConfig);
+    const content = JSON.parse(
+      await readFile(join(tmp.path, '.claude', 'settings.json'), 'utf-8'),
+    );
+    expect(content.permissions.deny).toContain('Read(./**/google-services.json)');
+    expect(content.permissions.deny).toContain('Read(./**/GoogleService-Info.plist)');
+  });
+
+  it('deny rules include Bash(git push --force *)', async () => {
+    await writeSettings(makeContext(), tmp.path, sampleHooksConfig);
+    const content = JSON.parse(
+      await readFile(join(tmp.path, '.claude', 'settings.json'), 'utf-8'),
+    );
+    expect(content.permissions.deny).toContain('Bash(git push --force *)');
   });
 });
 
@@ -223,6 +254,22 @@ describe('writeSettings — settings.local.json (personal)', () => {
     );
     expect(content.permissions.allow).toContain('Edit(./lib/**)');
     expect(content.permissions.allow).toContain('Edit(./test/**)');
+  });
+
+  it('allow rules include Bash(dart run build_runner *)', async () => {
+    await writeSettings(makeContext(), tmp.path, sampleHooksConfig);
+    const content = JSON.parse(
+      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
+    );
+    expect(content.permissions.allow).toContain('Bash(dart run build_runner *)');
+  });
+
+  it('allow rules include Read(./pubspec.yaml)', async () => {
+    await writeSettings(makeContext(), tmp.path, sampleHooksConfig);
+    const content = JSON.parse(
+      await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'),
+    );
+    expect(content.permissions.allow).toContain('Read(./pubspec.yaml)');
   });
 
   it('settings.local.json does NOT contain hooks', async () => {

@@ -81,3 +81,71 @@ describe('P11-007: line count stays under 120', () => {
     expect(lineCount).toBeLessThanOrEqual(120);
   });
 });
+
+// ─── P12-004: Security anti-patterns section ─────────────────────────────────
+
+describe('P12-004: security anti-patterns section', () => {
+  it('contains Security section header', () => {
+    const result = generateClaudeMd(makeTestContext());
+    expect(result).toContain('## Security');
+  });
+
+  it('warns against hardcoding secrets', () => {
+    const result = generateClaudeMd(makeTestContext());
+    expect(result).toContain('NEVER');
+    expect(result).toMatch(/hardcode.*secrets/i);
+  });
+
+  it('mentions flutter_secure_storage for sensitive data', () => {
+    const result = generateClaudeMd(makeTestContext());
+    expect(result).toContain('flutter_secure_storage');
+  });
+
+  it('warns against logging PII', () => {
+    const result = generateClaudeMd(makeTestContext());
+    expect(result).toMatch(/NEVER.*log.*PII|PII.*NEVER/i);
+  });
+
+  it('requires HTTPS for network requests', () => {
+    const result = generateClaudeMd(makeTestContext());
+    expect(result).toContain('HTTPS');
+  });
+});
+
+// ─── P12-004: New rule @-imports ─────────────────────────────────────────────
+
+describe('P12-004: new rule @-imports', () => {
+  it('contains @-import for error-recovery.md', () => {
+    const result = generateClaudeMd(makeTestContext());
+    expect(result).toContain('@.claude/rules/error-recovery.md');
+  });
+
+  it('contains @-import for context-management.md', () => {
+    const result = generateClaudeMd(makeTestContext());
+    expect(result).toContain('@.claude/rules/context-management.md');
+  });
+});
+
+// ─── P12-004: SDD pipeline section ──────────────────────────────────────────
+
+describe('P12-004: SDD pipeline section', () => {
+  it('includes SDD references when agentTeams is true', () => {
+    const ctx = makeTestContext({ claude: { enabled: true, agentTeams: true } });
+    const result = generateClaudeMd(ctx);
+    expect(result).toContain('/specify');
+    expect(result).toContain('/plan');
+    expect(result).toContain('/start-team');
+  });
+
+  it('does not include SDD references when agentTeams is false', () => {
+    const ctx = makeTestContext({ claude: { enabled: true, agentTeams: false } });
+    const result = generateClaudeMd(ctx);
+    expect(result).not.toContain('/specify');
+  });
+
+  it('mentions Spec-Driven Development', () => {
+    const ctx = makeTestContext({ claude: { enabled: true, agentTeams: true } });
+    const result = generateClaudeMd(ctx);
+    expect(result).toContain('Spec-Driven Development');
+  });
+});

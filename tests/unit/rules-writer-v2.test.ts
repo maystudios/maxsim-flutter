@@ -142,12 +142,14 @@ describe('P11-004: code-quality.md rule', () => {
 describe('P11-004: updated core file counts', () => {
   const tmp = useTempDir('rules-counts-');
 
-  it('generates exactly 7 core rules when no optional modules are enabled', async () => {
+  it('generates exactly 9 core rules when no optional modules are enabled', async () => {
     await writeRules(makeContext(), tmp.path);
     const entries = await readdir(join(tmp.path, '.claude', 'rules'));
     expect(entries.sort()).toEqual([
       'architecture.md',
       'code-quality.md',
+      'context-management.md',
+      'error-recovery.md',
       'git-workflow.md',
       'go-router.md',
       'riverpod.md',
@@ -156,7 +158,7 @@ describe('P11-004: updated core file counts', () => {
     ]);
   });
 
-  it('generates all 16 files when all optional modules are enabled', async () => {
+  it('generates all 18 files when all optional modules are enabled', async () => {
     const ctx = makeContext({
       modules: {
         auth: { provider: 'firebase' },
@@ -179,8 +181,10 @@ describe('P11-004: updated core file counts', () => {
       'auth.md',
       'cicd.md',
       'code-quality.md',
+      'context-management.md',
       'database.md',
       'deep-linking.md',
+      'error-recovery.md',
       'git-workflow.md',
       'go-router.md',
       'i18n.md',

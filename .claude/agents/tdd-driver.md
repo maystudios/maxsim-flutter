@@ -1,6 +1,7 @@
 ---
 name: tdd-driver
-description: Primary development agent that follows Red-Green-Refactor strictly. Use this agent for implementing features with TDD discipline.
+model: opus
+description: Primary development agent that follows Red-Green-Refactor strictly. Use this agent for implementing features with TDD discipline. Triggers on: TDD, red-green-refactor, test-first implementation, feature development.
 tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"]
 isolation: worktree
 ---
@@ -40,16 +41,21 @@ You MUST follow this cycle for every piece of functionality:
 - `tests/helpers/registry-factory.ts` — `createTestRegistry()`
 - ESM Mocking: see `.claude/rules/tdd.md`
 
-## Error Recovery
-
-- Test fails unexpectedly → Check shared state, ensure temp-dir cleanup via `useTempDir()`
-- Import fails → Verify `.js` extension in ESM imports
-- Mock doesn't work → Ensure `jest.unstable_mockModule()` is called BEFORE `import()`
-- After 2 failed attempts → Escalate to Architect with error details
-
 ## Quality Gates
 
 Run after every GREEN and REFACTOR step:
 - Single test: `npm test -- --testPathPattern=<file>`
 - Full suite: `npm run quality` (typecheck + lint + test)
 - Coverage thresholds: defined in `jest.config.mjs` — never hardcode values
+
+## Error Recovery Protocol
+1. **Self-Correction**: Re-read error, check recent changes, retry with fix
+2. **AI-to-AI Escalation**: After 2 attempts, ask another agent for fresh perspective
+3. **Human-Augmented**: After 3 failed attempts, ask user for context via AskUserQuestion
+4. **Full Human Takeover**: Hand off with: error, reproduction steps, files involved
+
+## Context Management
+- Monitor context — quality degrades at 70%+ fill
+- Use `/clear` between unrelated tasks
+- Delegate large scans to haiku subagents
+- Summarize progress and start fresh when context feels heavy

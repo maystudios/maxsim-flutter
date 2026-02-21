@@ -19,6 +19,8 @@ export interface HooksConfig {
     PreToolUse?: HookEntry[];
     PostToolUse?: HookEntry[];
     Notification?: HookEntry[];
+    PreCompact?: HookEntry[];
+    Stop?: HookEntry[];
   };
 }
 
@@ -114,26 +116,92 @@ exit 0
 `;
 
 const QUALITY_GATE_TASK_SH = `#!/bin/bash
-# TaskCompleted hook: remind about quality checks for implementation tasks
-# Claude passes task result as JSON on stdin
+# TaskCompleted hook — BLOCKS task completion if quality checks fail (exit 2)
 
-INPUT=$(cat)
+# Read task info from stdin
+TASK_JSON=$(cat)
+TASK_SUBJECT=$(echo "$TASK_JSON" | grep -o '"subject":"[^"]*"' | head -1 | sed 's/"subject":"//;s/"//')
 
-# Extract task subject from JSON
-SUBJECT=$(echo "$INPUT" | jq -r '.task_subject // .subject // empty')
-
-# Only trigger for implementation tasks (story IDs like P\\d+- or S-\\d+)
-if ! echo "$SUBJECT" | grep -qE 'P[0-9]+-|S-[0-9]+'; then
+# Only check implementation tasks (story IDs or implementation keywords)
+if ! echo "$TASK_SUBJECT" | grep -qiE '(P[0-9]+-|SDD-|implement|feat|build|create)'; then
   exit 0
 fi
 
-# Output quality gate reminder
-echo "Quality gate reminder for: $SUBJECT"
-echo "Before marking complete, verify:"
-echo "  1. flutter analyze — zero warnings"
-echo "  2. flutter test — all tests pass"
-echo "  3. dart format --set-exit-if-changed . — formatted"
-echo "  4. Coverage meets thresholds"
+echo "Quality Gate: Running checks for implementation task..."
+echo ""
+
+# Run flutter analyze
+echo "Running flutter analyze..."
+if ! flutter analyze --no-pub 2>&1; then
+  echo ""
+  echo "BLOCKED: flutter analyze found issues. Fix them before completing this task."
+  exit 2
+fi
+
+echo ""
+
+# Run flutter test
+echo "Running flutter test..."
+if ! flutter test 2>&1; then
+  echo ""
+  echo "BLOCKED: flutter test failed. Fix failing tests before completing this task."
+  exit 2
+fi
+
+echo ""
+echo "Quality Gate PASSED. Task may proceed."
+exit 0
+`;
+
+const PRECOMPACT_PRESERVE_SH = `#!/bin/bash
+# PreCompact hook — preserves critical context before compaction
+
+echo "## Context Preservation Summary"
+echo ""
+echo "### Modified Files"
+git diff --name-only 2>/dev/null || echo "(not a git repo)"
+echo ""
+echo "### Staged Files"
+git diff --cached --name-only 2>/dev/null || echo "(none)"
+echo ""
+echo "### Current Branch"
+git branch --show-current 2>/dev/null || echo "(unknown)"
+echo ""
+echo "### Recent Commits"
+git log --oneline -5 2>/dev/null || echo "(none)"
+echo ""
+if [ -f ".claude/decisions.md" ]; then
+  echo "### Architecture Decisions"
+  cat .claude/decisions.md
+fi
+
+exit 0
+`;
+
+const CONTEXT_MONITOR_SH = `#!/bin/bash
+# Stop hook — advisory context management guidance
+# Runs when a conversation stops; warns about context fill and recommends actions
+
+echo "## Context Management Advisory"
+echo ""
+echo "### Recommendations"
+echo "- If context is getting large, use /clear to reset"
+echo "- Delegate complex sub-tasks to subagents via the Task tool"
+echo "- Use PreCompact hook to preserve critical context before compaction"
+echo ""
+echo "### Current Working State"
+git status --short 2>/dev/null || echo "(not a git repo)"
+echo ""
+echo "### Uncommitted Changes"
+git diff --stat 2>/dev/null || echo "(none)"
+echo ""
+echo "### Suspicious Patterns Check"
+# Check for potential context poisoning indicators
+if git diff --cached --name-only 2>/dev/null | grep -qE '\\.(env|pem|key)$'; then
+  echo "WARNING: Staged files include potentially sensitive files"
+fi
+echo ""
+echo "Remember: commit early, commit often. Push after every commit."
 
 exit 0
 `;
@@ -151,12 +219,16 @@ export async function writeHooks(context: ProjectContext, outputPath: string): P
   const protectSecretsPath = path.join(hooksDir, 'protect-secrets.sh');
   const notifyWaitingPath = path.join(hooksDir, 'notify-waiting.sh');
   const qualityGateTaskPath = path.join(hooksDir, 'quality-gate-task.sh');
+  const precompactPreservePath = path.join(hooksDir, 'precompact-preserve.sh');
+  const contextMonitorPath = path.join(hooksDir, 'context-monitor.sh');
 
   await fs.writeFile(blockDangerousPath, BLOCK_DANGEROUS_SH);
   await fs.writeFile(formatDartPath, FORMAT_DART_SH);
   await fs.writeFile(protectSecretsPath, PROTECT_SECRETS_SH);
   await fs.writeFile(notifyWaitingPath, NOTIFY_WAITING_SH);
   await fs.writeFile(qualityGateTaskPath, QUALITY_GATE_TASK_SH);
+  await fs.writeFile(precompactPreservePath, PRECOMPACT_PRESERVE_SH);
+  await fs.writeFile(contextMonitorPath, CONTEXT_MONITOR_SH);
 
   // Make scripts executable (mode 0o755)
   await chmod(blockDangerousPath, 0o755);
@@ -164,8 +236,10 @@ export async function writeHooks(context: ProjectContext, outputPath: string): P
   await chmod(protectSecretsPath, 0o755);
   await chmod(notifyWaitingPath, 0o755);
   await chmod(qualityGateTaskPath, 0o755);
+  await chmod(precompactPreservePath, 0o755);
+  await chmod(contextMonitorPath, 0o755);
 
-  const scripts = [blockDangerousPath, formatDartPath, protectSecretsPath, notifyWaitingPath, qualityGateTaskPath];
+  const scripts = [blockDangerousPath, formatDartPath, protectSecretsPath, notifyWaitingPath, qualityGateTaskPath, precompactPreservePath, contextMonitorPath];
 
   // Build hooks config
   const hooks: HooksConfig['hooks'] = {
@@ -207,7 +281,7 @@ export async function writeHooks(context: ProjectContext, outputPath: string): P
           {
             type: 'command',
             command: '.claude/hooks/quality-gate-task.sh',
-            timeout: 60,
+            timeout: 120,
           },
         ],
       },
@@ -220,6 +294,28 @@ export async function writeHooks(context: ProjectContext, outputPath: string): P
             type: 'command',
             command: '.claude/hooks/notify-waiting.sh',
             timeout: 10,
+          },
+        ],
+      },
+    ],
+    PreCompact: [
+      {
+        hooks: [
+          {
+            type: 'command',
+            command: '.claude/hooks/precompact-preserve.sh',
+            timeout: 30,
+          },
+        ],
+      },
+    ],
+    Stop: [
+      {
+        hooks: [
+          {
+            type: 'command',
+            command: '.claude/hooks/context-monitor.sh',
+            timeout: 15,
           },
         ],
       },

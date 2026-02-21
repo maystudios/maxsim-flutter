@@ -148,10 +148,10 @@ describe('writeHooks: timeout field only on relevant hooks', () => {
     expect(editWriteHook!.hooks[0].timeout).toBeUndefined();
   });
 
-  it('TaskCompleted hook has timeout of 60', async () => {
+  it('TaskCompleted hook has timeout of 120', async () => {
     const hooks = await getConfig();
     const taskHook = hooks.TaskCompleted![0];
-    expect(taskHook.hooks[0].timeout).toBe(60);
+    expect(taskHook.hooks[0].timeout).toBe(120);
   });
 
   it('protect-secrets hook has timeout of 5', async () => {
@@ -186,24 +186,28 @@ describe('writeHooks: returned config structure', () => {
     expect(config).toHaveProperty('hooks');
   });
 
-  it('returned config contains all 5 event types when agentTeams is true', async () => {
+  it('returned config contains all 7 event types when agentTeams is true', async () => {
     const config = await getConfig(true);
     expect(config.hooks).toHaveProperty('PreToolUse');
     expect(config.hooks).toHaveProperty('PostToolUse');
     expect(config.hooks).toHaveProperty('TaskCompleted');
     expect(config.hooks).toHaveProperty('Notification');
+    expect(config.hooks).toHaveProperty('PreCompact');
+    expect(config.hooks).toHaveProperty('Stop');
     expect(config.hooks).toHaveProperty('TeammateIdle');
   });
 
-  it('returned config contains exactly 4 event types when agentTeams is false', async () => {
+  it('returned config contains exactly 6 event types when agentTeams is false', async () => {
     const config = await getConfig(false);
     const keys = Object.keys(config.hooks);
     expect(keys).toContain('PreToolUse');
     expect(keys).toContain('PostToolUse');
     expect(keys).toContain('TaskCompleted');
     expect(keys).toContain('Notification');
+    expect(keys).toContain('PreCompact');
+    expect(keys).toContain('Stop');
     expect(keys).not.toContain('TeammateIdle');
-    expect(keys).toHaveLength(4);
+    expect(keys).toHaveLength(6);
   });
 
   it('all hook entries have type: "command"', async () => {
@@ -213,6 +217,8 @@ describe('writeHooks: returned config structure', () => {
       ...config.hooks.PostToolUse!,
       ...config.hooks.TaskCompleted!,
       ...config.hooks.Notification!,
+      ...config.hooks.PreCompact!,
+      ...config.hooks.Stop!,
       ...config.hooks.TeammateIdle!,
     ];
     for (const entry of allHookEntries) {
@@ -241,12 +247,12 @@ describe('writeHooks: idempotency', () => {
     await expect(writeHooks(ctx, tmp.path)).resolves.not.toThrow();
   });
 
-  it('second call still produces 5 scripts in hooks directory', async () => {
+  it('second call still produces 7 scripts in hooks directory', async () => {
     const ctx = makeTestContext({ claude: { enabled: true, agentTeams: true } });
     await writeHooks(ctx, tmp.path);
     await writeHooks(ctx, tmp.path);
     const entries = await readdir(join(tmp.path, '.claude', 'hooks'));
-    expect(entries).toHaveLength(5);
+    expect(entries).toHaveLength(7);
   });
 
   it('second call returns valid HooksResult', async () => {

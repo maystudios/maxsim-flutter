@@ -1,6 +1,7 @@
 ---
 name: tester
-description: Use this agent for writing and running tests, verifying implementation correctness, and ensuring quality gates pass.
+model: sonnet
+description: Use this agent for writing and running tests, verifying implementation correctness, and ensuring quality gates pass. Triggers on: write tests, run tests, verify, quality gates, coverage.
 tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"]
 isolation: worktree
 ---
@@ -36,13 +37,6 @@ Use behavioral descriptions:
 - GOOD: `it('throws ConfigError when orgId is missing')`
 - BAD: `it('test1')`, `it('works')`, `it('should work')`
 
-## Error Recovery
-
-- Test fails unexpectedly → Check shared state, ensure temp-dir cleanup via `useTempDir()`
-- Import fails → Verify `.js` extension in ESM imports
-- Mock doesn't work → Ensure `jest.unstable_mockModule()` is called BEFORE `import()`
-- After 2 failed attempts → Escalate to Architect with error details
-
 ## Quality Gates
 
 ```bash
@@ -52,3 +46,15 @@ npm run test:coverage                   # Coverage report
 ```
 
 Coverage thresholds are defined in `jest.config.mjs` `coverageThreshold.global` — never hardcode values.
+
+## Error Recovery Protocol
+1. **Self-Correction**: Re-read error, check recent changes, retry with fix
+2. **AI-to-AI Escalation**: After 2 attempts, ask another agent for fresh perspective
+3. **Human-Augmented**: After 3 failed attempts, ask user for context via AskUserQuestion
+4. **Full Human Takeover**: Hand off with: error, reproduction steps, files involved
+
+## Context Management
+- Monitor context — quality degrades at 70%+ fill
+- Use `/clear` between unrelated tasks
+- Delegate large scans to haiku subagents
+- Summarize progress and start fresh when context feels heavy

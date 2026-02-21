@@ -814,3 +814,38 @@ Verification:
 - Total tests: 989 → 1356 (367 new tests)
 - Total suites: 64 → 77 (13 new suites)
 - All quality gates pass: typecheck, lint, 1356 tests, 14 snapshots
+
+## Phase 12 — Agentic Coding Excellence (2026-02-21)
+
+### Group A: Agent Definitions (P12-001 → P12-003)
+- P12-001: Enhanced 4 agents with 4-tier error recovery, context management, reviewer upgraded haiku→sonnet
+- P12-002: Added 2 SDD agents (flutter-specifier, flutter-planner) conditional on agentTeams=true
+- P12-003: Enhanced own 7 agent definitions with model frontmatter, error recovery, context management
+
+### Group B: CLAUDE.md & Rules (P12-004 → P12-006)
+- P12-004: Generated CLAUDE.md now has security anti-patterns, SDD workflow section, new @-imports
+- P12-005: Added error-recovery.md and context-management.md rules (9 core rules total)
+- P12-006: Enhanced own CLAUDE.md with security section, added own error-recovery and context-management rules
+
+### Group C: Hooks & Automation (P12-007 → P12-010)
+- P12-007: Added PreCompact hook (precompact-preserve.sh) — preserves git state on context compaction
+- P12-008: Made quality-gate-task.sh blocking (exit 2), timeout 120s
+- P12-009: Added context-monitor.sh on Stop event — advisory context fill warning
+- P12-010: Added CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=70 to settings.json env
+
+### Group D: Skills & Commands (P12-011 → P12-014)
+- P12-011: Added 3 SDD skills (sdd-workflow.md, spec-template.md, plan-template.md) — 13 skills total
+- P12-012: Added error-recovery.md and debug-workflow.md skills
+- P12-013: Added 3 SDD commands (specify.md, plan.md, tasks.md) conditional on agentTeams — 6 commands total
+- P12-014: Enhanced own start-team, hooks, and settings
+
+### Group E: Integration (P12-015 → P12-016)
+- P12-015: 28 Phase 12 integration tests in claude-setup-phase12.test.ts
+- P12-016: End-to-end validation — all quality gates pass
+
+## Phase 12 Summary — Agentic Coding Excellence
+- Stories completed: 16/16 (P12-001 through P12-016)
+- Total tests: 1356 → 1558 (202 new tests)
+- Total suites: 77 → 81 (4 new suites)
+- All quality gates pass: typecheck, lint, 1558 tests, 14 snapshots
+- PRD: 108/108 stories complete across 12 phases

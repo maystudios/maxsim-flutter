@@ -46,14 +46,16 @@ async function setupMinimal(tmpPath: string) {
 describe('P11-009: agent definitions have Phase 11 frontmatter', () => {
   const tmp = useTempDir('p11-agents-integration-');
 
-  it('generates exactly 4 agent definition files', async () => {
+  it('generates exactly 6 agent definition files (standard + specifier + planner)', async () => {
     await setupStandard(tmp.path);
     const agents = await readdir(join(tmp.path, '.claude', 'agents'));
-    expect(agents).toHaveLength(4);
+    expect(agents).toHaveLength(6);
     expect(agents.sort()).toEqual([
       'flutter-architect.md',
       'flutter-builder.md',
+      'flutter-planner.md',
       'flutter-reviewer.md',
+      'flutter-specifier.md',
       'flutter-tester.md',
     ]);
   });
@@ -83,7 +85,7 @@ describe('P11-009: agent definitions have Phase 11 frontmatter', () => {
     await setupStandard(tmp.path);
     const content = await readFile(join(tmp.path, '.claude', 'agents', 'flutter-reviewer.md'), 'utf-8');
     expect(content).toContain('memory: user');
-    expect(content).toContain('model: haiku');
+    expect(content).toContain('model: sonnet');
   });
 
   it('all agent files contain Model Selection Rationale section', async () => {
@@ -101,13 +103,15 @@ describe('P11-009: agent definitions have Phase 11 frontmatter', () => {
 describe('P11-009: all 5 hook scripts generated correctly', () => {
   const tmp = useTempDir('p11-hooks-integration-');
 
-  it('hooks directory contains exactly 5 scripts', async () => {
+  it('hooks directory contains exactly 7 scripts', async () => {
     await setupStandard(tmp.path);
     const entries = await readdir(join(tmp.path, '.claude', 'hooks'));
     expect(entries.sort()).toEqual([
       'block-dangerous.sh',
+      'context-monitor.sh',
       'format-dart.sh',
       'notify-waiting.sh',
+      'precompact-preserve.sh',
       'protect-secrets.sh',
       'quality-gate-task.sh',
     ]);
@@ -161,7 +165,7 @@ describe('P11-009: settings.json has deny permissions and hook registration', ()
   it('settings.json has deny permissions list with 10 rules', async () => {
     await setupStandard(tmp.path);
     const content = JSON.parse(await readFile(join(tmp.path, '.claude', 'settings.json'), 'utf-8'));
-    expect(content.permissions.deny).toHaveLength(10);
+    expect(content.permissions.deny).toHaveLength(13);
     expect(content.permissions.deny).toContain('Read(./.env)');
     expect(content.permissions.deny).toContain('Bash(rm -rf *)');
     expect(content.permissions.deny).toContain('Bash(sudo *)');
@@ -185,7 +189,7 @@ describe('P11-009: settings.json has deny permissions and hook registration', ()
   it('settings.local.json has allow permissions list with 9 rules', async () => {
     await setupStandard(tmp.path);
     const content = JSON.parse(await readFile(join(tmp.path, '.claude', 'settings.local.json'), 'utf-8'));
-    expect(content.permissions.allow).toHaveLength(9);
+    expect(content.permissions.allow).toHaveLength(11);
     expect(content.permissions.allow).toContain('Bash(flutter *)');
     expect(content.permissions.allow).toContain('Read(./lib/**)');
   });
@@ -236,10 +240,10 @@ describe('P11-009: rule files have narrowed paths in frontmatter', () => {
 describe('P11-009: proactive skills have user-invocable frontmatter', () => {
   const tmp = useTempDir('p11-skills-integration-');
 
-  it('generates exactly 8 skill files', async () => {
+  it('generates exactly 13 skill files', async () => {
     await setupStandard(tmp.path);
     const skills = await readdir(join(tmp.path, '.claude', 'skills'));
-    expect(skills).toHaveLength(8);
+    expect(skills).toHaveLength(13);
   });
 
   it('security-review.md has user-invocable: true and trigger description', async () => {
@@ -272,10 +276,10 @@ describe('P11-009: proactive skills have user-invocable frontmatter', () => {
 describe('P11-009: start-team command with team composition', () => {
   const tmp = useTempDir('p11-commands-integration-');
 
-  it('generates exactly 3 command files', async () => {
+  it('generates 6 command files when agentTeams is true', async () => {
     await setupStandard(tmp.path);
     const commands = await readdir(join(tmp.path, '.claude', 'commands'));
-    expect(commands.sort()).toEqual(['add-feature.md', 'analyze.md', 'start-team.md']);
+    expect(commands.sort()).toEqual(['add-feature.md', 'analyze.md', 'plan.md', 'specify.md', 'start-team.md', 'tasks.md']);
   });
 
   it('start-team.md contains 4-agent team composition (architect, builder, tester, reviewer)', async () => {
@@ -287,12 +291,11 @@ describe('P11-009: start-team command with team composition', () => {
     expect(content).toContain('reviewer');
   });
 
-  it('start-team.md specifies model tiers (opus, sonnet, haiku)', async () => {
+  it('start-team.md specifies model tiers (opus, sonnet)', async () => {
     await setupStandard(tmp.path);
     const content = await readFile(join(tmp.path, '.claude', 'commands', 'start-team.md'), 'utf-8');
     expect(content).toContain('opus');
     expect(content).toContain('sonnet');
-    expect(content).toContain('haiku');
   });
 
   it('start-team.md includes TDD flow and commit+push protocol', async () => {
@@ -361,17 +364,17 @@ describe('P11-009: minimal preset skips agents, hooks, skills, commands', () => 
 describe('P11-009: standard preset has agents, hooks, skills, commands', () => {
   const tmp = useTempDir('p11-standard-preset-');
 
-  it('standard preset generates 4 agents, 5 hooks, 8 skills, 3 commands — no .mcp.json', async () => {
+  it('standard preset generates 6 agents, 7 hooks, 13 skills, 6 commands — no .mcp.json', async () => {
     await setupStandard(tmp.path);
 
     const agents = await readdir(join(tmp.path, '.claude', 'agents'));
-    expect(agents).toHaveLength(4);
+    expect(agents).toHaveLength(6);
     const hooks = await readdir(join(tmp.path, '.claude', 'hooks'));
-    expect(hooks).toHaveLength(5);
+    expect(hooks).toHaveLength(7);
     const skills = await readdir(join(tmp.path, '.claude', 'skills'));
-    expect(skills).toHaveLength(8);
+    expect(skills).toHaveLength(13);
     const commands = await readdir(join(tmp.path, '.claude', 'commands'));
-    expect(commands).toHaveLength(3);
+    expect(commands).toHaveLength(6);
 
     await expect(stat(join(tmp.path, '.mcp.json'))).rejects.toThrow();
   });
@@ -380,17 +383,17 @@ describe('P11-009: standard preset has agents, hooks, skills, commands', () => {
 describe('P11-009: full preset includes .mcp.json alongside all outputs', () => {
   const tmp = useTempDir('p11-full-preset-');
 
-  it('full preset generates 4 agents, 5 hooks, 8 skills, 3 commands, and .mcp.json', async () => {
+  it('full preset generates 6 agents, 7 hooks, 13 skills, 6 commands, and .mcp.json', async () => {
     await setupFull(tmp.path);
 
     const agents = await readdir(join(tmp.path, '.claude', 'agents'));
-    expect(agents).toHaveLength(4);
+    expect(agents).toHaveLength(6);
     const hooks = await readdir(join(tmp.path, '.claude', 'hooks'));
-    expect(hooks).toHaveLength(5);
+    expect(hooks).toHaveLength(7);
     const skills = await readdir(join(tmp.path, '.claude', 'skills'));
-    expect(skills).toHaveLength(8);
+    expect(skills).toHaveLength(13);
     const commands = await readdir(join(tmp.path, '.claude', 'commands'));
-    expect(commands).toHaveLength(3);
+    expect(commands).toHaveLength(6);
 
     const mcp = JSON.parse(await readFile(join(tmp.path, '.mcp.json'), 'utf-8'));
     expect(mcp.mcpServers).toBeDefined();

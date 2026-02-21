@@ -51,9 +51,9 @@ describe('settings.json: deny-only, no allow rules', () => {
     expect(content.permissions.allow).toBeUndefined();
   });
 
-  it('settings.json deny list has exactly 10 rules', async () => {
+  it('settings.json deny list has exactly 13 rules', async () => {
     const content = await getSettings();
-    expect(content.permissions.deny).toHaveLength(10);
+    expect(content.permissions.deny).toHaveLength(13);
   });
 
   it('settings.json deny rules cover all .env variants', async () => {
@@ -116,9 +116,9 @@ describe('settings.local.json: allow-only, no shared config', () => {
     expect(content.env).toBeUndefined();
   });
 
-  it('settings.local.json allow list has exactly 9 rules', async () => {
+  it('settings.local.json allow list has exactly 11 rules', async () => {
     const content = await getLocal();
-    expect(content.permissions.allow).toHaveLength(9);
+    expect(content.permissions.allow).toHaveLength(11);
   });
 
   it('settings.local.json does NOT have hooks field', async () => {
@@ -218,27 +218,39 @@ describe('writeSettings: file format', () => {
 
 // ─── env conditional ─────────────────────────────────────────────────────
 
-describe('settings.json: env field conditional on agentTeams', () => {
+describe('settings.json: env field always includes AUTOCOMPACT', () => {
   const tmp = useTempDir('settings-env-edge-');
 
-  it('env absent when claude.enabled is false', async () => {
+  it('env includes AUTOCOMPACT when agentTeams is false', async () => {
     await writeSettings(
       makeTestContext({ claude: { enabled: false, agentTeams: false } }),
       tmp.path,
       sampleHooksConfig,
     );
     const content = JSON.parse(await readFile(join(tmp.path, '.claude', 'settings.json'), 'utf-8'));
-    expect(content.env).toBeUndefined();
+    expect(content.env).toBeDefined();
+    expect(content.env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE).toBe('70');
   });
 
-  it('env present with agentTeams=true regardless of claude.enabled', async () => {
+  it('env includes both AUTOCOMPACT and AGENT_TEAMS when agentTeams is true', async () => {
     await writeSettings(
       makeTestContext({ claude: { enabled: false, agentTeams: true } }),
       tmp.path,
       sampleHooksConfig,
     );
     const content = JSON.parse(await readFile(join(tmp.path, '.claude', 'settings.json'), 'utf-8'));
+    expect(content.env?.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE).toBe('70');
     expect(content.env?.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS).toBe('1');
+  });
+
+  it('env does NOT include AGENT_TEAMS when agentTeams is false', async () => {
+    await writeSettings(
+      makeTestContext({ claude: { enabled: true, agentTeams: false } }),
+      tmp.path,
+      sampleHooksConfig,
+    );
+    const content = JSON.parse(await readFile(join(tmp.path, '.claude', 'settings.json'), 'utf-8'));
+    expect(content.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS).toBeUndefined();
   });
 });
 

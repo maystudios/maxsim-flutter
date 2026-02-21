@@ -43,8 +43,11 @@ export async function writeSettings(
         'Read(./secrets*)',
         'Read(./**/*.pem)',
         'Read(./**/*.key)',
+        'Read(./**/google-services.json)',
+        'Read(./**/GoogleService-Info.plist)',
         'Bash(rm -rf *)',
         'Bash(sudo *)',
+        'Bash(git push --force *)',
       ],
     },
   };
@@ -53,11 +56,14 @@ export async function writeSettings(
     settings.hooks = hooksConfig.hooks;
   }
 
+  // Always include AUTOCOMPACT override; conditionally add agent teams
+  const env: Record<string, string> = {
+    CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: '70',
+  };
   if (context.claude?.agentTeams) {
-    settings.env = {
-      CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1',
-    };
+    env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = '1';
   }
+  settings.env = env;
 
   await writeFile(
     join(claudeDir, 'settings.json'),
@@ -71,11 +77,13 @@ export async function writeSettings(
       allow: [
         'Bash(flutter *)',
         'Bash(dart *)',
+        'Bash(dart run build_runner *)',
         'Bash(git diff *)',
         'Bash(git status)',
         'Bash(git log *)',
         'Read(./lib/**)',
         'Read(./test/**)',
+        'Read(./pubspec.yaml)',
         'Edit(./lib/**)',
         'Edit(./test/**)',
       ],

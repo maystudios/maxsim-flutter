@@ -21,6 +21,8 @@ A test Flutter app
 @.claude/rules/security.md
 @.claude/rules/git-workflow.md
 @.claude/rules/code-quality.md
+@.claude/rules/error-recovery.md
+@.claude/rules/context-management.md
 @.claude/rules/auth.md
 @.claude/rules/api.md
 
@@ -41,6 +43,14 @@ flutter analyze
 - \`flutter analyze\` — zero warnings
 - \`flutter test\` — all pass
 - \`dart format --set-exit-if-changed .\` — formatted
+
+## Security
+
+- **NEVER** hardcode secrets, API keys, or credentials in source code
+- **NEVER** log PII (personal identifiable information) or sensitive data
+- Validate ALL external input — user input, API responses, deep link parameters
+- Use \`flutter_secure_storage\` for sensitive data, not \`SharedPreferences\`
+- Always use HTTPS for network requests
 
 ## Model Usage Policy
 
@@ -89,7 +99,7 @@ This project follows Clean Architecture with three layers:
 exports[`Generated file snapshots flutter-builder agent matches snapshot 1`] = `
 "---
 name: flutter-builder
-description: Implements Flutter features following Clean Architecture. Handles both architecture review and implementation.
+description: Implements Flutter features following Clean Architecture. Triggers on: implement, build, code, create, modify, fix.
 model: opus
 tools: ["Read","Write","Edit","Grep","Glob","Bash"]
 ---
@@ -182,6 +192,29 @@ dart run build_runner build --delete-conflicting-outputs
 - Do NOT run \`flutter clean\` without explicit instruction
 - Do NOT install new packages without checking acceptance criteria first
 - Do NOT skip quality gates
+
+## Error Recovery Protocol
+
+1. **Self-Correction**: Re-read the error, check recent changes, retry with fix
+2. **AI-to-AI Escalation**: If stuck after 2 attempts, ask another agent for fresh perspective
+3. **Human-Augmented**: After 3 failed attempts, ask the user for context or constraints
+4. **Full Human Takeover**: If the issue requires domain knowledge or external access, hand off completely
+
+## Context Management
+
+- Monitor context usage — quality degrades at 70%+ fill
+- Use \`/clear\` between unrelated tasks
+- Delegate large file scans to haiku subagents
+- When context feels heavy, summarize progress and start fresh
+
+## Handoff Format
+
+When handing off to the next agent, include:
+1. Changed files — absolute paths
+2. Tests added/modified — file paths and count
+3. Quality status — last check output
+4. Blockers — unresolved issues
+5. Next step — what the receiving agent should do
 "
 `;
 

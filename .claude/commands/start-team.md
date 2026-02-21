@@ -44,6 +44,12 @@ Set up task dependencies: stories within the same phase should be ordered by pri
 
 ## Step 4: Spawn Teammates
 
+### 3-Tier Hierarchy
+
+- **Tier 1 — Team Lead** (you): Orchestrates sprint, manages tasks, commits, resolves blockers
+- **Tier 2 — Core Agents** (architect, tdd-driver, builder): Own design and implementation
+- **Tier 3 — Support Agents** (tester, reviewer, quality-gate): Validate, review, enforce
+
 Spawn all 6 agent roles using the Task tool with `team_name: "prd-sprint"`:
 
 | Name | subagent_type | Model | Role |
@@ -54,6 +60,23 @@ Spawn all 6 agent roles using the Task tool with `team_name: "prd-sprint"`:
 | `builder` | `typescript-builder` | `opus` | Implements features to make tests pass |
 | `reviewer` | `reviewer` | `sonnet` | Reviews code for quality and TDD compliance |
 | `quality-gate` | `quality-gate-enforcer` | `haiku` | Runs all 8 quality gates before story completion |
+
+### File Ownership Table
+
+| Directory | Owner | Notes |
+|-----------|-------|-------|
+| `src/core/` | `architect` + `builder` | Core interfaces and config |
+| `src/scaffold/` | `builder` | Scaffold engine |
+| `src/modules/` | `builder` | Module definitions |
+| `src/claude-setup/` | `builder` | Claude setup generators |
+| `src/cli/` | `builder` | CLI commands |
+| `tests/unit/` | `tdd-driver` + `tester` | Unit tests |
+| `tests/integration/` | `tester` | Integration tests |
+| `tests/helpers/` | `tdd-driver` | Shared test utilities |
+| `templates/` | `flutter-template-expert` | Handlebars templates |
+| `.claude/` | `team-lead` | Agentic setup (agents, hooks, rules) |
+
+Agents must NOT modify files outside their owned directories without coordination.
 
 Give each teammate this initial prompt:
 
@@ -137,6 +160,7 @@ Then gracefully shut down all teammates via `SendMessage` with `type: "shutdown_
 - **Quality gate fails**: Route back to the responsible agent (builder/tester) for fixes
 - **Agent stuck**: After 2 failed attempts at the same fix, escalate — reassign to a different agent or ask the user
 - **Merge conflict**: Stop and ask the user — never force-resolve conflicts autonomously
+- **Context overflow**: Use `/clear` on agents hitting 70%+ context, delegate scans to haiku subagents
 
 ## Rules
 

@@ -103,6 +103,50 @@ describe('buildAgentDefinitions: agent descriptions are non-empty and descriptiv
   });
 });
 
+// ─── P12-001: Description trigger phrases ──────────────────────────────────
+
+describe('P12-001: agent descriptions include WHEN-to-use trigger phrases', () => {
+  const context = makeTestContext({ projectName: 'test_app' });
+
+  it('flutter-architect description includes trigger phrases for design/architecture', () => {
+    const agents = buildAgentDefinitions(context);
+    const architect = agents.find((a) => a.name === 'flutter-architect')!;
+    const descLower = architect.description.toLowerCase();
+    expect(descLower).toContain('triggers on');
+    expect(descLower.includes('design') || descLower.includes('architecture')).toBe(true);
+  });
+
+  it('flutter-builder description includes trigger phrases for implement/build', () => {
+    const agents = buildAgentDefinitions(context);
+    const builder = agents.find((a) => a.name === 'flutter-builder')!;
+    const descLower = builder.description.toLowerCase();
+    expect(descLower).toContain('triggers on');
+    expect(descLower.includes('implement') || descLower.includes('build')).toBe(true);
+  });
+
+  it('flutter-tester description includes trigger phrases for test/coverage', () => {
+    const agents = buildAgentDefinitions(context);
+    const tester = agents.find((a) => a.name === 'flutter-tester')!;
+    const descLower = tester.description.toLowerCase();
+    expect(descLower).toContain('triggers on');
+    expect(descLower.includes('test') || descLower.includes('coverage')).toBe(true);
+  });
+
+  it('flutter-reviewer description includes trigger phrases for review/compliance', () => {
+    const agents = buildAgentDefinitions(context);
+    const reviewer = agents.find((a) => a.name === 'flutter-reviewer')!;
+    const descLower = reviewer.description.toLowerCase();
+    expect(descLower).toContain('triggers on');
+    expect(descLower.includes('review') || descLower.includes('compliance')).toBe(true);
+  });
+
+  it('flutter-reviewer uses sonnet model (upgraded from haiku)', () => {
+    const agents = buildAgentDefinitions(context);
+    const reviewer = agents.find((a) => a.name === 'flutter-reviewer')!;
+    expect(reviewer.model).toBe('sonnet');
+  });
+});
+
 // ─── formatAgentMarkdown: frontmatter correctness ─────────────────────────
 
 describe('formatAgentMarkdown: frontmatter does not emit undefined or null values', () => {
@@ -114,7 +158,7 @@ describe('formatAgentMarkdown: frontmatter does not emit undefined or null value
 
   it('no agent file contains "maxTurns: undefined"', async () => {
     await writeAgents(makeContext(), tmp.path);
-    for (const file of ['flutter-architect.md', 'flutter-builder.md', 'flutter-tester.md', 'flutter-reviewer.md']) {
+    for (const file of ['flutter-architect.md', 'flutter-builder.md', 'flutter-tester.md', 'flutter-reviewer.md', 'flutter-specifier.md', 'flutter-planner.md']) {
       const content = await readFile(join(tmp.path, '.claude', 'agents', file), 'utf-8');
       expect(content).not.toContain('maxTurns: undefined');
     }
@@ -122,7 +166,7 @@ describe('formatAgentMarkdown: frontmatter does not emit undefined or null value
 
   it('no agent file contains "isolation: undefined"', async () => {
     await writeAgents(makeContext(), tmp.path);
-    for (const file of ['flutter-architect.md', 'flutter-builder.md', 'flutter-tester.md', 'flutter-reviewer.md']) {
+    for (const file of ['flutter-architect.md', 'flutter-builder.md', 'flutter-tester.md', 'flutter-reviewer.md', 'flutter-specifier.md', 'flutter-planner.md']) {
       const content = await readFile(join(tmp.path, '.claude', 'agents', file), 'utf-8');
       expect(content).not.toContain('isolation: undefined');
     }
@@ -130,7 +174,7 @@ describe('formatAgentMarkdown: frontmatter does not emit undefined or null value
 
   it('no agent file contains "memory: undefined"', async () => {
     await writeAgents(makeContext(), tmp.path);
-    for (const file of ['flutter-architect.md', 'flutter-builder.md', 'flutter-tester.md', 'flutter-reviewer.md']) {
+    for (const file of ['flutter-architect.md', 'flutter-builder.md', 'flutter-tester.md', 'flutter-reviewer.md', 'flutter-specifier.md', 'flutter-planner.md']) {
       const content = await readFile(join(tmp.path, '.claude', 'agents', file), 'utf-8');
       expect(content).not.toContain('memory: undefined');
     }
@@ -205,10 +249,10 @@ describe('writeAgents: idempotency', () => {
     expect(content).not.toContain('first_app');
   });
 
-  it('second call returns 4 file paths', async () => {
+  it('second call returns 6 file paths', async () => {
     await writeAgents(makeContext(), tmp.path);
     const files = await writeAgents(makeContext(), tmp.path);
-    expect(files).toHaveLength(4);
+    expect(files).toHaveLength(6);
   });
 });
 

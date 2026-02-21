@@ -1,7 +1,7 @@
 import type { ProjectContext } from '../core/context.js';
 
 /**
- * Generates a slim CLAUDE.md (~80 lines) for a scaffolded Flutter project.
+ * Generates a slim CLAUDE.md (~90 lines) for a scaffolded Flutter project.
  * Detailed rules are referenced via @-imports to .claude/rules/ files.
  */
 export function generateClaudeMd(context: ProjectContext): string {
@@ -10,8 +10,9 @@ export function generateClaudeMd(context: ProjectContext): string {
     generateRules(context),
     generateBuildCommands(),
     generateQualityGates(),
+    generateSecurity(),
     generateModelPolicy(),
-    generateDevelopmentWorkflow(),
+    generateDevelopmentWorkflow(context),
     generateKeyPaths(),
   ];
 
@@ -56,6 +57,8 @@ function generateRules(context: ProjectContext): string {
     '@.claude/rules/security.md',
     '@.claude/rules/git-workflow.md',
     '@.claude/rules/code-quality.md',
+    '@.claude/rules/error-recovery.md',
+    '@.claude/rules/context-management.md',
   ];
 
   if (context.modules.auth) imports.push('@.claude/rules/auth.md');
@@ -93,6 +96,16 @@ function generateQualityGates(): string {
 - \`dart format --set-exit-if-changed .\` — formatted`;
 }
 
+function generateSecurity(): string {
+  return `## Security
+
+- **NEVER** hardcode secrets, API keys, or credentials in source code
+- **NEVER** log PII (personal identifiable information) or sensitive data
+- Validate ALL external input — user input, API responses, deep link parameters
+- Use \`flutter_secure_storage\` for sensitive data, not \`SharedPreferences\`
+- Always use HTTPS for network requests`;
+}
+
 function generateModelPolicy(): string {
   return `## Model Usage Policy
 
@@ -101,12 +114,28 @@ function generateModelPolicy(): string {
 - **Haiku**: Trivial tasks only (formatting, simple scans).`;
 }
 
-function generateDevelopmentWorkflow(): string {
-  return `## Development Workflow
+function generateDevelopmentWorkflow(context: ProjectContext): string {
+  const lines = [
+    '## Development Workflow',
+    '',
+  ];
 
-- Commit: \`feat: [StoryID] - description\`
-- Files: \`snake_case.dart\`
-- Tests: \`<source>_test.dart\``;
+  if (context.claude.agentTeams) {
+    lines.push(
+      '### SDD Pipeline (for new features)',
+      '`/specify` → `/plan` → `/tasks` → `/start-team`',
+      'Use Spec-Driven Development for features with 3+ files across multiple layers.',
+      '',
+    );
+  }
+
+  lines.push(
+    '- Commit: `feat: [StoryID] - description`',
+    '- Files: `snake_case.dart`',
+    '- Tests: `<source>_test.dart`',
+  );
+
+  return lines.join('\n');
 }
 
 function generateKeyPaths(): string {

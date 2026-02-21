@@ -43,12 +43,21 @@ export async function writeAgents(
  * Useful for testing and dry-run mode.
  */
 export function buildAgentDefinitions(context: ProjectContext): AgentDefinition[] {
-  return [
+  const agents = [
     buildFlutterArchitectAgent(context),
     buildFlutterBuilderAgent(context),
     buildFlutterTesterAgent(context),
     buildFlutterReviewerAgent(context),
   ];
+
+  if (context.claude?.agentTeams) {
+    agents.push(
+      buildFlutterSpecifierAgent(context),
+      buildFlutterPlannerAgent(context),
+    );
+  }
+
+  return agents;
 }
 
 function formatAgentMarkdown(agent: AgentDefinition): string {
@@ -95,14 +104,41 @@ function buildModuleContext(context: ProjectContext): string {
   return `Active modules: ${modules.join(', ')}. Be aware of module boundaries and inter-module dependencies.`;
 }
 
+function buildSharedSections(): string {
+  return `
+## Error Recovery Protocol
+
+1. **Self-Correction**: Re-read the error, check recent changes, retry with fix
+2. **AI-to-AI Escalation**: If stuck after 2 attempts, ask another agent for fresh perspective
+3. **Human-Augmented**: After 3 failed attempts, ask the user for context or constraints
+4. **Full Human Takeover**: If the issue requires domain knowledge or external access, hand off completely
+
+## Context Management
+
+- Monitor context usage — quality degrades at 70%+ fill
+- Use \`/clear\` between unrelated tasks
+- Delegate large file scans to haiku subagents
+- When context feels heavy, summarize progress and start fresh
+
+## Handoff Format
+
+When handing off to the next agent, include:
+1. Changed files — absolute paths
+2. Tests added/modified — file paths and count
+3. Quality status — last check output
+4. Blockers — unresolved issues
+5. Next step — what the receiving agent should do`;
+}
+
 function buildFlutterArchitectAgent(context: ProjectContext): AgentDefinition {
   const moduleContext = buildModuleContext(context);
+  const sharedSections = buildSharedSections();
 
   return {
     filename: 'flutter-architect.md',
     name: 'flutter-architect',
     description:
-      'Read-only planning agent. Designs feature architecture, defines interfaces, and plans implementation before coding begins.',
+      'Read-only planning agent. Designs feature architecture, defines interfaces, and plans implementation order. Triggers on: new feature, design, architecture review, plan implementation.',
     model: 'opus',
     tools: ['Read', 'Grep', 'Glob', 'WebSearch'],
     maxTurns: 30,
@@ -156,18 +192,20 @@ Consult \`.claude/rules/\` for the full set of project-specific rules and conven
 - Do NOT write or edit files — planning only
 - Do NOT make implementation decisions without checking existing patterns
 - Do NOT skip dependency analysis between features
-- Do NOT approve designs that violate Clean Architecture layer rules`,
+- Do NOT approve designs that violate Clean Architecture layer rules
+${sharedSections}`,
   };
 }
 
 function buildFlutterBuilderAgent(context: ProjectContext): AgentDefinition {
   const moduleContext = buildModuleContext(context);
+  const sharedSections = buildSharedSections();
 
   return {
     filename: 'flutter-builder.md',
     name: 'flutter-builder',
     description:
-      'Implements Flutter features following Clean Architecture. Handles both architecture review and implementation.',
+      'Implements Flutter features following Clean Architecture. Triggers on: implement, build, code, create, modify, fix.',
     model: 'opus',
     tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash'],
     isolation: 'worktree',
@@ -259,18 +297,20 @@ dart run build_runner build --delete-conflicting-outputs
 - Do NOT modify files outside the project directory
 - Do NOT run \`flutter clean\` without explicit instruction
 - Do NOT install new packages without checking acceptance criteria first
-- Do NOT skip quality gates`,
+- Do NOT skip quality gates
+${sharedSections}`,
   };
 }
 
 function buildFlutterTesterAgent(context: ProjectContext): AgentDefinition {
   const moduleContext = buildModuleContext(context);
+  const sharedSections = buildSharedSections();
 
   return {
     filename: 'flutter-tester.md',
     name: 'flutter-tester',
     description:
-      'TDD-first testing agent. Writes tests before implementation and validates that features meet acceptance criteria.',
+      'TDD-first testing agent. Writes tests before implementation and validates coverage. Triggers on: test, verify, coverage, TDD, assertion.',
     model: 'sonnet',
     tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash'],
     isolation: 'worktree',
@@ -352,19 +392,21 @@ dart format --set-exit-if-changed .  # Code is formatted
 - Do NOT write implementation code — only tests
 - Do NOT modify source files outside \`test/\`
 - Do NOT mark tasks complete without all tests passing
-- Do NOT skip edge case tests`,
+- Do NOT skip edge case tests
+${sharedSections}`,
   };
 }
 
 function buildFlutterReviewerAgent(context: ProjectContext): AgentDefinition {
   const moduleContext = buildModuleContext(context);
+  const sharedSections = buildSharedSections();
 
   return {
     filename: 'flutter-reviewer.md',
     name: 'flutter-reviewer',
     description:
-      'Read-only compliance checker. Reviews code for Clean Architecture violations, Riverpod patterns, and code quality.',
-    model: 'haiku',
+      'Read-only compliance checker. Reviews code for architecture violations and quality. Triggers on: review, check, audit, compliance, quality.',
+    model: 'sonnet',
     tools: ['Read', 'Grep', 'Glob'],
     memory: 'user',
     maxTurns: 20,
@@ -372,7 +414,7 @@ function buildFlutterReviewerAgent(context: ProjectContext): AgentDefinition {
 
 ## Model Selection Rationale
 
-This agent uses **Haiku** because Haiku is fast and cost-effective for pattern-matching review tasks — checking import rules, naming conventions, and checklist compliance does not require Sonnet-level reasoning.
+This agent uses **Sonnet** for thorough code review — security analysis, architecture violation detection, and nuanced compliance checking require more reasoning capability than Haiku provides.
 
 ## Sub-Agent Policy
 
@@ -438,6 +480,139 @@ Consult \`.claude/rules/\` for the full set of project-specific rules and conven
 - Do NOT write or edit any files — read-only analysis only
 - Do NOT approve code with unresolved architecture violations
 - Do NOT skip the review checklist
-- Do NOT suggest changes without specific file/line references`,
+- Do NOT suggest changes without specific file/line references
+${sharedSections}`,
+  };
+}
+
+function buildFlutterSpecifierAgent(context: ProjectContext): AgentDefinition {
+  const moduleContext = buildModuleContext(context);
+  const sharedSections = buildSharedSections();
+
+  return {
+    filename: 'flutter-specifier.md',
+    name: 'flutter-specifier',
+    description:
+      'Specification-Driven Development agent. Writes detailed specifications before implementation. Triggers on: specify, spec, requirements, acceptance criteria, define behavior.',
+    model: 'opus',
+    tools: ['Read', 'Grep', 'Glob', 'WebSearch'],
+    maxTurns: 30,
+    body: `You are a Flutter specifier for **${context.projectName}**. You write detailed specifications before any implementation begins, following Specification-Driven Development (SDD).
+
+## Model Selection Rationale
+
+This agent uses **Opus** for deep specification reasoning — defining precise acceptance criteria, identifying edge cases, and analyzing cross-feature impacts requires Opus-level capability.
+
+## Your Role
+
+You are a **specification** teammate. You:
+1. Read the story or feature request
+2. Analyze the existing codebase for relevant patterns and constraints
+3. Write detailed specifications with acceptance criteria
+4. Define data models, interfaces, and behavior contracts
+5. Identify edge cases, error scenarios, and cross-feature impacts
+6. Hand off the specification to the planner or builder
+
+## Specification Workflow
+
+1. **Understand**: Read the story requirements thoroughly
+2. **Research**: Search the codebase for related code, patterns, and conventions
+3. **Specify**: Write detailed specs including:
+   - Acceptance criteria (with testable predicates)
+   - Data models and interface signatures
+   - Error scenarios and edge cases
+   - Performance and security considerations
+4. **Validate**: Cross-check specs against existing architecture
+5. **Hand off**: Provide the planner with complete specs
+
+## Clean Architecture Compliance
+
+All specifications must respect the layer rules:
+- **Domain** (entities, repository interfaces, use cases) — no external dependencies
+- **Data** (repository implementations, data sources, models) — depends only on Domain
+- **Presentation** (pages, widgets, Riverpod providers) — depends on Domain, never directly on Data
+
+## Module Context
+
+${moduleContext}
+
+## Scope Boundaries
+
+### Do
+- Read and analyze existing code patterns
+- Write detailed specifications with acceptance criteria
+- Research best practices and Flutter conventions
+- Identify edge cases and error scenarios
+
+### Do NOT
+- Do NOT write or edit implementation files — specification only
+- Do NOT skip edge case analysis
+- Do NOT approve specifications that violate Clean Architecture
+- Do NOT specify features without checking existing patterns
+${sharedSections}`,
+  };
+}
+
+function buildFlutterPlannerAgent(context: ProjectContext): AgentDefinition {
+  const moduleContext = buildModuleContext(context);
+  const sharedSections = buildSharedSections();
+
+  return {
+    filename: 'flutter-planner.md',
+    name: 'flutter-planner',
+    description:
+      'Implementation planner for SDD workflow. Creates step-by-step implementation plans from specifications. Triggers on: plan, break down, implementation steps, task breakdown, sprint plan.',
+    model: 'sonnet',
+    tools: ['Read', 'Grep', 'Glob'],
+    maxTurns: 25,
+    body: `You are a Flutter implementation planner for **${context.projectName}**. You create step-by-step implementation plans from specifications, following Specification-Driven Development (SDD).
+
+## Model Selection Rationale
+
+This agent uses **Sonnet** for structured planning — breaking specifications into ordered implementation steps, identifying dependencies, and creating task breakdowns is well-suited to Sonnet's capabilities.
+
+## Your Role
+
+You are a **planning** teammate. You:
+1. Read the specification from the specifier
+2. Break it into ordered implementation steps
+3. Identify dependencies between steps
+4. Estimate complexity and assign to appropriate agents
+5. Create a clear implementation plan for the builder and tester
+
+## Planning Workflow
+
+1. **Read spec**: Understand the full specification and acceptance criteria
+2. **Decompose**: Break the spec into atomic implementation tasks
+3. **Order**: Arrange tasks respecting Clean Architecture layer order (Domain → Data → Presentation)
+4. **Dependencies**: Identify which tasks block others
+5. **Assign**: Recommend which agent should handle each task
+6. **Hand off**: Provide the ordered plan to the team
+
+## Task Decomposition Rules
+
+- Each task should be completable in a single agent turn
+- Tasks follow Clean Architecture layer order
+- Test tasks are paired with implementation tasks (TDD)
+- Each task has clear acceptance criteria from the spec
+
+## Module Context
+
+${moduleContext}
+
+## Scope Boundaries
+
+### Do
+- Read specifications and existing code
+- Create ordered implementation plans
+- Identify task dependencies and blockers
+- Recommend agent assignments
+
+### Do NOT
+- Do NOT write or edit implementation files — planning only
+- Do NOT skip dependency analysis
+- Do NOT create plans that violate Clean Architecture layer order
+- Do NOT plan tasks without clear acceptance criteria
+${sharedSections}`,
   };
 }

@@ -17,9 +17,9 @@ function makeContext(overrides: Partial<Parameters<typeof makeTestContext>[0]> =
 }
 
 describe('buildAgentDefinitions', () => {
-  it('returns exactly 4 agent definitions', () => {
+  it('returns exactly 6 agent definitions when agentTeams is true', () => {
     const agents = buildAgentDefinitions(makeContext());
-    expect(agents).toHaveLength(4);
+    expect(agents).toHaveLength(6);
   });
 
   it('returns agents with correct filenames', () => {
@@ -30,6 +30,8 @@ describe('buildAgentDefinitions', () => {
       'flutter-builder.md',
       'flutter-tester.md',
       'flutter-reviewer.md',
+      'flutter-specifier.md',
+      'flutter-planner.md',
     ]);
   });
 
@@ -41,6 +43,8 @@ describe('buildAgentDefinitions', () => {
       'flutter-builder',
       'flutter-tester',
       'flutter-reviewer',
+      'flutter-specifier',
+      'flutter-planner',
     ]);
   });
 
@@ -126,10 +130,10 @@ describe('buildAgentDefinitions', () => {
   });
 
   describe('flutter-reviewer', () => {
-    it('uses haiku model', () => {
+    it('uses sonnet model', () => {
       const agents = buildAgentDefinitions(makeContext());
       const reviewer = agents.find((a) => a.name === 'flutter-reviewer')!;
-      expect(reviewer.model).toBe('haiku');
+      expect(reviewer.model).toBe('sonnet');
     });
 
     it('has read-only tools', () => {
@@ -205,16 +209,16 @@ describe('buildAgentDefinitions', () => {
 describe('writeAgents', () => {
   const tmp = useTempDir('agent-writer-test-');
 
-  it('creates .claude/agents/ directory with 4 files', async () => {
+  it('creates .claude/agents/ directory with 6 files when agentTeams is true', async () => {
     await writeAgents(makeContext(), tmp.path);
     const agentsDir = join(tmp.path, '.claude', 'agents');
     const entries = await readdir(agentsDir);
-    expect(entries).toHaveLength(4);
+    expect(entries).toHaveLength(6);
   });
 
-  it('writes all 4 agent files', async () => {
+  it('writes all 6 agent files when agentTeams is true', async () => {
     const files = await writeAgents(makeContext(), tmp.path);
-    expect(files).toHaveLength(4);
+    expect(files).toHaveLength(6);
     for (const file of files) {
       expect(file).toContain('.claude/agents/');
       expect(file).toMatch(/\.md$/);
@@ -249,15 +253,17 @@ describe('writeAgents', () => {
     expect(files[1]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-builder.md'));
     expect(files[2]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-tester.md'));
     expect(files[3]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-reviewer.md'));
+    expect(files[4]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-specifier.md'));
+    expect(files[5]).toBe(join(tmp.path, '.claude', 'agents', 'flutter-planner.md'));
   });
 
-  it('generates reviewer agent with haiku model', async () => {
+  it('generates reviewer agent with sonnet model', async () => {
     await writeAgents(makeContext(), tmp.path);
     const content = await readFile(
       join(tmp.path, '.claude', 'agents', 'flutter-reviewer.md'),
       'utf-8',
     );
-    expect(content).toContain('model: haiku');
+    expect(content).toContain('model: sonnet');
   });
 
   it('generates reviewer agent with read-only tools', async () => {

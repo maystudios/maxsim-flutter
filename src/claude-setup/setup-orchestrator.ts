@@ -66,6 +66,8 @@ export async function runClaudeSetup(
       join(rulesDir, 'security.md'),
       join(rulesDir, 'git-workflow.md'),
       join(rulesDir, 'code-quality.md'),
+      join(rulesDir, 'error-recovery.md'),
+      join(rulesDir, 'context-management.md'),
     );
     if (context.modules.auth) filesWritten.push(join(rulesDir, 'auth.md'));
     if (context.modules.api) filesWritten.push(join(rulesDir, 'api.md'));
@@ -105,6 +107,11 @@ export async function runClaudeSetup(
       join(skillsDir, 'performance-check.md'),
       join(skillsDir, 'add-feature.md'),
       join(skillsDir, 'quality-gate.md'),
+      join(skillsDir, 'error-recovery.md'),
+      join(skillsDir, 'debug-workflow.md'),
+      join(skillsDir, 'sdd-workflow.md'),
+      join(skillsDir, 'spec-template.md'),
+      join(skillsDir, 'plan-template.md'),
     );
   }
 
@@ -113,6 +120,9 @@ export async function runClaudeSetup(
     await writeCommands(context, outputPath);
     const commandsDir = join(outputPath, '.claude', 'commands');
     filesWritten.push(join(commandsDir, 'add-feature.md'), join(commandsDir, 'analyze.md'), join(commandsDir, 'start-team.md'));
+    if (context.claude?.agentTeams) {
+      filesWritten.push(join(commandsDir, 'specify.md'), join(commandsDir, 'plan.md'), join(commandsDir, 'tasks.md'));
+    }
   }
 
   // 8. Write MCP server config (.mcp.json)

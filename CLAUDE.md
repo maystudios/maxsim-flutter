@@ -26,7 +26,7 @@
 - IMPORTANT: Use shared test helpers from `tests/helpers/` — never duplicate them
 - IMPORTANT: Coverage thresholds live in `jest.config.mjs` `coverageThreshold.global` — never hardcode values
 
-Detailed conventions: see `.claude/rules/code-style.md`
+Detailed conventions: see `.claude/rules/code-style.md`, `.claude/rules/error-recovery.md`, `.claude/rules/context-management.md`
 
 ## Build & Test
 
@@ -57,11 +57,16 @@ IMPORTANT: Before marking any story complete, ALL 8 gates must pass:
 
 ## Error Handling & Recovery
 
-- **Quality fails**: Fix root cause, never skip checks. Re-run failing check first, then full suite.
-- **Coverage drops**: `npm run test:coverage` to find uncovered lines, write targeted tests.
-- **Typecheck fails**: Never use `@ts-ignore` or `as any`. Fix at source.
-- **Tests fail**: Check shared state leaks, temp-dir cleanup via `useTempDir()`, `.js` ESM extensions, mock ordering.
-- **Escalation**: After 2 failed attempts, escalate to Architect with: what was tried, exact errors, file paths.
+See `.claude/rules/error-recovery.md` for 4-tier escalation protocol.
+- **Quality/typecheck fails**: Fix root cause, never skip or use `@ts-ignore`.
+- **Tests fail**: Check shared state, temp-dir cleanup, `.js` ESM extensions, mock ordering.
+- **Escalation**: After 2 failed attempts, escalate with: what was tried, exact errors, file paths.
+
+## Security
+
+- **NEVER** commit secrets, API keys, or credentials
+- **NEVER** use `@ts-ignore`, `as any` — fix at source
+- Deny `.env`, `.env.*`, `*.pem`, `*.key` in settings.json
 
 ## Development Workflow
 
@@ -99,12 +104,7 @@ Detailed rules: see `.claude/rules/git-workflow.md`
 
 ## Handoff Format
 
-Every agent handoff must include:
-1. **Changed files** — absolute paths
-2. **Tests added** — file paths and count
-3. **Quality status** — last `npm run quality` output
-4. **Blockers** — unresolved issues
-5. **Next step** — what the receiving agent should do
+Include: changed files (absolute paths), tests added, quality status (`npm run quality` output), blockers, next step.
 
 ## Important Paths
 

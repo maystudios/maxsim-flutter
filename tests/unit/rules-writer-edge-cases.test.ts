@@ -255,12 +255,12 @@ describe('writeRules: idempotency', () => {
     await expect(writeRules(ctx, tmp.path)).resolves.not.toThrow();
   });
 
-  it('second call still produces exactly 7 core rule files', async () => {
+  it('second call still produces exactly 9 core rule files', async () => {
     const ctx = makeContext();
     await writeRules(ctx, tmp.path);
     await writeRules(ctx, tmp.path);
     const entries = await readdir(join(tmp.path, '.claude', 'rules'));
-    expect(entries).toHaveLength(7);
+    expect(entries).toHaveLength(9);
   });
 
   it('second call with modules enabled generates additional rules', async () => {

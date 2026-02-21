@@ -23,13 +23,18 @@ describe('writeSkills', () => {
     const entries = await readdir(skillsDir);
     expect(entries.sort()).toEqual([
       'add-feature.md',
+      'debug-workflow.md',
+      'error-recovery.md',
       'flutter-patterns.md',
       'go-router-patterns.md',
       'module-conventions.md',
       'performance-check.md',
+      'plan-template.md',
       'prd.md',
       'quality-gate.md',
+      'sdd-workflow.md',
       'security-review.md',
+      'spec-template.md',
     ]);
   });
 
@@ -263,11 +268,11 @@ describe('writeMcpConfig', () => {
 describe('writeCommands', () => {
   const tmp = useTempDir('commands-writer-test-');
 
-  it('creates .claude/commands/ directory with 3 files', async () => {
+  it('creates .claude/commands/ directory with 6 files when agentTeams is true', async () => {
     await writeCommands(makeContext(), tmp.path);
     const commandsDir = join(tmp.path, '.claude', 'commands');
     const entries = await readdir(commandsDir);
-    expect(entries.sort()).toEqual(['add-feature.md', 'analyze.md', 'start-team.md']);
+    expect(entries.sort()).toEqual(['add-feature.md', 'analyze.md', 'plan.md', 'specify.md', 'start-team.md', 'tasks.md']);
   });
 
   it('add-feature.md contains Clean Architecture steps', async () => {

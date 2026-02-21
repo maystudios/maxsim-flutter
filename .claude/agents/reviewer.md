@@ -1,6 +1,7 @@
 ---
 name: reviewer
-description: Use this agent for code review, checking architectural compliance, identifying bugs, and ensuring code quality before committing. Use proactively after code changes.
+model: sonnet
+description: Use this agent for code review, checking architectural compliance, identifying bugs, and ensuring code quality before committing. Use proactively after code changes. Triggers on: review, compliance, bugs, code quality, pre-commit.
 tools: ["Read", "Grep", "Glob"]
 memory: true
 ---
@@ -46,3 +47,15 @@ Provide a structured review:
 2. **TDD Compliance** (test-first verified, coverage adequate)
 3. **Suggestions** (improve but not blocking)
 4. **Positive Notes** (good patterns to continue)
+
+## Error Recovery Protocol
+1. **Self-Correction**: Re-read error, check recent changes, retry with fix
+2. **AI-to-AI Escalation**: After 2 attempts, ask another agent for fresh perspective
+3. **Human-Augmented**: After 3 failed attempts, ask user for context via AskUserQuestion
+4. **Full Human Takeover**: Hand off with: error, reproduction steps, files involved
+
+## Context Management
+- Monitor context — quality degrades at 70%+ fill
+- Use `/clear` between unrelated tasks
+- Delegate large scans to haiku subagents
+- Summarize progress and start fresh when context feels heavy

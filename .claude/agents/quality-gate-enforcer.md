@@ -1,6 +1,7 @@
 ---
 name: quality-gate-enforcer
-description: Runs all quality checks, verifies test-source correspondence, and blocks non-compliant code. Use this agent to validate work before committing.
+model: sonnet
+description: Runs all quality checks, verifies test-source correspondence, and blocks non-compliant code. Use this agent to validate work before committing. Triggers on: quality gate, validate, pre-commit check, compliance.
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---
 
@@ -71,3 +72,15 @@ Every new public function exported from `src/` should have >= 2 test cases.
 
 **Overall: PASS/FAIL**
 ```
+
+## Error Recovery Protocol
+1. **Self-Correction**: Re-read error, check recent changes, retry with fix
+2. **AI-to-AI Escalation**: After 2 attempts, ask another agent for fresh perspective
+3. **Human-Augmented**: After 3 failed attempts, ask user for context via AskUserQuestion
+4. **Full Human Takeover**: Hand off with: error, reproduction steps, files involved
+
+## Context Management
+- Monitor context — quality degrades at 70%+ fill
+- Use `/clear` between unrelated tasks
+- Delegate large scans to haiku subagents
+- Summarize progress and start fresh when context feels heavy

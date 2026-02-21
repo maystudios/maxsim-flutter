@@ -36,11 +36,11 @@ describe('buildAgentDefinitions v2', () => {
     expect(tester?.model).toBe('sonnet');
   });
 
-  it('flutter-reviewer has model haiku', () => {
+  it('flutter-reviewer has model sonnet', () => {
     const agents = buildAgentDefinitions(context);
     const reviewer = agents.find((a) => a.filename === 'flutter-reviewer.md');
     expect(reviewer).toBeDefined();
-    expect(reviewer?.model).toBe('haiku');
+    expect(reviewer?.model).toBe('sonnet');
   });
 
   it('flutter-reviewer has only read-only tools (Read, Grep, Glob)', () => {
@@ -111,6 +111,239 @@ describe('buildAgentDefinitions v2', () => {
         agent.body.includes('.claude/rules') || agent.body.includes('rules/');
       expect(hasRulesRef).toBe(true);
     }
+  });
+});
+
+describe('P12-001: Error Recovery Protocol in all agents', () => {
+  const context = makeTestContext({ projectName: 'test_app' });
+
+  it('each agent body includes Error Recovery Protocol section', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      expect(agent.body).toContain('Error Recovery Protocol');
+    }
+  });
+
+  it('each agent body includes Self-Correction step', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      expect(agent.body).toContain('Self-Correction');
+    }
+  });
+
+  it('each agent body includes AI-to-AI Escalation step', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      expect(agent.body).toContain('AI-to-AI Escalation');
+    }
+  });
+
+  it('each agent body includes Human-Augmented step', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      expect(agent.body).toContain('Human-Augmented');
+    }
+  });
+
+  it('each agent body includes Full Human Takeover step', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      expect(agent.body).toContain('Full Human Takeover');
+    }
+  });
+});
+
+describe('P12-001: Context Management in all agents', () => {
+  const context = makeTestContext({ projectName: 'test_app' });
+
+  it('each agent body includes Context Management section', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      expect(agent.body).toContain('Context Management');
+    }
+  });
+
+  it('each agent body mentions 70% context threshold', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      expect(agent.body).toContain('70%');
+    }
+  });
+
+  it('each agent body mentions /clear guidance', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      expect(agent.body).toContain('/clear');
+    }
+  });
+
+  it('each agent body mentions subagent delegation for context management', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      const bodyLower = agent.body.toLowerCase();
+      expect(
+        bodyLower.includes('subagent') ||
+        bodyLower.includes('sub-agent') ||
+        bodyLower.includes('haiku'),
+      ).toBe(true);
+    }
+  });
+});
+
+describe('P12-001: Handoff Format in all agents', () => {
+  const context = makeTestContext({ projectName: 'test_app' });
+
+  it('each agent body includes Handoff Format section', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      expect(agent.body).toContain('Handoff Format');
+    }
+  });
+
+  it('each agent body includes Changed files item', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      expect(agent.body).toContain('Changed files');
+    }
+  });
+
+  it('each agent body includes Tests added/modified item', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      expect(agent.body).toContain('Tests added');
+    }
+  });
+
+  it('each agent body includes Quality status item', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      expect(agent.body).toContain('Quality status');
+    }
+  });
+
+  it('each agent body includes Blockers item', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      expect(agent.body).toContain('Blockers');
+    }
+  });
+
+  it('each agent body includes Next step item', () => {
+    const agents = buildAgentDefinitions(context);
+    for (const agent of agents) {
+      expect(agent.body).toContain('Next step');
+    }
+  });
+});
+
+// ─── P12-002: SDD agents (specifier + planner) ─────────────────────────────
+
+describe('P12-002: flutter-specifier agent', () => {
+  const context = makeTestContext({ projectName: 'test_app', claude: { enabled: true, agentTeams: true } });
+
+  it('returns 6 agents when agentTeams is true', () => {
+    const agents = buildAgentDefinitions(context);
+    expect(agents).toHaveLength(6);
+  });
+
+  it('returns 4 agents when agentTeams is false', () => {
+    const ctx = makeTestContext({ projectName: 'test_app', claude: { enabled: true, agentTeams: false } });
+    const agents = buildAgentDefinitions(ctx);
+    expect(agents).toHaveLength(4);
+  });
+
+  it('flutter-specifier uses opus model', () => {
+    const agents = buildAgentDefinitions(context);
+    const specifier = agents.find((a) => a.name === 'flutter-specifier');
+    expect(specifier).toBeDefined();
+    expect(specifier?.model).toBe('opus');
+  });
+
+  it('flutter-specifier has read-only tools plus WebSearch', () => {
+    const agents = buildAgentDefinitions(context);
+    const specifier = agents.find((a) => a.name === 'flutter-specifier');
+    expect(specifier?.tools).toEqual(expect.arrayContaining(['Read', 'Grep', 'Glob', 'WebSearch']));
+    expect(specifier?.tools).toHaveLength(4);
+    expect(specifier?.tools).not.toContain('Write');
+    expect(specifier?.tools).not.toContain('Edit');
+    expect(specifier?.tools).not.toContain('Bash');
+  });
+
+  it('flutter-specifier has maxTurns of 30', () => {
+    const agents = buildAgentDefinitions(context);
+    const specifier = agents.find((a) => a.name === 'flutter-specifier');
+    expect(specifier?.maxTurns).toBe(30);
+  });
+
+  it('flutter-specifier body contains Error Recovery Protocol', () => {
+    const agents = buildAgentDefinitions(context);
+    const specifier = agents.find((a) => a.name === 'flutter-specifier');
+    expect(specifier?.body).toContain('Error Recovery Protocol');
+  });
+
+  it('flutter-specifier body contains Context Management', () => {
+    const agents = buildAgentDefinitions(context);
+    const specifier = agents.find((a) => a.name === 'flutter-specifier');
+    expect(specifier?.body).toContain('Context Management');
+  });
+
+  it('flutter-specifier body includes project name', () => {
+    const agents = buildAgentDefinitions(context);
+    const specifier = agents.find((a) => a.name === 'flutter-specifier');
+    expect(specifier?.body).toContain('test_app');
+  });
+});
+
+describe('P12-002: flutter-planner agent', () => {
+  const context = makeTestContext({ projectName: 'test_app', claude: { enabled: true, agentTeams: true } });
+
+  it('flutter-planner uses sonnet model', () => {
+    const agents = buildAgentDefinitions(context);
+    const planner = agents.find((a) => a.name === 'flutter-planner');
+    expect(planner).toBeDefined();
+    expect(planner?.model).toBe('sonnet');
+  });
+
+  it('flutter-planner has read-only tools: Read, Grep, Glob', () => {
+    const agents = buildAgentDefinitions(context);
+    const planner = agents.find((a) => a.name === 'flutter-planner');
+    expect(planner?.tools).toEqual(expect.arrayContaining(['Read', 'Grep', 'Glob']));
+    expect(planner?.tools).toHaveLength(3);
+    expect(planner?.tools).not.toContain('Write');
+    expect(planner?.tools).not.toContain('Edit');
+    expect(planner?.tools).not.toContain('Bash');
+    expect(planner?.tools).not.toContain('WebSearch');
+  });
+
+  it('flutter-planner has maxTurns of 25', () => {
+    const agents = buildAgentDefinitions(context);
+    const planner = agents.find((a) => a.name === 'flutter-planner');
+    expect(planner?.maxTurns).toBe(25);
+  });
+
+  it('flutter-planner body contains Error Recovery Protocol', () => {
+    const agents = buildAgentDefinitions(context);
+    const planner = agents.find((a) => a.name === 'flutter-planner');
+    expect(planner?.body).toContain('Error Recovery Protocol');
+  });
+
+  it('flutter-planner body contains Context Management', () => {
+    const agents = buildAgentDefinitions(context);
+    const planner = agents.find((a) => a.name === 'flutter-planner');
+    expect(planner?.body).toContain('Context Management');
+  });
+
+  it('flutter-planner body includes project name', () => {
+    const agents = buildAgentDefinitions(context);
+    const planner = agents.find((a) => a.name === 'flutter-planner');
+    expect(planner?.body).toContain('test_app');
+  });
+
+  it('flutter-planner is not included when agentTeams is false', () => {
+    const ctx = makeTestContext({ projectName: 'test_app', claude: { enabled: true, agentTeams: false } });
+    const agents = buildAgentDefinitions(ctx);
+    const planner = agents.find((a) => a.name === 'flutter-planner');
+    expect(planner).toBeUndefined();
   });
 });
 

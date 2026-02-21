@@ -247,11 +247,11 @@ describe('writeSkills: idempotency', () => {
     await expect(writeSkills(ctx, tmp.path)).resolves.not.toThrow();
   });
 
-  it('second call still produces exactly 8 skill files', async () => {
+  it('second call still produces exactly 13 skill files', async () => {
     const ctx = makeContext();
     await writeSkills(ctx, tmp.path);
     await writeSkills(ctx, tmp.path);
     const entries = await readdir(join(tmp.path, '.claude', 'skills'));
-    expect(entries).toHaveLength(8);
+    expect(entries).toHaveLength(13);
   });
 });

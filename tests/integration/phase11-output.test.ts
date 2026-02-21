@@ -55,7 +55,7 @@ describe('Phase 11: agent definitions (P11-001)', () => {
     await runClaudeSetup(makeTestContext({ claude: { enabled: true, agentTeams: false, preset: 'standard' } }), tmp.path);
     const content = await readFile(join(tmp.path, '.claude', 'agents', 'flutter-reviewer.md'), 'utf-8');
     expect(content).toContain('memory: user');
-    expect(content).toContain('model: haiku');
+    expect(content).toContain('model: sonnet');
   });
 
   it('all agents have Scope Boundaries section', async () => {
@@ -84,13 +84,15 @@ describe('Phase 11: agent definitions (P11-001)', () => {
 describe('Phase 11: hook scripts (P11-002)', () => {
   const tmp = useTempDir('p11-hooks-');
 
-  it('standard preset generates 5 hook scripts', async () => {
+  it('standard preset generates 7 hook scripts', async () => {
     await runClaudeSetup(makeTestContext({ claude: { enabled: true, agentTeams: false, preset: 'standard' } }), tmp.path);
     const hooks = await readdir(join(tmp.path, '.claude', 'hooks'));
     expect(hooks.sort()).toEqual([
       'block-dangerous.sh',
+      'context-monitor.sh',
       'format-dart.sh',
       'notify-waiting.sh',
+      'precompact-preserve.sh',
       'protect-secrets.sh',
       'quality-gate-task.sh',
     ]);
@@ -214,7 +216,7 @@ describe('Phase 11: path-scoped rule files (P11-004)', () => {
     await runClaudeSetup(makeTestContext({ claude: { enabled: true, agentTeams: false, preset: 'minimal' } }), tmp.path);
     const rulesDir = join(tmp.path, '.claude', 'rules');
     const files = await readdir(rulesDir);
-    expect(files.length).toBe(7);
+    expect(files.length).toBe(9);
     const content = await readFile(join(rulesDir, 'architecture.md'), 'utf-8');
     expect(content.startsWith('---')).toBe(true);
   });
@@ -225,10 +227,10 @@ describe('Phase 11: path-scoped rule files (P11-004)', () => {
 describe('Phase 11: proactive skills (P11-005)', () => {
   const tmp = useTempDir('p11-skills-');
 
-  it('standard preset generates 8 skill files', async () => {
+  it('standard preset generates 13 skill files', async () => {
     await runClaudeSetup(makeTestContext({ claude: { enabled: true, agentTeams: false, preset: 'standard' } }), tmp.path);
     const skills = await readdir(join(tmp.path, '.claude', 'skills'));
-    expect(skills.length).toBe(8);
+    expect(skills.length).toBe(13);
     expect(skills).toContain('quality-gate.md');
     expect(skills).toContain('security-review.md');
     expect(skills).toContain('performance-check.md');
@@ -286,7 +288,6 @@ describe('Phase 11: start-team command (P11-006)', () => {
     expect(content).toContain('reviewer');
     expect(content).toContain('opus');
     expect(content).toContain('sonnet');
-    expect(content).toContain('haiku');
   });
 
   it('start-team command includes TDD flow steps', async () => {
@@ -372,7 +373,7 @@ describe('Phase 11: quality-gate-task hook (P11-008)', () => {
     const content = JSON.parse(await readFile(join(tmp.path, '.claude', 'settings.json'), 'utf-8'));
     expect(content.hooks.TaskCompleted).toBeDefined();
     expect(content.hooks.TaskCompleted[0].hooks[0].command).toContain('quality-gate-task.sh');
-    expect(content.hooks.TaskCompleted[0].hooks[0].timeout).toBe(60);
+    expect(content.hooks.TaskCompleted[0].hooks[0].timeout).toBe(120);
   });
 });
 
@@ -386,7 +387,7 @@ describe('Phase 11: cross-preset verification', () => {
 
     expect(await fileExists(join(tmp.path, 'CLAUDE.md'))).toBe(true);
     const rules = await readdir(join(tmp.path, '.claude', 'rules'));
-    expect(rules.length).toBe(7);
+    expect(rules.length).toBe(9);
 
     // These should NOT exist for minimal
     let agentsExist = true;
@@ -405,8 +406,8 @@ describe('Phase 11: cross-preset verification', () => {
 
     expect(await fileExists(join(tmp.path, 'CLAUDE.md'))).toBe(true);
     expect((await readdir(join(tmp.path, '.claude', 'agents'))).length).toBe(4);
-    expect((await readdir(join(tmp.path, '.claude', 'hooks'))).length).toBe(5);
-    expect((await readdir(join(tmp.path, '.claude', 'skills'))).length).toBe(8);
+    expect((await readdir(join(tmp.path, '.claude', 'hooks'))).length).toBe(7);
+    expect((await readdir(join(tmp.path, '.claude', 'skills'))).length).toBe(13);
     expect((await readdir(join(tmp.path, '.claude', 'commands'))).length).toBe(3);
     expect(await fileExists(join(tmp.path, '.claude', 'settings.json'))).toBe(true);
     expect(await fileExists(join(tmp.path, '.claude', 'settings.local.json'))).toBe(true);
@@ -418,8 +419,8 @@ describe('Phase 11: cross-preset verification', () => {
 
     expect(await fileExists(join(tmp.path, 'CLAUDE.md'))).toBe(true);
     expect((await readdir(join(tmp.path, '.claude', 'agents'))).length).toBe(4);
-    expect((await readdir(join(tmp.path, '.claude', 'hooks'))).length).toBe(5);
-    expect((await readdir(join(tmp.path, '.claude', 'skills'))).length).toBe(8);
+    expect((await readdir(join(tmp.path, '.claude', 'hooks'))).length).toBe(7);
+    expect((await readdir(join(tmp.path, '.claude', 'skills'))).length).toBe(13);
     expect((await readdir(join(tmp.path, '.claude', 'commands'))).length).toBe(3);
     expect(await fileExists(join(tmp.path, '.claude', 'settings.json'))).toBe(true);
     expect(await fileExists(join(tmp.path, '.claude', 'settings.local.json'))).toBe(true);

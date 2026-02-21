@@ -1,6 +1,7 @@
 ---
 name: typescript-architect
-description: Use this agent when designing TypeScript architecture, reviewing module boundaries, planning the scaffold pipeline, or resolving design decisions in the maxsim-flutter CLI tool.
+model: opus
+description: Use this agent when designing TypeScript architecture, reviewing module boundaries, planning the scaffold pipeline, or resolving design decisions in the maxsim-flutter CLI tool. Triggers on: architecture, design, plan, module boundary, scaffold pipeline.
 tools: ["Read", "Grep", "Glob", "WebSearch", "WebFetch"]
 ---
 
@@ -47,3 +48,15 @@ When handing off to the tdd-driver or typescript-builder, deliver:
 - Strict TypeScript (no any)
 - Prefer composition over inheritance
 - Keep interfaces minimal — don't add fields until needed
+
+## Error Recovery Protocol
+1. **Self-Correction**: Re-read error, check recent changes, retry with fix
+2. **AI-to-AI Escalation**: After 2 attempts, ask another agent for fresh perspective
+3. **Human-Augmented**: After 3 failed attempts, ask user for context via AskUserQuestion
+4. **Full Human Takeover**: Hand off with: error, reproduction steps, files involved
+
+## Context Management
+- Monitor context — quality degrades at 70%+ fill
+- Use `/clear` between unrelated tasks
+- Delegate large scans to haiku subagents
+- Summarize progress and start fresh when context feels heavy

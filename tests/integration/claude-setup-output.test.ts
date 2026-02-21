@@ -95,7 +95,7 @@ describe('Claude setup output integration', () => {
     expect(await fileExists(join(rulesDir, 'i18n.md'))).toBe(true);
   });
 
-  it('no modules generates only the 7 core rule files without conditional extras', async () => {
+  it('no modules generates only the 9 core rule files without conditional extras', async () => {
     const ctx = makeTestContext({
       claude: { enabled: true, agentTeams: false, preset: 'standard' },
     });
@@ -104,7 +104,7 @@ describe('Claude setup output integration', () => {
     const rulesDir = join(tmp.path, '.claude', 'rules');
     const files = await readdir(rulesDir);
 
-    const coreFiles = ['architecture.md', 'riverpod.md', 'go-router.md', 'testing.md', 'security.md', 'git-workflow.md', 'code-quality.md'];
+    const coreFiles = ['architecture.md', 'riverpod.md', 'go-router.md', 'testing.md', 'security.md', 'git-workflow.md', 'code-quality.md', 'error-recovery.md', 'context-management.md'];
     for (const f of coreFiles) {
       expect(files).toContain(f);
     }
@@ -112,7 +112,7 @@ describe('Claude setup output integration', () => {
     expect(files).not.toContain('api.md');
     expect(files).not.toContain('database.md');
     expect(files).not.toContain('i18n.md');
-    expect(files.length).toBe(7);
+    expect(files.length).toBe(9);
   });
 
   it('CLAUDE.md contains at most 100 lines', async () => {

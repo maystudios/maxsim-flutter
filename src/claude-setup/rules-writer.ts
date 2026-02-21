@@ -328,6 +328,83 @@ Guidelines for maintaining code quality standards.
   );
 }
 
+function generateErrorRecoveryRule(): string {
+  return (
+    frontmatter(['**']) +
+    `# Error Recovery Protocol
+
+## 4-Tier Escalation
+
+### Tier 1: Self-Correction
+- Re-read the error message carefully
+- Check recent changes for obvious mistakes
+- Run \`flutter analyze\` to get specific warnings
+- Try \`flutter clean && flutter pub get\` to reset state
+- Retry the failing operation
+
+### Tier 2: AI-to-AI Escalation
+- If stuck after 2 attempts at the same error
+- Ask another agent for a fresh perspective
+- Share: exact error, what you tried, file paths involved
+- The fresh context often spots what you missed
+
+### Tier 3: Human-Augmented
+- After 3 failed attempts total
+- Ask the user via AskUserQuestion for:
+  - Domain-specific context
+  - Business rule clarification
+  - External system access or credentials
+
+### Tier 4: Full Human Takeover
+- If the issue requires:
+  - Physical device testing
+  - Third-party service configuration
+  - Production database access
+- Hand off with: error description, reproduction steps, files involved
+
+## Flutter-Specific Recovery Steps
+- \`flutter clean\` — clear build cache
+- \`flutter pub get\` — re-resolve dependencies
+- \`dart run build_runner build --delete-conflicting-outputs\` — regenerate code
+- \`flutter pub cache repair\` — repair corrupted packages
+- Delete \`.dart_tool/\` and re-run \`flutter pub get\`
+`
+  );
+}
+
+function generateContextManagementRule(): string {
+  return (
+    frontmatter(['**']) +
+    `# Context Management
+
+## The 70% Rule
+Context quality degrades significantly at 70%+ fill. Monitor usage and act proactively.
+
+## When to \`/clear\`
+- Between unrelated tasks (most impactful habit)
+- After completing a major feature or story
+- When Claude starts repeating itself or ignoring instructions
+- After debugging sessions with verbose output
+
+## When to Use Subagents
+- Scanning large directory trees (> 50 files)
+- Reading multiple large files for research
+- Running verbose commands that produce long output
+- Exploring unfamiliar parts of the codebase
+
+## File Ownership in Teams
+- Each agent should own specific directories
+- Never modify files another agent is actively working on
+- Use \`blockedBy\` task dependencies to serialize conflicting edits
+
+## Preservation on Compact
+- Modified files list survives compaction via PreCompact hook
+- Architectural decisions should be written to files, not just discussed
+- Test results should be captured before compaction
+`
+  );
+}
+
 export async function writeRules(context: ProjectContext, outputPath: string): Promise<void> {
   const rulesDir = join(outputPath, '.claude', 'rules');
   await mkdir(rulesDir, { recursive: true });
@@ -340,6 +417,8 @@ export async function writeRules(context: ProjectContext, outputPath: string): P
   await writeFile(join(rulesDir, 'security.md'), generateSecurityRule(), 'utf-8');
   await writeFile(join(rulesDir, 'git-workflow.md'), generateGitWorkflowRule(), 'utf-8');
   await writeFile(join(rulesDir, 'code-quality.md'), generateCodeQualityRule(), 'utf-8');
+  await writeFile(join(rulesDir, 'error-recovery.md'), generateErrorRecoveryRule(), 'utf-8');
+  await writeFile(join(rulesDir, 'context-management.md'), generateContextManagementRule(), 'utf-8');
 
   // Conditional module rules
   if (context.modules.auth) {

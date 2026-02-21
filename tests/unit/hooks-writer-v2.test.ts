@@ -333,16 +333,154 @@ describe('P11-002: hook config with timeout (via returned config)', () => {
     expect(result.config.hooks.PreToolUse!).toHaveLength(2);
   });
 
-  it('hooks directory contains exactly 5 scripts after writeHooks', async () => {
+  it('hooks directory contains exactly 7 scripts after writeHooks', async () => {
     await writeHooks(makeContext(), tmp.path);
     const entries = await readdir(join(tmp.path, '.claude', 'hooks'));
-    expect(entries).toHaveLength(5);
+    expect(entries).toHaveLength(7);
     expect(entries.sort()).toEqual([
       'block-dangerous.sh',
+      'context-monitor.sh',
       'format-dart.sh',
       'notify-waiting.sh',
+      'precompact-preserve.sh',
       'protect-secrets.sh',
       'quality-gate-task.sh',
     ]);
+  });
+});
+
+// ─── P12-007: precompact-preserve.sh script ─────────────────────────────
+
+describe('P12-007: precompact-preserve.sh script', () => {
+  const tmp = useTempDir('hooks-precompact-test-');
+
+  it('precompact-preserve.sh exists in .claude/hooks/', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const entries = await readdir(join(tmp.path, '.claude', 'hooks'));
+    expect(entries).toContain('precompact-preserve.sh');
+  });
+
+  it('precompact-preserve.sh starts with a bash shebang', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const content = await readFile(join(tmp.path, '.claude', 'hooks', 'precompact-preserve.sh'), 'utf-8');
+    expect(content.startsWith('#!/bin/bash') || content.startsWith('#!/usr/bin/env bash')).toBe(true);
+  });
+
+  it('precompact-preserve.sh contains git diff --name-only', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const content = await readFile(join(tmp.path, '.claude', 'hooks', 'precompact-preserve.sh'), 'utf-8');
+    expect(content).toContain('git diff --name-only');
+  });
+
+  it('precompact-preserve.sh contains git branch --show-current', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const content = await readFile(join(tmp.path, '.claude', 'hooks', 'precompact-preserve.sh'), 'utf-8');
+    expect(content).toContain('git branch --show-current');
+  });
+
+  it('precompact-preserve.sh contains git log for recent commits', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const content = await readFile(join(tmp.path, '.claude', 'hooks', 'precompact-preserve.sh'), 'utf-8');
+    expect(content).toContain('git log');
+  });
+
+  it('precompact-preserve.sh has executable permissions', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const fileStat = await stat(join(tmp.path, '.claude', 'hooks', 'precompact-preserve.sh'));
+    expect(fileStat.mode & 0o111).toBeTruthy();
+  });
+
+  it('returned config includes PreCompact hook entry', async () => {
+    const result = await writeHooks(makeContext(), tmp.path);
+    expect(result.config.hooks.PreCompact).toBeDefined();
+    expect(result.config.hooks.PreCompact).toHaveLength(1);
+    expect(result.config.hooks.PreCompact![0].hooks[0].command).toContain('precompact-preserve.sh');
+  });
+
+  it('precompact-preserve.sh always exits 0', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const content = await readFile(join(tmp.path, '.claude', 'hooks', 'precompact-preserve.sh'), 'utf-8');
+    expect(content).toContain('exit 0');
+    expect(content).not.toContain('exit 2');
+  });
+});
+
+// ─── P12-008: quality-gate-task.sh blocking behavior ────────────────────
+
+describe('P12-008: quality-gate-task.sh blocks task completion', () => {
+  const tmp = useTempDir('hooks-quality-gate-blocking-');
+
+  it('quality-gate-task.sh contains exit 2 for blocking', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const content = await readFile(join(tmp.path, '.claude', 'hooks', 'quality-gate-task.sh'), 'utf-8');
+    expect(content).toContain('exit 2');
+  });
+
+  it('quality-gate-task.sh runs flutter analyze', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const content = await readFile(join(tmp.path, '.claude', 'hooks', 'quality-gate-task.sh'), 'utf-8');
+    expect(content).toContain('flutter analyze');
+  });
+
+  it('quality-gate-task.sh runs flutter test', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const content = await readFile(join(tmp.path, '.claude', 'hooks', 'quality-gate-task.sh'), 'utf-8');
+    expect(content).toContain('flutter test');
+  });
+
+  it('quality-gate-task.sh only triggers for implementation tasks', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const content = await readFile(join(tmp.path, '.claude', 'hooks', 'quality-gate-task.sh'), 'utf-8');
+    expect(content).toContain('P[0-9]+-');
+  });
+
+  it('TaskCompleted hook timeout is 120', async () => {
+    const result = await writeHooks(makeContext(), tmp.path);
+    const taskHook = result.config.hooks.TaskCompleted![0];
+    expect(taskHook.hooks[0].timeout).toBe(120);
+  });
+});
+
+// ─── P12-009: context-monitor.sh script ─────────────────────────────────
+
+describe('P12-009: context-monitor.sh script', () => {
+  const tmp = useTempDir('hooks-context-monitor-test-');
+
+  it('context-monitor.sh exists in .claude/hooks/', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const entries = await readdir(join(tmp.path, '.claude', 'hooks'));
+    expect(entries).toContain('context-monitor.sh');
+  });
+
+  it('context-monitor.sh starts with a bash shebang', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const content = await readFile(join(tmp.path, '.claude', 'hooks', 'context-monitor.sh'), 'utf-8');
+    expect(content.startsWith('#!/bin/bash') || content.startsWith('#!/usr/bin/env bash')).toBe(true);
+  });
+
+  it('context-monitor.sh is advisory only (exit 0, no exit 2)', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const content = await readFile(join(tmp.path, '.claude', 'hooks', 'context-monitor.sh'), 'utf-8');
+    expect(content).toContain('exit 0');
+    expect(content).not.toContain('exit 2');
+  });
+
+  it('context-monitor.sh recommends /clear or subagent delegation', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const content = await readFile(join(tmp.path, '.claude', 'hooks', 'context-monitor.sh'), 'utf-8');
+    expect(content).toContain('/clear');
+  });
+
+  it('context-monitor.sh has executable permissions', async () => {
+    await writeHooks(makeContext(), tmp.path);
+    const fileStat = await stat(join(tmp.path, '.claude', 'hooks', 'context-monitor.sh'));
+    expect(fileStat.mode & 0o111).toBeTruthy();
+  });
+
+  it('returned config includes Stop hook entry for context-monitor', async () => {
+    const result = await writeHooks(makeContext(), tmp.path);
+    expect(result.config.hooks.Stop).toBeDefined();
+    expect(result.config.hooks.Stop).toHaveLength(1);
+    expect(result.config.hooks.Stop![0].hooks[0].command).toContain('context-monitor.sh');
   });
 });
